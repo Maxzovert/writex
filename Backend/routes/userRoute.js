@@ -1,8 +1,13 @@
 import express from "express";
-
-import signUp from "../controller/userController";
-import protectRoute from "../middleware/auth";
+import userController from "../controller/userController.js";
+import protectRoute from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.post('/signUp', signUp)
+router.post('/signup', userController.signup);
+router.post('/login', userController.login);
+
+// router.get("/protected", protectRoute, (req, res) => {
+//     res.json({ message: "You are authorized!", user: req.user });
+//   });
+export default router;
