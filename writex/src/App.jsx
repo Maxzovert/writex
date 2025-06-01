@@ -1,10 +1,11 @@
 import React from 'react'
+import Home from "./Pages/Home"
 
 const App = () => {
   return (
-    <div className="font-bold text-amber-200">
-      Writex
-    </div>
+    <>
+    <Home/>
+    </>
   )
 }
 
