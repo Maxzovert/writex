@@ -1,10 +1,8 @@
 import React from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import Dashboard from "../App/Dashboard/Dashboard";
 import { DotPattern } from "../components/magicui/dot-pattern";
 import { LineShadowText } from "../components/magicui/line-shadow-text";
 import { InteractiveHoverButton } from "../components/magicui/interactive-hover-button";
-import { TypingAnimation } from "../components/magicui/typing-animation";
 const Home = () => {
 
   const Navigate = useNavigate()
