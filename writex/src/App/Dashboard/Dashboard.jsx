@@ -4,7 +4,9 @@ import { DotPattern } from "@/components/magicui/dot-pattern";
 const Dashboard = () => {
   return (
     <>
-      <div>Dashboard</div>
+      <div>
+        
+      </div>
     </>
   );
 };
