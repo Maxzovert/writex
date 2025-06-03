@@ -8,7 +8,7 @@ const Home = () => {
   const Navigate = useNavigate()
 
   const handleClick = () => {
-    Navigate("/dashboard")
+    Navigate("/SignUp")
   }
   return (
     <>
