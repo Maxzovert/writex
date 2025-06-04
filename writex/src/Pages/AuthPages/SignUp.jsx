@@ -1,12 +1,8 @@
 import React from "react";
-import { DotPattern } from "../../components/magicui/dot-pattern";
-import { LineShadowText } from "../../components/magicui/line-shadow-text";
-import { Pointer } from "../../components/magicui/pointer";
 
 const SignUp = () => {
   return (
     <div className="h-screen flex">
-      <Pointer />
       {/* Left */}
       <div className="w-1/2 flex items-center justify-center bg-gray-50">
         <div className="w-[500px] space-y-8 p-8">
@@ -65,21 +61,7 @@ const SignUp = () => {
         </div>
       </div>
       {/* right */}
-      <div className="relative w-1/2 rounded-l-[150px] bg-stone-100">
-        <div className="absolute inset-0 z-10">
-          <DotPattern className="rounded-l-[150px]"/>
-        </div>
 
-        <div className="flex flex-col justify-center items-center mt-[20%]">
-          <h1 className="text-8xl font-bold z-10">Sign in</h1>
-          <h1 className="text-4xl font-bold z-10 mt-8 mb-8">Now To</h1>
-          <div className="flex items-center justify-center flex-col relative z-10">
-            <div className="text-8xl">
-              Write<LineShadowText>X</LineShadowText>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
