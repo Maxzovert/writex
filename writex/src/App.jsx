@@ -5,7 +5,6 @@ import Dashboard from "./App/Dashboard/Dashboard"
 import SignUp from "./Pages/AuthPages/SignUp"
 import Login from "./Pages/AuthPages/Login"
 import { Pointer } from "./components/magicui/pointer"
-import Layout from "./Pages/AuthPages/layout"
 
 const App = () => {
   return (
@@ -13,9 +12,8 @@ const App = () => {
     <Pointer/>
     <Routes>
     <Route path="/" element={<Home/>} />
-    {/* <Route path="/signup" element={<SignUp/>} />
-    <Route path="/login" element={<Login/>} /> */}
-    <Route path="/auth" element={<Layout/>} />
+     <Route path="/signup" element={<SignUp/>} />
+    <Route path="/login" element={<Login/>} /> 
     <Route path="/dashboard" element={<Dashboard/>} />
     </Routes>
     </>
