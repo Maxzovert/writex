@@ -2,32 +2,33 @@ import React, { useState } from "react";
 import { DotPattern } from "../../components/magicui/dot-pattern";
 import { LineShadowText } from "../../components/magicui/line-shadow-text";
 import axios from "axios";
-
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 const SignUp = () => {
-
-  const [formData , setFormData] = useState({
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
 
-  const handleChnage = (e) => {
+  const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.id]:e.target.value
+      [e.target.id]: e.target.value,
     });
   };
 
-  const handleSignUp = async () => {
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+
     try {
       const respose = await axios.post("/api/users/signup",{
-        
       })
     } catch (error) {
-      
+
     }
-  }
+  };
   return (
     <div className="h-screen flex">
       {/* Left */}
@@ -63,10 +64,10 @@ const SignUp = () => {
               type="text"
               id="name"
               value={formData.name}
-              onChange={handleChnage}
+              onChange={handleChange}
               required
               className="w-full px-5 py-3 text-lg border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
-              placeholder="John Doe"
+              placeholder="Max"
             />
           </div>
 
@@ -81,10 +82,10 @@ const SignUp = () => {
               type="email"
               id="email"
               value={formData.email}
-              onChange={handleChnage}
+              onChange={handleChange}
               required
               className="w-full px-5 py-3 text-lg border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
-              placeholder="john@example.com"
+              placeholder="max@example.com"
             />
           </div>
 
@@ -99,7 +100,7 @@ const SignUp = () => {
               type="password"
               id="password"
               value={formData.password}
-              onChange={handleChnage}
+              onChange={handleChange}
               required
               className="w-full px-5 py-3 text-lg border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
               placeholder="••••••••"
@@ -116,12 +117,17 @@ const SignUp = () => {
             <input
               type="password"
               id="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
               className="w-full px-5 py-3 text-lg border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
               placeholder="••••••••"
             />
           </div>
 
-          <button className="w-full bg-gray-900 text-white py-4 rounded-xl text-lg font-semibold hover:bg-gray-800 transition-colors duration-200 shadow-lg hover:shadow-xl cursor-pointer">
+          <button
+            className="w-full bg-gray-900 text-white py-4 rounded-xl text-lg font-semibold hover:bg-gray-800 transition-colors duration-200 shadow-lg hover:shadow-xl cursor-pointer"
+            onClick={handleSignUp}
+          >
             Sign Up
           </button>
 
@@ -136,7 +142,6 @@ const SignUp = () => {
           </p>
         </div>
       </div>
-      {/* right */}
     </div>
   );
 };
