@@ -3,11 +3,18 @@ import dotenv from "dotenv";
 import connetDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import router from "./routes/userRoute.js";
+import cors from "cors";
 
 dotenv.config();
 const app = express();
 
 connetDB();
+
+// Enable CORS
+app.use(cors({
+  origin: 'http://localhost:5173', // Vite's default port
+  credentials: true // This is important for cookies
+}));
 
 app.use(cookieParser());
 app.use(express.json());
