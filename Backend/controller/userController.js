@@ -92,4 +92,18 @@ const  getCurrentUser = async (req , res) => {
         res.status(500).json({message : "Error in GetCurrentUser" , error : error.message})
     }
 }
-export  default { signup, login , getCurrentUser };
+
+const logout = async (req,res) => {
+    try {
+        res.cookie('token', '', {
+            httpOnly : true,
+            expiresIn : new Date(0),
+            secure : process.env.NODE_ENV === 'pWroduction',
+            sameSite : "strict"
+        })
+        res.status(200).json({message : "Logout Successfully"})
+    } catch (error) {
+        res.status(500).json({message : "Error in logot" , error : error.message})
+    }
+}
+export  default { signup, login , getCurrentUser ,logout};
