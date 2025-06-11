@@ -1,13 +1,12 @@
 import React from "react";
-import { DotPattern } from "@/components/magicui/dot-pattern";
 
 const Dashboard = () => {
   return (
-    <>
-      <div>
-        
+      <div className="w-[200px] h-[200px] bg-amber-100">
+        <button>Logout</button>
+        <h1 className="font-bold text-3xl">HELOO</h1>
       </div>
-    </>
+
   );
 };
 

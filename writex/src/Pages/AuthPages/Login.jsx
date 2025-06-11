@@ -4,13 +4,15 @@ import { LineShadowText } from "../../components/magicui/line-shadow-text";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from '../../context/AuthContext';
 
 axios.defaults.baseURL = "http://localhost:5000";
 axios.defaults.withCredentials = true;
 
 const Login = () => {
   const navigate = useNavigate();
-  const [formData , setFormData] = useState({
+  const { setUser } = useAuth();
+  const [formData, setFormData] = useState({
     email: "",
     password: ""
   })
@@ -18,29 +20,31 @@ const Login = () => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.id] : e.target.value
+      [e.target.id]: e.target.value
     })
   }
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if(!formData.email || !formData.password ){
+    if(!formData.email || !formData.password){
       toast.warning("Please fill all the fields");
       return;
     }
 
     try {
-      const response = await axios.post("/api/users/login" ,{
-        email : formData.email,
-        password : formData.password
-      })
-      toast.success("Login SucessFully");
-      navigate("/dashboard")
+      const response = await axios.post("/api/users/login", {
+        email: formData.email,
+        password: formData.password
+      });
+      setUser(response.data);
+      toast.success("Login Successfully");
+      navigate("/dashboard");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Login Failed")
+      toast.error(error.response?.data?.message || "Login Failed");
     }
   }
+
   return (
     <div className="h-screen flex">
     <div className="relative w-1/2 rounded-r-[150px] bg-stone-100">
