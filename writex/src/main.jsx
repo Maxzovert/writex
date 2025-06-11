@@ -6,7 +6,6 @@ import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom';
 import { Pointer } from "./components/magicui/pointer.js"
 import { ToastContainer, toast } from 'react-toastify';
-import { AuthProvider } from "./context/AuthContext.jsx"
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -24,9 +23,7 @@ createRoot(document.getElementById('root')).render(
         theme="light"
       />
     <BrowserRouter>
-    <AuthProvider>
-    <App />
-    </AuthProvider>
+      <App />
     </BrowserRouter>
-  </StrictMode>,
+  </StrictMode>
 )
