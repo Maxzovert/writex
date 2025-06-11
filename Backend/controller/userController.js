@@ -16,10 +16,10 @@ const signup = async (req , res) => {
             return res.status(400).json({message:"User Already Exists"})
         }
 
-        const user = await User.create({username , email, password});
+        const user = await User.create({ username, email, password});
         const token = generateToken(user._id)
 
-        res .cookie('token' ,token , {
+        res.cookie('token' ,token , {
             httpOnly : true,
             secure : process.env.NODE_ENV === "production",
             sameSite : "strict",
@@ -28,14 +28,15 @@ const signup = async (req , res) => {
 
         res.status(201).json({
             _id: user._id,
-            username:user.username,
-            email:user.email,
+            username: user.username,
+            email: user.email,
             message : "user created"
         })
         
 
     } catch (error) {
-        res.status(500).json({message : "error userController (signUp)"})
+        console.error("Signup error:", error);
+        res.status(500).json({message : error.message || "Error in signup"})
     }
 }
 
@@ -73,4 +74,36 @@ const login = async (req , res) => {
     }
 }
 
-export  default { signup, login };
+const  getCurrentUser = async (req , res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+    
+        if(!user){
+            return res.status(404).json({message: "User not Found"});
+        }
+        
+        res.status(200).json({
+            _id : user._id,
+            username : user.username,
+            email : user.email
+        
+        }) 
+    } catch (error) {
+        res.status(500).json({message : "Error in GetCurrentUser" , error : error.message})
+    }
+}
+
+const logout = async (req,res) => {
+    try {
+        res.cookie('token', '', {
+            httpOnly : true,
+            expiresIn : new Date(0),
+            secure : process.env.NODE_ENV === 'pWroduction',
+            sameSite : "strict"
+        })
+        res.status(200).json({message : "Logout Successfully"})
+    } catch (error) {
+        res.status(500).json({message : "Error in logot" , error : error.message})
+    }
+}
+export  default { signup, login , getCurrentUser ,logout};

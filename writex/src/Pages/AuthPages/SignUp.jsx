@@ -4,7 +4,15 @@ import { LineShadowText } from "../../components/magicui/line-shadow-text";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from '../../context/AuthContext';
+
+axios.defaults.baseURL = 'http://localhost:5000';
+axios.defaults.withCredentials = true;
+
 const SignUp = () => {
+  const navigate = useNavigate();
+  const { setUser } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -22,13 +30,33 @@ const SignUp = () => {
   const handleSignUp = async (e) => {
     e.preventDefault();
 
-    try {
-      const respose = await axios.post("/api/users/signup",{
-      })
-    } catch (error) {
+    if(!formData.email || !formData.password || !formData.name || !formData.confirmPassword){
+      toast.warning("Please fill all the fields");
+      return;
+    }
+    if(formData.password.length < 6){
+      toast.warning("Password must contain 6 Characters");
+      return;
+    }
+    if(formData.password !== formData.confirmPassword){
+      toast.error("Passwords Do Not match");
+      return;
+    }
 
+    try {
+      const response = await axios.post("/api/users/signup", {
+        username: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+      setUser(response.data);
+      toast.success("Account Created Successfully");
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
+
   return (
     <div className="h-screen flex">
       {/* Left */}
