@@ -4,9 +4,6 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-axios.defaults.baseURL = "http://localhost:5000";
-axios.defaults.withCredentials = true;
-
 const Dashboard = () => {
   const {user, setUser} = useAuth();
   const navigate = useNavigate();

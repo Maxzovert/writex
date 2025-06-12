@@ -6,27 +6,27 @@ import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom';
 import { Pointer } from "./components/magicui/pointer.js"
 import { ToastContainer, toast } from 'react-toastify';
-import { AuthProvider } from "./context/AuthContext.jsx"
+import { AuthProvider } from './context/AuthContext';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <Pointer/>
-    <ToastContainer
-        position="bottom-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
-    <BrowserRouter>
     <AuthProvider>
-    <App />
+      <Pointer/>
+      <ToastContainer
+          position="bottom-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </AuthProvider>
-    </BrowserRouter>
-  </StrictMode>,
+  </StrictMode>
 )

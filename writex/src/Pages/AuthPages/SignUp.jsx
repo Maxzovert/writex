@@ -7,9 +7,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../../context/AuthContext';
 
-axios.defaults.baseURL = 'http://localhost:5000';
-axios.defaults.withCredentials = true;
-
 const SignUp = () => {
   const navigate = useNavigate();
   const { setUser } = useAuth();

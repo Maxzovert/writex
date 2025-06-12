@@ -1,8 +1,10 @@
 import axios from "axios";
 import { Children, createContext, useContext, useEffect, useState } from "react";
 
-axios.defaults.baseURL = "http://localhost:5000";
-axios.defaults.withCredentials  = true;
+// Use environment variable for API URL, fallback to localhost for development
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+axios.defaults.baseURL = API_URL;
+axios.defaults.withCredentials = true;
 
 const AuthContext = createContext();
 

@@ -6,9 +6,6 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../../context/AuthContext';
 
-axios.defaults.baseURL = "http://localhost:5000";
-axios.defaults.withCredentials = true;
-
 const Login = () => {
   const navigate = useNavigate();
   const { setUser } = useAuth();

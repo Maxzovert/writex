@@ -20,7 +20,7 @@ const Home = () => {
           <div className="text-9xl mt-[200px]">
             Write<LineShadowText>X</LineShadowText>
           </div>
-            <p>Write Your Thoughts and ideas</p>
+            <p>Lowkey deep, highkey real — post what hits different</p>
           <InteractiveHoverButton className="mt-8" onClick={handleClick}>
             Go To Dashboard
           </InteractiveHoverButton>
