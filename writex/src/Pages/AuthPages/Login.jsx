@@ -4,7 +4,7 @@ import { LineShadowText } from "../../components/magicui/line-shadow-text";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/authContext';
 
 const Login = () => {
   const navigate = useNavigate();

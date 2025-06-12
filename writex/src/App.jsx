@@ -5,7 +5,7 @@ import Dashboard from "./App/Dashboard/Dashboard";
 import SignUp from "./Pages/AuthPages/SignUp";
 import Login from "./Pages/AuthPages/Login";
 import { Pointer } from "./components/magicui/pointer";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/authContext";
 import { SyncLoader } from "react-spinners";
 
 const App = () => {
