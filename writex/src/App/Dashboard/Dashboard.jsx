@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "../../context/authContext";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import logo from "../../assets/logo.png";
+import FirstGrid from "../../assets/firstgrid.jpg";
+import twoGrid from "../../assets/twoGrid.jpg";
+import threeGrid from "../../assets/threeGrid.jpg";
 import { Button } from "../../components/ui/button";
 import {
   Popover,
@@ -12,17 +15,23 @@ import {
 } from "@/components/ui/popover";
 
 const Dashboard = () => {
+  const pathname = useLocation()
+  const [currentTab , setCurrentTab] = useState("Home")
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
 
   const NAVITEMS = [
     {
       title: "Home",
-      path: "/",
+      path: "/dashboard",
     },
     {
       title: "Blogs",
       path: "/blogs",
+    },
+    {
+      title: "Write",
+      path: "/addblog",
     },
     {
       title: "About",
@@ -72,8 +81,8 @@ const Dashboard = () => {
                 ))}
               </ul>
             </div>
-
             <div className="flex items-center gap-4">
+              <div className="border-gray-300 w-18 border-2 p-1.5 rounded-sm text-gray-600 text-[16px] text-center font-semibold">Ctrl+k</div>
               <Button
                 onClick={handleLogout}
                 variant="outline"
@@ -101,7 +110,9 @@ const Dashboard = () => {
                       >
                         {user?.name?.[0]?.toUpperCase() || "U"}
                       </div>
-                      <h2 className="font-semibold text-gray-400 mt-2 ml-4 text-2xl">Abdullah</h2>
+                      <h2 className="font-semibold text-gray-400 mt-2 ml-4 text-2xl">
+                        Abdullah
+                      </h2>
                     </div>
                   </div>
                 </PopoverContent>
@@ -113,14 +124,52 @@ const Dashboard = () => {
 
       {/* MID SECTION */}
       <div className="relative w-full h-[800px] mt-20 flex flex-row justify-center">
-        <div className="w-[60%] h-[800px] bg-gray-400 ml-20 mr-4 rounded-4xl"></div>
-        <div className="w-[30%] h-[800px] mr-20 rounded-4xl flex flex-col justify-between">
-          <div className="w-full h-[395px] bg-gray-400 rounded-4xl"></div>
-          <div className="w-full h-[395px] bg-gray-400 rounded-4xl"></div>
+        {/* Left Large Image Box */}
+        <div className="w-[60%] h-[800px] ml-20 mr-4 rounded-4xl overflow-hidden relative">
+          <img
+            src={FirstGrid}
+            alt="Travel"
+            className="w-full h-full object-cover rounded-4xl"
+          />
+          <h1 className="absolute bottom-6 left-6 text-white text-[100px] font-bold lexend-txt">
+            1. Travel
+          </h1>
+        </div>
+
+        {/* Right Side Boxes */}
+        <div className="w-[30%] h-[800px] mr-20 flex flex-col justify-between">
+          {/* Top Box */}
+          <div className="w-full h-[395px] rounded-4xl overflow-hidden relative">
+            <img
+              src={twoGrid}
+              alt="Food"
+              className="w-full h-full object-cover rounded-4xl"
+            />
+            <h1 className="absolute bottom-4 left-4 text-white text-[60px] lexend-txt font-semibold">
+              2. Food
+            </h1>
+          </div>
+
+          {/* Bottom Box */}
+          <div className="w-full h-[395px] rounded-4xl overflow-hidden relative">
+            <img
+              src={threeGrid}
+              alt="Journal"
+              className="w-full h-full object-cover rounded-4xl"
+            />
+            <h1 className="absolute bottom-4 left-4 text-[60px] lexend-txt font-bold text-white">
+              3. Journal
+            </h1>
+          </div>
         </div>
       </div>
+
+      {/* divider */}
+      <div className="border-b-2 border-gray-400 mt-24 mr-16 ml-16"></div>
+      
     </div>
   );
 };
 
 export default Dashboard;
+
