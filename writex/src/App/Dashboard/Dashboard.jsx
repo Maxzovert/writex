@@ -7,7 +7,11 @@ import logo from "../../assets/logo.png";
 import FirstGrid from "../../assets/firstgrid.jpg";
 import twoGrid from "../../assets/twoGrid.jpg";
 import threeGrid from "../../assets/threeGrid.jpg";
+import secondSec from "../../assets/secondSec.jpg";
 import { Button } from "../../components/ui/button";
+import { BoxReveal } from "@/components/magicui/box-reveal";
+import { TextReveal } from "@/components/magicui/text-reveal";
+import { PulsatingButton } from "@/components/magicui/pulsating-button";
 import {
   Popover,
   PopoverContent,
@@ -15,8 +19,8 @@ import {
 } from "@/components/ui/popover";
 
 const Dashboard = () => {
-  const pathname = useLocation()
-  const [currentTab , setCurrentTab] = useState("Home")
+  const pathname = useLocation();
+  const [currentTab, setCurrentTab] = useState("Home");
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
 
@@ -51,6 +55,10 @@ const Dashboard = () => {
     }
   };
 
+  const startWritting = () => {
+    navigate("/addblog");
+  };
+
   return (
     <div>
       {/* NAVBAR */}
@@ -82,7 +90,9 @@ const Dashboard = () => {
               </ul>
             </div>
             <div className="flex items-center gap-4">
-              <div className="border-gray-300 w-18 border-2 p-1.5 rounded-sm text-gray-600 text-[16px] text-center font-semibold">Ctrl+k</div>
+              <div className="border-gray-300 w-18 border-2 p-1.5 rounded-sm text-gray-600 text-[16px] text-center font-semibold">
+                Ctrl+k
+              </div>
               <Button
                 onClick={handleLogout}
                 variant="outline"
@@ -122,8 +132,9 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* MID SECTION */}
-      <div className="relative w-full h-[800px] mt-20 flex flex-row justify-center">
+    
+          {/* MID SECTION */}
+          <div className="relative w-full h-[800px] mt-20 flex flex-row justify-center">
         {/* Left Large Image Box */}
         <div className="w-[60%] h-[800px] ml-20 mr-4 rounded-4xl overflow-hidden relative">
           <img
@@ -164,7 +175,52 @@ const Dashboard = () => {
         </div>
       </div>
 
+
+
       {/* divider */}
+      <div className="border-b-2 border-gray-400 mt-24 mr-16 ml-16"></div>
+
+      <div className="flex w-full h-[1000px] mt-24 justify-center">
+        <div className="w-[85%] h-[700px] relative">
+          <img
+            src={secondSec}
+            alt=""
+            className="rounded-4xl w-full object-cover"
+          />
+          <div className="absolute inset-0 z-10 flex items-center justify-center flex-col">
+            <BoxReveal boxColor={"white"}>
+              <h1 className="text-[60px] text-white font-bold">
+                GOT SOMETHING TO SAY??
+              </h1>
+            </BoxReveal>
+            <BoxReveal boxColor={"white"}>
+              <h2 className="text-[25px] text-white font-semibold text-center mt-2">
+                Got a hot take, a cool hack, or a tutorial that slaps?
+              </h2>
+            </BoxReveal>
+            <BoxReveal boxColor={"white"}>
+              <h2 className="text-[25px] text-white font-semibold text-center mt-2">
+                This is your space to share it.
+              </h2>
+            </BoxReveal>
+            <PulsatingButton
+              className="mt-8 bg-black text-white font-semibold text-xl"
+              pulseColor="white"
+              onClick={startWritting}
+            >
+              Start Writing
+            </PulsatingButton>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gray-200 w-full mt-24">
+        <TextReveal className="relative mt-10 text-center text-white">
+          Tutorials, tips, stories, if it slaps, post it.
+          No pressure no gatekeeping, just real ones sharing real stuff
+        </TextReveal>
+      </div>
+
       <div className="border-b-2 border-gray-400 mt-24 mr-16 ml-16"></div>
       
     </div>
@@ -173,3 +229,4 @@ const Dashboard = () => {
 
 export default Dashboard;
 
+                 
