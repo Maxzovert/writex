@@ -1,8 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Oxygen:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
-
 @custom-variant dark (&:is(.dark *));
 
+.oxygen-light {
+  font-family: "Oxygen", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.oxygen-regular {
+  font-family: "Oxygen", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.oxygen-bold {
+  font-family: "Oxygen", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.lexend-txt {
+  font-family: "Lexend", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -48,7 +73,16 @@
     background-position: 100% -100%;
     }
   }
-}
+  --animate-pulse: pulse var(--duration) ease-out infinite
+;
+  @keyframes pulse {
+  0%, 100% {
+    boxShadow: 0 0 0 0 var(--pulse-color);
+    }
+  50% {
+    boxShadow: 0 0 0 8px var(--pulse-color);
+    }
+  }}
 
 :root {
   --radius: 0.625rem;

@@ -4,7 +4,6 @@ import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import Dashboard from "./App/Dashboard/Dashboard";
 import SignUp from "./Pages/AuthPages/SignUp";
 import Login from "./Pages/AuthPages/Login";
-import { Pointer } from "./components/magicui/pointer";
 import { useAuth } from "./context/authContext";
 import { SyncLoader } from "react-spinners";
 
@@ -42,7 +41,6 @@ const App = () => {
 
   return (
     <>
-      <Pointer />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route
