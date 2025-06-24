@@ -12,7 +12,7 @@ connetDB();
 
 // Enable CORS
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite's default port
+  origin: 'https://writtex.onrender.com', // Vite's default port
   credentials: true // This is important for cookies
 }));
 
