@@ -6,6 +6,11 @@
 /* @import "./node_modules/preline/variants.css"; */
 @custom-variant dark (&:is(.dark *));
 
+html, body {
+  height: 100%;
+  overflow-y: auto;
+}
+
 .oxygen-light {
   font-family: "Oxygen", sans-serif;
   font-weight: 300;

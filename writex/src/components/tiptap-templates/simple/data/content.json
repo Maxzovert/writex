@@ -1,0 +1,198 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "textAlign": null, "level": 1 },
+      "content": [{ "type": "text", "text": "Start Writing with Writex" }]
+    },
+    {
+      "type": "paragraph",
+      "attrs": { "textAlign": null },
+      "content": [
+        { "type": "text", "text": "Welcome to your new " },
+        {
+          "type": "text",
+          "marks": [
+            { "type": "italic" },
+            {
+              "type": "highlight",
+              "attrs": { "color": "var(--tt-color-highlight-yellow)" }
+            }
+          ],
+          "text": "Writex editor"
+        },
+        {
+          "type": "text",
+          "text": "! This space is designed for creators and writers to draft, style, and publish beautiful blog content with ease."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": { "textAlign": null },
+      "content": [
+        { "type": "text", "text": "Write freely, format effortlessly, and bring your ideas to life with built-in markdown support, intuitive formatting tools, and advanced customization features." }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "textAlign": null, "level": 2 },
+      "content": [{ "type": "text", "text": "Editor Highlights" }]
+    },
+    {
+      "type": "blockquote",
+      "content": [
+        {
+          "type": "paragraph",
+          "attrs": { "textAlign": null },
+          "content": [
+            {
+              "type": "text",
+              "marks": [{ "type": "italic" }],
+              "text": "Enjoy a distraction-free, responsive writing experience. Use markdown "
+            },
+            { "type": "text", "marks": [{ "type": "code" }], "text": "**" },
+            {
+              "type": "text",
+              "marks": [{ "type": "italic" }],
+              "text": " or shortcuts like "
+            },
+            { "type": "text", "marks": [{ "type": "code" }], "text": "⌘+B" },
+            {
+              "type": "text",
+              "text": " to style your content instantly. It just works. ✨"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": { "textAlign": "left" },
+      "content": [
+        { "type": "text", "text": "Embed images, adjust alignment, and apply " },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": { "color": "var(--tt-color-highlight-blue)" }
+            }
+          ],
+          "text": "creative formatting"
+        },
+        {
+          "type": "text",
+          "text": " to make your blog posts stand out and engage your audience."
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "attrs": {
+        "src": "/images/your-blog-placeholder.png",
+        "alt": "your-blog-placeholder",
+        "title": "Blog Image Placeholder"
+      }
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": { "textAlign": "left" },
+              "content": [
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Superscript" },
+                { "type": "text", "text": " (x" },
+                { "type": "text", "marks": [{ "type": "superscript" }], "text": "2" },
+                { "type": "text", "text": ") and " },
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Subscript" },
+                { "type": "text", "text": " (H" },
+                { "type": "text", "marks": [{ "type": "subscript" }], "text": "2" },
+                { "type": "text", "text": "O) for technical writing." }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": { "textAlign": "left" },
+              "content": [
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "Smart typography" },
+                { "type": "text", "text": ": Automatically converts " },
+                { "type": "text", "marks": [{ "type": "code" }], "text": "->" },
+                { "type": "text", "text": " into " },
+                { "type": "text", "marks": [{ "type": "bold" }], "text": "→" },
+                { "type": "text", "text": " and more." }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": { "textAlign": "left" },
+      "content": [
+        { "type": "text", "marks": [{ "type": "italic" }], "text": "💡" },
+        { "type": "text", "text": " You can format content your way, without limits." }
+      ]
+    },
+    {
+      "type": "horizontalRule"
+    },
+    {
+      "type": "heading",
+      "attrs": { "textAlign": "left", "level": 2 },
+      "content": [{ "type": "text", "text": "Personalize Your Writing Space" }]
+    },
+    {
+      "type": "paragraph",
+      "attrs": { "textAlign": "left" },
+      "content": [
+        {
+          "type": "text",
+          "text": "Switch between light and dark modes and tailor the editor’s appearance to match your writing style using custom CSS in Writex."
+        }
+      ]
+    },
+    {
+      "type": "taskList",
+      "content": [
+        {
+          "type": "taskItem",
+          "attrs": { "checked": true },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": { "textAlign": "left" },
+              "content": [{ "type": "text", "text": "Start your first blog draft" }]
+            }
+          ]
+        },
+        {
+          "type": "taskItem",
+          "attrs": { "checked": false },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": { "textAlign": "left" },
+              "content": [{ "type": "text", "text": "Customize the editor in Writex settings" }]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": { "textAlign": "left" }
+    }
+  ]
+}
