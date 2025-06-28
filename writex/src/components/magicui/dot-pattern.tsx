@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, MotionValue } from "motion/react";
 import React, { useEffect, useId, useRef, useState } from "react";
 
 /**
@@ -95,7 +95,7 @@ export function DotPattern({
         Math.ceil(dimensions.width / width) *
         Math.ceil(dimensions.height / height),
     },
-    (_, i) => {
+    (_: any, i: number) => {
       const col = i % Math.ceil(dimensions.width / width);
       const row = Math.floor(i / Math.ceil(dimensions.width / width));
       return {
@@ -123,7 +123,7 @@ export function DotPattern({
           <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
         </radialGradient>
       </defs>
-      {dots.map((dot, index) => (
+      {dots.map((dot: { x: string | number | MotionValue<number> | MotionValue<string> | MotionValue<any> | undefined; y: string | number | MotionValue<number> | MotionValue<string> | MotionValue<any> | undefined; duration: any; delay: any; }, index: any) => (
         <motion.circle
           key={`${dot.x}-${dot.y}`}
           cx={dot.x}
