@@ -73,6 +73,17 @@ const Dashboard = () => {
       profileImage: "/images/authors/kabir.jpg",
       mainImage: twoGrid,
     },
+    {
+      id: 6,
+      title: "What Journaling Taught Me About Mindfulness",
+      author: "Kabir Arora",
+      category: "Journal",
+      date: "2025-06-18",
+      content:
+        "A personal story on how daily journaling transformed my approach to life, focus, and emotional clarity.",
+      profileImage: "/images/authors/kabir.jpg",
+      mainImage: twoGrid,
+    },
 
   ];
 
