@@ -182,7 +182,11 @@ const MobileToolbarContent = ({
   </>
 )
 
-export function SimpleEditor() {
+interface SimpleEditorProps {
+  getEditorInstance?: (editor: any) => void
+}
+
+export function SimpleEditor({ getEditorInstance }: SimpleEditorProps) {
   const isMobile = useMobile()
   const windowSize = useWindowSize()
   const [mobileView, setMobileView] = React.useState<
@@ -225,6 +229,12 @@ export function SimpleEditor() {
     ],
     content: content,
   })
+
+  React.useEffect(() => {
+    if (editor && getEditorInstance) {
+      getEditorInstance(editor)
+    }
+  }, [editor, getEditorInstance])
 
   const bodyRect = useCursorVisibility({
     editor,
