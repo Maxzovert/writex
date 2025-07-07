@@ -50,19 +50,19 @@ const WriteBlog = () => {
         {/* Editor */}
         <div className="w-1/2 flex flex-col">
           <h1 className="text-center font-bold text-3xl mt-14 mb-2">
-            <input
+            {/* <input
               type="text"
               placeholder="Enter blog title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full text-center bg-transparent border-none focus:outline-none"
-            />
+            /> */}
           </h1>
           <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
             <SimpleEditor getEditorInstance={(editor) => (editorRef.current = editor)} />
             <div className="flex justify-center mt-4 mb-4 gap-4">
               <select 
-                value={category}
+                // value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="p-2 border rounded bg-gray-200"
               >
@@ -72,11 +72,12 @@ const WriteBlog = () => {
                 {/* Add more categories as needed */}
               </select>
               <Button 
-                onClick={handlePublish} 
-                disabled={isPublishing}
+                // onClick={handlePublish} 
+                // disabled={isPublishing}
                 className="text-center"
               >
-                {isPublishing ? 'Publishing...' : 'Publish Now'}
+                {/* {isPublishing ? 'Publishing...' : 'Publish Now'} */}
+                Pulish now
               </Button>
             </div>
           </div>
