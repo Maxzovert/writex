@@ -6,6 +6,7 @@ import protectRoute from "../middleware/auth.js";
 
 const postRouter = express.Router();
 
-postRouter.post("/addblog", protectRoute, postController);
+postRouter.post("/addblog", protectRoute, postController.createBlog);
+postRouter.get("/myblogs" , protectRoute , postController.getUserBlogs)
 
 export default postRouter;
