@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import router from "./routes/userRoute.js";
 import cors from "cors";
 import postRouter from "./routes/PostUserRoute.js";
+import publicRouter from "./routes/PostPublicRoute.js";
 
 dotenv.config();
 const app = express();
@@ -12,14 +13,17 @@ const app = express();
 connetDB();
 
 // Enable CORS
-// app.use(cors({
-//   origin: 'http://localhost:5173', // No trailing slash!
-//   credentials: true // This is important for cookies
-// }));
 app.use(cors({
-  origin: 'https://writtex.onrender.com', // Vite's default port
+  origin: 'http://localhost:5173', // No trailing slash!
   credentials: true // This is important for cookies
 }));
+
+// Production
+
+// app.use(cors({
+//   origin: 'https://writtex.onrender.com', // Vite's default port
+//   credentials: true // This is important for cookies
+// }));
 
 app.use(cookieParser());
 app.use(express.json());
@@ -31,6 +35,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/users", router);
 app.use("/api/blog/",postRouter);
+app.use("/api/public/posts/",publicRouter);
 
 const PORT = process.env.PORT || 5000;
 
