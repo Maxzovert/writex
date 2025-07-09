@@ -7,6 +7,7 @@ import Login from "./Pages/AuthPages/Login";
 import { useAuth } from "./context/authContext";
 import { SyncLoader } from "react-spinners";
 import WriteBlog from "./App/WriteBlog/WriteBLog";
+import Blog from "./App/Blogs/Blog";
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -73,6 +74,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <WriteBlog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/blogs"
+          element={
+            <ProtectedRoute>
+              <Blog />
             </ProtectedRoute>
           }
         />
