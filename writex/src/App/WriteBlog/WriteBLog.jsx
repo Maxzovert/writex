@@ -1,44 +1,44 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import Navbar from "../Components/Navbar"
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor'
 import { Button } from "../../components/ui/button"
-import axios from 'axios'
+import axios from 'axios';
+import { toast } from "react-toastify";
 
 const WriteBlog = () => {
   const editorRef = useRef(null)
-  // const [title, setTitle] = React.useState('')
-  // const [category, setCategory] = React.useState('general')
-  // const [isPublishing, setIsPublishing] = React.useState(false)
+  const [title, setTitle] = React.useState('')
+  const [category, setCategory] = React.useState('general')
+  const [isPublishing, setIsPublishing] = useState(false);
 
-  // const handlePublish = async (e) => {
-  //   e.preventDefault()
+  const handlePublish = async(e)=> {
+    e.preventDefault();
     
-  //   if (!editorRef.current) {
-  //     console.error('Editor not initialized')
-  //     return
-  //   }
-
-  //   setIsPublishing(true)
+    if(!editorRef.current){
+      toast.warning("Editor Not initailize, Please Refresh");
+      return;
+    }
     
-  //   try {
-  //     const editorContent = editorRef.current.getJSON()
-      
-  //     const response = await axios.post('/api/blog/addblog', {
-  //       title,
-  //       content: editorContent,
-  //       category,
-  //       status: 'published' // or 'draft' if you want to save as draft
-  //     })
+    setIsPublishing(true);
 
-  //     console.log('Blog published successfully:', response.data)
-  //     // Optionally redirect or show success message
-  //   } catch (error) {
-  //     console.error('Error publishing blog:', error)
-  //     // Handle error (show toast, etc.)
-  //   } finally {
-  //     setIsPublishing(false)
-  //   }
-  // }
+    try {
+      const editorContent = editorRef.current.getJSON(); //You use editorRef.current.getJSON() to get the entire content of the TipTap editor in structured JSON format.
+      if(!title){
+        toast.warning("Please Enter Title Before Publishing")
+      }
+      const respnse = await axios.post('/api/blog/addblog',{
+        title,
+        content: editorContent,
+        category,
+        status : 'published'
+      })
+      toast.success("Blog published Sucessfully");
+    } catch (error) {
+      toast.error("Error in plublishing blog" , error);      
+    }finally{
+      setIsPublishing(false)
+    }
+  }
 
   return (
     <div className="flex flex-col h-screen">
@@ -50,34 +50,38 @@ const WriteBlog = () => {
         {/* Editor */}
         <div className="w-1/2 flex flex-col">
           <h1 className="text-center font-bold text-3xl mt-14 mb-2">
-            {/* <input
+            <input
               type="text"
               placeholder="Enter blog title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full text-center bg-transparent border-none focus:outline-none"
-            /> */}
+            />
           </h1>
           <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
             <SimpleEditor getEditorInstance={(editor) => (editorRef.current = editor)} />
             <div className="flex justify-center mt-4 mb-4 gap-4">
               <select 
-                // value={category}
+                value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="p-2 border rounded bg-gray-200"
               >
                 <option value="general" className="rounded-md">General</option>
                 <option value="technology">Technology</option>
                 <option value="business">Business</option>
-                {/* Add more categories as needed */}
+                <option value="personal">Personal</option>
               </select>
               <Button 
-                // onClick={handlePublish} 
-                // disabled={isPublishing}
+                onClick={handlePublish} 
+                disabled={isPublishing}
                 className="text-center"
               >
-                {/* {isPublishing ? 'Publishing...' : 'Publish Now'} */}
-                Pulish now
+                {isPublishing ? 'Publishing...' : 'Publish Now'}
+              </Button>
+              <Button 
+                className="p-2 border rounded bg-gray-200 text-black hover:text-white"
+                >
+                Save as Draft
               </Button>
             </div>
           </div>
