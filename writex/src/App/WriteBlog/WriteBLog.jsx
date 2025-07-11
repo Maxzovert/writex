@@ -1,44 +1,65 @@
-import React, { useRef, useState } from 'react'
-import Navbar from "../Components/Navbar"
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor'
-import { Button } from "../../components/ui/button"
-import axios from 'axios';
+import React, { useRef, useState } from "react";
+import Navbar from "../Components/Navbar";
+import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
+import { Button } from "../../components/ui/button";
+import axios from "axios";
 import { toast } from "react-toastify";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const WriteBlog = () => {
-  const editorRef = useRef(null)
-  const [title, setTitle] = React.useState('')
-  const [category, setCategory] = React.useState('general')
+  const editorRef = useRef(null);
+  const [title, setTitle] = React.useState("");
+  const [category, setCategory] = React.useState("general");
   const [isPublishing, setIsPublishing] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handlePublish = async(e)=> {
+  const handlePublish = async (e) => {
     e.preventDefault();
-    
-    if(!editorRef.current){
+
+    if (!editorRef.current) {
       toast.warning("Editor Not initailize, Please Refresh");
       return;
     }
-    
+
     setIsPublishing(true);
 
     try {
       const editorContent = editorRef.current.getJSON(); //You use editorRef.current.getJSON() to get the entire content of the TipTap editor in structured JSON format.
-      if(!title){
-        toast.warning("Please Enter Title Before Publishing")
+      if (!title) {
+        toast.warning("Please Enter Title Before Publishing");
+        return;
       }
-      const respnse = await axios.post('/api/blog/addblog',{
+      const respnse = await axios.post("/api/blog/addblog", {
         title,
         content: editorContent,
         category,
-        status : 'published'
-      })
+        status: "published",
+      });
       toast.success("Blog published Sucessfully");
+      setDialogOpen(false); // <-- Close dialog after success
     } catch (error) {
-      toast.error("Error in plublishing blog" , error);      
-    }finally{
-      setIsPublishing(false)
+      toast.error("Error in plublishing blog", error);
+    } finally {
+      setIsPublishing(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col h-screen">
@@ -50,37 +71,72 @@ const WriteBlog = () => {
         {/* Editor */}
         <div className="w-1/2 flex flex-col">
           <h1 className="text-center font-bold text-3xl mt-14 mb-2">
-            <input
-              type="text"
-              placeholder="Enter blog title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full text-center bg-transparent border-none focus:outline-none"
-            />
           </h1>
           <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
-            <SimpleEditor getEditorInstance={(editor) => (editorRef.current = editor)} />
+            <SimpleEditor
+              getEditorInstance={(editor) => (editorRef.current = editor)}
+            />
             <div className="flex justify-center mt-4 mb-4 gap-4">
-              <select 
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="p-2 border rounded bg-gray-200"
-              >
-                <option value="general" className="rounded-md">General</option>
-                <option value="technology">Technology</option>
-                <option value="business">Business</option>
-                <option value="personal">Personal</option>
-              </select>
-              <Button 
-                onClick={handlePublish} 
-                disabled={isPublishing}
-                className="text-center"
-              >
-                {isPublishing ? 'Publishing...' : 'Publish Now'}
-              </Button>
-              <Button 
-                className="p-2 border rounded bg-gray-200 text-black hover:text-white"
-                >
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    // onClick={handlePublish}
+                    disabled={isPublishing}
+                    className="text-center"
+                    onClick={() => setDialogOpen(true)}
+                  >
+                    {isPublishing ? "Publishing..." : "Publish Now"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[650px]">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-medium">
+                      Select Title and Catagory.
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4">
+                    <div className="grid gap-3">
+                      <Label>
+                        Title
+                      </Label>
+                      <Input
+                        id="name-1"
+                        name="name"
+                        className="bg-gray-200"
+                        defaultValue="Your Blog's Title"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <Label>
+                    Select Catogory
+                  </Label>
+                  <Select
+                    value={category}
+                    onValueChange={(value) => setCategory(value)}
+                  >
+                    <SelectTrigger className="w-[300px] bg-gray-200">
+                      <SelectValue placeholder="Select category"/>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="technology">Technology</SelectItem>
+                      <SelectItem value="business">Business</SelectItem>
+                      <SelectItem value="personal">Personal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <DialogFooter>
+                    <Button
+                      onClick={handlePublish}
+                      disabled={isPublishing}
+                    >
+                      Done
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              <Button className="text-center" variant={"outline"}>
                 Save as Draft
               </Button>
             </div>
@@ -88,7 +144,7 @@ const WriteBlog = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default WriteBlog
+export default WriteBlog;
