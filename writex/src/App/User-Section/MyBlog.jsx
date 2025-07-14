@@ -12,7 +12,7 @@ const MyBlog = () => {
     hasFetched.current = true;
 
     try {
-      const fetchData = await axios.get("/api/blog/myblogs/");
+      const fetchData = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/blog/myblogs/`);
       console.log("User Blogs");
       console.log(fetchData.data.blogs);
       setData(fetchData.data.blogs);
