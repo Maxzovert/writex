@@ -8,6 +8,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useAuth } from "../../context/authContext";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -32,7 +34,7 @@ const Navbar = () => {
   ];
   const handleLogout = async () => {
     try {
-      const res = await axios.post("/api/users/logout");
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/logout`);
       setUser(null);
       toast.success("Logout Successfully");
       navigate("/");

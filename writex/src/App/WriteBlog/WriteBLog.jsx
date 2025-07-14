@@ -46,7 +46,7 @@ const WriteBlog = () => {
         toast.warning("Please Enter Title Before Publishing");
         return;
       }
-      const respnse = await axios.post("/api/blog/addblog", {
+      const respnse = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, {
         title,
         content: editorContent,
         category,

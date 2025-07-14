@@ -15,8 +15,8 @@ export const AuthProvider = ({children}) => {
     useEffect(()=>{
         const checkAuth = async () => {
             try {
-                const response = await axios.get('api/users/current');
-                // const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}api/users/current`);
+                // const response = await axios.get('api/users/current');
+                const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/users/current`);
                 setUser(response.data)
             } catch (error) {
                 setUser(null);
