@@ -1,5 +1,13 @@
 import Blog from "../models/postModel.js";
 
+const getAllBlogs = async() => {
+    try {
+        // const allBlogs = await 
+    } catch (error) {
+        
+    }
+}
+
 const getBlogBySlug = async (req , res) => {
     try {
         const {slug} = req.params;

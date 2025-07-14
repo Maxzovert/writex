@@ -104,6 +104,10 @@ const Navbar = () => {
                       Abdullah
                     </h2>
                   </div>
+                  <div className="flex flex-col mt-4 text-gray-400">
+                    <Link to={"/profile"}>My Profile</Link>
+                    <Link to={"/myblogs"}>My Blogs</Link>
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>

@@ -1,51 +1,33 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from "react";
 import Navbar from "../Components/Navbar";
-import axios from "axios";
-import { toast } from "react-toastify";
 
 const Blog = () => {
-  const [data, setData] = useState([]);
-  const hasFetched = useRef(false);
 
-  const handleFetchUserBlogs = async () => {
-    if(hasFetched.current) return;
-    hasFetched.current = true;
-    
-    try {
-      const fetchData = await axios.get("/api/blog/myblogs/");
-      console.log("User Blogs");
-      console.log(fetchData.data.blogs);
-      setData(fetchData.data.blogs);
-      toast.success("Blog Fetched");
-    } catch (error) {
-      console.error("Error in fetching Blog", error);
-      toast.error("Blog not found")
-    }
-  };
-
-  useEffect(() => {
-    handleFetchUserBlogs();
-  }, []);
+  const CATAGORY = [
+    {
+      type: "General",
+    },
+    {
+      type: "Personal",
+    },
+    {
+      type: "Business",
+    },
+    {
+      type: "Tech",
+    },
+  ];
 
   return (
     <div>
       <Navbar />
-      <div>
-        {data.length === 0 ? (
-          "Publish Blog today"
-        ) : (
-          data.map((blog) => (
-            <div key={blog._id}>
-              <h1>{blog._id}</h1>
-              <h1>{blog.title}</h1>
-              <h1>
-                {typeof blog.content === "string"
-                  ? blog.content
-                  : JSON.stringify(blog.content)}
-              </h1>
-            </div>
-          ))
-        )}
+      <div className="flex-row flex justify-center items-center w-full mt-12">
+        {CATAGORY.map((type, index) => (
+          <div key={index}>
+            <div className="font-medium text-gray-500 mr-12 ml-12 hover:text-gray-900 cursor-pointer">{type.type}</div>
+            <div className="border-b-2 mt-2"></div>
+          </div>
+        ))}
       </div>
     </div>
   );

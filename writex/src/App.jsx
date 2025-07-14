@@ -8,6 +8,8 @@ import { useAuth } from "./context/authContext";
 import { SyncLoader } from "react-spinners";
 import WriteBlog from "./App/WriteBlog/WriteBLog";
 import Blog from "./App/Blogs/Blog";
+import MyBlog from "./App/User-Section/MyBlog";
+import MyProfile from "./App/User-Section/MyProfile";
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -80,8 +82,22 @@ const App = () => {
         <Route
           path="/blogs"
           element={
-            <ProtectedRoute>
               <Blog />
+          }
+        />
+        <Route
+          path="/myblogs"
+          element={
+            <ProtectedRoute>
+              <MyBlog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <MyProfile />
             </ProtectedRoute>
           }
         />
