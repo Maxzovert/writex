@@ -180,7 +180,7 @@ const Dashboard = () => {
         </div>
 
         <div className="mt-12 overflow-x-auto">
-          <div className="flex justify-around gap-8 px-4">
+          <div className="flex justify-around gap-2 px-4">
             {topBlogs.map((blog) => (
               <div
                 key={blog.id}

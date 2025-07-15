@@ -1,7 +1,28 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Navbar from "../Components/Navbar";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Blog = () => {
+  const [data , setData] = useState([]);
+  const hasFatched = useRef(false);
+
+  const handleFetchAllBlogs = async()=> {
+    if(hasFatched.current) return;
+      hasFatched.current = true;
+
+      try {
+        const fetchData = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/public/posts/blogs/`);
+        console.log(fetchData.data.allBlogs)
+        setData(fetchData.data.allBlogs);
+        toast.success("Blog Fetched")
+      } catch (error) {
+        toast.error("Error in handle fetch all blogs");
+      }
+  }
+  useEffect(()=>{
+    handleFetchAllBlogs();
+  },[])
 
   const CATAGORY = [
     {

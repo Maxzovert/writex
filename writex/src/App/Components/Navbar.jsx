@@ -10,6 +10,8 @@ import {
 import { useAuth } from "../../context/authContext";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { FaUser } from "react-icons/fa";
+import { TbArticleFilled } from "react-icons/tb";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -31,6 +33,18 @@ const Navbar = () => {
       title: "About",
       path: "/about",
     },
+  ];
+  const USERITEMS = [
+    {
+      title : "Profile",
+      path : "/profile",
+      logo : <FaUser/>
+    },
+    {
+      title : "My Blogs",
+      path : "/myblogs",
+      logo : <TbArticleFilled/>
+    }
   ];
   const handleLogout = async () => {
     try {
@@ -107,8 +121,12 @@ const Navbar = () => {
                     </h2>
                   </div>
                   <div className="flex flex-col mt-4 text-gray-400">
-                    <Link to={"/profile"}>My Profile</Link>
-                    <Link to={"/myblogs"}>My Blogs</Link>
+                    {USERITEMS.map((item) => (
+                      <Link to={item.path} key={item.title} className="flex flex-row hover:bg-gray-200 p-2 hover:rounded-md">
+                        <div className="mt-1">{item.logo}</div>
+                        <h1 className="ml-2">{item.title}</h1>
+                      </Link>
+                    ))}
                   </div>
                 </div>
               </PopoverContent>

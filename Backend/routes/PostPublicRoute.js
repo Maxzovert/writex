@@ -1,8 +1,9 @@
 import express from "express";
-import getBlogBySlug from "../controller/postPublicController.js";
+import postPublicController from "../controller/postPublicController.js";
 
 const publicRouter = express.Router();
 
-publicRouter.get("/:slug" , getBlogBySlug);
+publicRouter.get("/blogs" , postPublicController.getAllBlogs);
+publicRouter.get("/:slug" , postPublicController.getBlogBySlug);
 
 export default publicRouter;
