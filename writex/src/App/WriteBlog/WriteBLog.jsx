@@ -51,10 +51,8 @@ const WriteBlog = () => {
         content: editorContent,
         category,
         status: "published",
-      },
-    {
-      withCredentials:true
-    });
+      },{withCredentials:true}
+  );
       toast.success("Blog published Sucessfully");
       setDialogOpen(false); // <-- Close dialog after success
     } catch (error) {
