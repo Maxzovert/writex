@@ -34,12 +34,14 @@ const Login = () => {
       const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/login`, {
         email: formData.email,
         password: formData.password
-      }, {
-        withCredentials: true
-      });
+      }
+      // , { withCredentials: true}
+      );
       setUser(response.data);
       toast.success("Login Successfully");
       navigate("/dashboard");
+      // Set this once after login/signup
+      axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
     } catch (error) {
       toast.error(error.response?.data?.message || "Login Failed");
     }

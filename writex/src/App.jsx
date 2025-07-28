@@ -15,19 +15,19 @@ const App = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  const ProtectedRoute = ({ children }) => {
-    if (loading) {
-      return (
-        <div className="h-screen w-screen flex items-center justify-center">
-          <SyncLoader color="#000000" />
-        </div>
-      );
-    }
-    if (!user) {
-      return <Navigate to="/login" replace />;
-    }
-    return children;
-  };
+  // const ProtectedRoute = ({ children }) => {
+  //   if (loading) {
+  //     return (
+  //       <div className="h-screen w-screen flex items-center justify-center">
+  //         <SyncLoader color="#000000" />
+  //       </div>
+  //     );
+  //   }
+  //   if (!user) {
+  //     return <Navigate to="/login" replace />;
+  //   }
+  //   return children;
+  // };
 
   const PublicRoute = ({ children }) => {
     if (loading) {
@@ -41,6 +41,11 @@ const App = () => {
       return <Navigate to="/dashboard" replace />;
     }
     return children;
+  };
+
+  const PrivateRoute = ({ children }) => {
+    const token = localStorage.getItem('token');
+    return token ? children : <Navigate to="/login" />;
   };
 
   return (
@@ -66,17 +71,17 @@ const App = () => {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <PrivateRoute>
               <Dashboard />
-            </ProtectedRoute>
+            </PrivateRoute>
           }
         />
         <Route
           path="/write"
           element={
-            <ProtectedRoute>
+            <PrivateRoute>
               <WriteBlog />
-            </ProtectedRoute>
+            </PrivateRoute>
           }
         />
         <Route
@@ -88,17 +93,17 @@ const App = () => {
         <Route
           path="/myblogs"
           element={
-            <ProtectedRoute>
+            <PrivateRoute>
               <MyBlog />
-            </ProtectedRoute>
+            </PrivateRoute>
           }
         />
         <Route
           path="/profile"
           element={
-            <ProtectedRoute>
+            <PrivateRoute>
               <MyProfile />
-            </ProtectedRoute>
+            </PrivateRoute>
           }
         />
       </Routes>
