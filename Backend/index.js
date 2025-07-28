@@ -27,7 +27,7 @@ app.use(cors({
 
 // app.options('*', cors());
 
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -35,9 +35,9 @@ app.use(express.urlencoded({ extended: true }));
 //   res.send("Back running");
 // });
 
-app.use("/api/users", router);
-app.use("/api/blog/",postRouter);
-app.use("/api/public/posts/",publicRouter);
+app.use("/users", router);
+app.use("/blog/",postRouter);
+app.use("/public/posts/",publicRouter);
 
 const PORT = process.env.PORT || 5000;
 
