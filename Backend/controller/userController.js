@@ -19,17 +19,18 @@ const signup = async (req , res) => {
         const user = await User.create({ username, email, password});
         const token = generateToken(user._id)
 
-        res.cookie('token' ,token , {
-            httpOnly : true,
-            secure : process.env.NODE_ENV === "production",
-            sameSite : "strict",
-            maxAge : 7 * 24 * 60 * 60 * 1000
-        });
+        // res.cookie('token' ,token , {
+        //     httpOnly : true,
+        //     secure : process.env.NODE_ENV === "production",
+        //     sameSite : "strict",
+        //     maxAge : 7 * 24 * 60 * 60 * 1000
+        // });
 
         res.status(201).json({
             _id: user._id,
             username: user.username,
             email: user.email,
+            token,
             message : "user created"
         })
         
@@ -56,17 +57,18 @@ const login = async (req , res) => {
 
         const token = generateToken(user._id);
 
-        res.cookie('token' , token , {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        })
+        // res.cookie('token' , token , {
+        //     httpOnly: true,
+        //     secure: process.env.NODE_ENV === "production",
+        //     sameSite: "strict",
+        //     maxAge: 7 * 24 * 60 * 60 * 1000,
+        // })
 
         res.status(200).json({
             _id : user._id,
             username : user.username,
             email : user.email,
+            token,
             message : "Login Successful"
         })
     } catch (error) {
@@ -76,7 +78,7 @@ const login = async (req , res) => {
 
 const  getCurrentUser = async (req , res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
+        const user = req.user;
     
         if(!user){
             return res.status(404).json({message: "User not Found"});
@@ -85,8 +87,8 @@ const  getCurrentUser = async (req , res) => {
         res.status(200).json({
             _id : user._id,
             username : user.username,
-            email : user.email
-        
+            email : user.email,
+            token
         }) 
     } catch (error) {
         res.status(500).json({message : "Error in GetCurrentUser" , error : error.message})
@@ -95,12 +97,6 @@ const  getCurrentUser = async (req , res) => {
 
 const logout = async (req,res) => {
     try {
-        res.cookie('token', '', {
-            httpOnly : true,
-            expiresIn : new Date(0),
-            secure : process.env.NODE_ENV === 'poroduction',
-            sameSite : "strict"
-        })
         res.status(200).json({message : "Logout Successfully"})
     } catch (error) {
         res.status(500).json({message : "Error in logot" , error : error.message})

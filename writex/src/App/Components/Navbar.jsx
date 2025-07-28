@@ -50,6 +50,7 @@ const Navbar = () => {
     try {
       const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/logout`);
       setUser(null);
+      localStorage.removeItem('token');
       toast.success("Logout Successfully");
       navigate("/");
     } catch (error) {
@@ -57,6 +58,7 @@ const Navbar = () => {
       toast.error(error.response?.data?.message || "Logout Failed");
     }
   };
+  const isLoggedIn = !!localStorage.getItem('token');
   return (
     <div className="flex items-center justify-center mt-8">
       <div className="h-20 w-full mx-64 bg-white/80 backdrop-blur-md border border-gray-200 rounded-2xl shadow-lg">
