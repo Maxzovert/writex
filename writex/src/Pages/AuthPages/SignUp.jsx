@@ -49,6 +49,7 @@ const SignUp = () => {
       });
       setUser(response.data);
       toast.success("Account Created Successfully");
+      localStorage.setItem('token', response.data.token);
       navigate("/dashboard");
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");

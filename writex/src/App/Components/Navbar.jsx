@@ -105,7 +105,7 @@ const Navbar = () => {
                 flex items-center justify-center text-gray-700 font-semibold shadow-sm
                 hover:shadow-md transition-shadow cursor-pointer"
                 >
-                  {user?.name?.[0]?.toUpperCase() || "U"}
+                  {user?.username?.[0]?.toUpperCase() || "U"}
                 </div>
               </PopoverTrigger>
               <PopoverContent>

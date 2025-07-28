@@ -40,6 +40,7 @@ const Login = () => {
       setUser(response.data);
       toast.success("Login Successfully");
       navigate("/dashboard");
+      localStorage.setItem('token',response.data.token);
       // Set this once after login/signup
       axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
     } catch (error) {
