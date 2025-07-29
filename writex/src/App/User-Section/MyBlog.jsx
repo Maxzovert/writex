@@ -26,6 +26,11 @@ const MyBlog = () => {
   useEffect(() => {
     handleFetchUserBlogs();
   }, []);
+
+  const firstUpperCase = (str) => {
+    const capName = str.charAt(0).toUpperCase() + str.slice(1);
+    return capName;
+  }
   return (
     <div>
       <Navbar />
@@ -57,7 +62,7 @@ const MyBlog = () => {
                     />
                   ) : null}
                   <span className="font-semibold text-gray-700">
-                    {blog.author?.username || "Unknown"}
+                    {firstUpperCase(blog.author?.username) || "Unknown"}
                   </span>
                 </div>
                 <h3 className="text-lg font-bold mt-2 text-gray-800 truncate">
@@ -68,12 +73,19 @@ const MyBlog = () => {
                     ? blog.content
                     : JSON.stringify(blog.content)}
                 </p>
+                <div className="flex justify-between">
                 <a
                   href="#"
                   className="text-gray-600 text-sm font-semibold mt-3 hover:text-black self-start"
                 >
                   Read More →
                 </a>
+                <h1
+                  className="text-gray-900 text-sm font-semibold mt-3 "
+                >
+                  {`${blog.status === "draft" ? "!" : "✔️"} ${firstUpperCase(blog.status)}`}
+                </h1>
+                </div>
               </div>
             </div>
           ))

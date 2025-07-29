@@ -39,6 +39,12 @@ const Blog = () => {
     },
   ];
 
+
+  const firstUpperCase = (str) => {
+    const capName = str.charAt(0).toUpperCase() + str.slice(1);
+    return capName;
+  }
+
   return (
     <div>
       <Navbar />
@@ -49,6 +55,56 @@ const Blog = () => {
             <div className="border-b-2 mt-2"></div>
           </div>
         ))}
+      </div>
+      <div className="flex flex-wrap justify-center mt-8">
+        {data.length === 0 ? (
+          <div className="text-gray-500">No blogs found.</div>
+        ) : (
+          data.map((blog) => (
+            <div
+              key={blog._id}
+              className="w-[350px] h-[500px] bg-white border border-gray-300 rounded-xl shadow-lg flex-shrink-0 overflow-hidden m-4"
+            >
+              <div className="h-1/2 w-full">
+                {blog.mainImage ? (
+                  <img
+                    src={blog.mainImage}
+                    alt={blog.title || "Blog Image"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : null}
+              </div>
+              <div className="h-1/2 p-4 flex flex-col justify-between">
+                <div className="flex items-center gap-3">
+                  {blog.profileImage ? (
+                    <img
+                      src={blog.profileImage}
+                      alt={blog.author?.username || "Author"}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : null}
+                  <span className="font-semibold text-gray-700">
+                    {firstUpperCase(blog.author?.username) || "Unknown"}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold mt-2 text-gray-800 truncate">
+                  {blog.title}
+                </h3>
+                <p className="text-sm text-gray-600 line-clamp-3 text-justify mt-1">
+                  {typeof blog.content === "string"
+                    ? blog.content
+                    : JSON.stringify(blog.content)}
+                </p>
+                <a
+                  href="#"
+                  className="text-gray-600 text-sm font-semibold mt-3 hover:text-black self-start"
+                >
+                  Read More →
+                </a>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
