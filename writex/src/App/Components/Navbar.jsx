@@ -116,10 +116,10 @@ const Navbar = () => {
                 flex items-center justify-center text-gray-700 font-semibold shadow-sm
                 hover:shadow-md transition-shadow cursor-pointer"
                     >
-                      {user?.name?.[0]?.toUpperCase() || "U"}
+                      {user?.username?.[0]?.toUpperCase() || "U"}
                     </div>
                     <h2 className="font-semibold text-gray-400 mt-2 ml-4 text-2xl">
-                      Abdullah
+                      {user?.username?.[0]?.toUpperCase() + user?.username.slice(1)}
                     </h2>
                   </div>
                   <div className="flex flex-col mt-4 text-gray-400">

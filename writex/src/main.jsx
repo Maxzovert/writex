@@ -11,8 +11,8 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ToastContainer
         position="bottom-right"
-        autoClose={3000}
-        hideProgressBar={false}
+        autoClose={2000}
+        hideProgressBar={true}
         newestOnTop
         closeOnClick
         rtl={false}
