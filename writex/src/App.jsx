@@ -14,21 +14,7 @@ import MyProfile from "./App/User-Section/MyProfile";
 const App = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-
-  // const ProtectedRoute = ({ children }) => {
-  //   if (loading) {
-  //     return (
-  //       <div className="h-screen w-screen flex items-center justify-center">
-  //         <SyncLoader color="#000000" />
-  //       </div>
-  //     );
-  //   }
-  //   if (!user) {
-  //     return <Navigate to="/login" replace />;
-  //   }
-  //   return children;
-  // };
-
+  
   const PublicRoute = ({ children }) => {
     if (loading) {
       return (
