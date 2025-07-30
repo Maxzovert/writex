@@ -27,7 +27,11 @@ export interface ImageUploadNodeOptions {
   /**
    * Function to handle the upload process.
    */
-  upload?: UploadFunction
+  upload?: UploadFunction,
+  /**
+   * Callback when upload is complete with array of uploaded image URLs
+   */
+  onUploadComplete?: (urls: string[]) => void
   /**
    * Callback for upload errors.
    */

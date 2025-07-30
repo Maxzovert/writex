@@ -29,6 +29,17 @@ const WriteBlog = () => {
   const [category, setCategory] = React.useState("general");
   const [isPublishing, setIsPublishing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [mainImage, setMainImage] = useState(null);
+
+  // Handle mainImage changes
+  React.useEffect(() => {
+    console.log('Main image updated:', mainImage);
+  }, [mainImage]);
+
+  const handleMainImageChange = React.useCallback((imageUrl) => {
+    console.log('Updating main image:', imageUrl);
+    setMainImage(imageUrl);
+  }, []);
 
   const handlePublish = async (e) => {
     e.preventDefault();
@@ -44,10 +55,20 @@ const WriteBlog = () => {
       const editorContent = editorRef.current.getJSON(); //You use editorRef.current.getJSON() to get the entire content of the TipTap editor in structured JSON format.
       if (!title) {
         toast.warning("Please Enter Title Before Publishing");
+        setIsPublishing(false);
         return;
       }
-      const respnse = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, {
+      
+      console.log("Current mainImage:", mainImage);
+      if (!mainImage) {
+        toast.warning("Please add at least one image to your blog");
+        setIsPublishing(false);
+        return;
+      }
+
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, {
         title,
+        mainImage,
         content: editorContent,
         category,
         status: "published",
@@ -76,6 +97,7 @@ const WriteBlog = () => {
           <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
             <SimpleEditor
               getEditorInstance={(editor) => (editorRef.current = editor)}
+              onMainImageChange={handleMainImageChange}
             />
             <div className="flex justify-center mt-4 mb-4 gap-4">
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

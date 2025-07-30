@@ -9,10 +9,10 @@ const blogSchema = new mongoose.Schema({
         type: Schema.Types.Mixed,
         required: true
     },
-    // excerpt: {
-    //     type: String,
-    //     default: ""
-    // },
+    mainImage: {
+        type: String,
+        default: ""
+    },
     author: {
         type: Schema.Types.ObjectId,
         ref: 'User',

@@ -4,6 +4,7 @@
     "composite": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "lib": ["ES2015", "DOM", "DOM.Iterable"],
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,

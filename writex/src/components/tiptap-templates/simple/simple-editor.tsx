@@ -1,6 +1,7 @@
 import * as React from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 import "@/styles/_variables.scss";
+import { toast } from "react-toastify";
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit"
@@ -69,7 +70,7 @@ import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 // import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
 
 // --- Lib ---
-import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
+import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/new-tiptap-utils"
 
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss"
@@ -183,16 +184,23 @@ const MobileToolbarContent = ({
 )
 
 interface SimpleEditorProps {
-  getEditorInstance?: (editor: any) => void
+  getEditorInstance?: (editor: any) => void;
+  onMainImageChange?: (imageUrl: string | null) => void;
 }
 
-export function SimpleEditor({ getEditorInstance }: SimpleEditorProps) {
+export function SimpleEditor({ getEditorInstance, onMainImageChange }: SimpleEditorProps) {
   const isMobile = useMobile()
   const windowSize = useWindowSize()
   const [mobileView, setMobileView] = React.useState<
     "main" | "highlighter" | "link"
   >("main")
   const toolbarRef = React.useRef<HTMLDivElement>(null)
+  const [mainImage, setMainImage] = React.useState<string | null>(null)
+  
+  // Debug when mainImage changes
+  React.useEffect(() => {
+    console.log("MainImage state changed:", mainImage);
+  }, [mainImage])
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -221,8 +229,27 @@ export function SimpleEditor({ getEditorInstance }: SimpleEditorProps) {
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
         limit: 3,
-        upload: handleImageUpload,
-        onError: (error) => console.error("Upload failed:", error),
+        upload: async (file, onProgress, abortSignal) => {
+          console.log("Starting image upload...");
+          try {
+            const result = await handleImageUpload(file, onProgress, abortSignal);
+            console.log("Image upload successful:", result);
+            // Immediately set the first uploaded image as main image
+            if (!mainImage) {
+              console.log("Setting as main image:", result);
+              setMainImage(result);
+              onMainImageChange?.(result);
+            }
+            return result;
+          } catch (error) {
+            console.error("Image upload failed:", error);
+            throw error;
+          }
+        },
+        onError: (error) => {
+          console.error("Upload failed:", error);
+          toast?.error("Image upload failed");
+        },
       }),
       TrailingNode,
       Link.configure({ openOnClick: false }),
