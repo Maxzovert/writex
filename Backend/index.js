@@ -1,6 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import connetDB from "./config/db.js";
 import cookieParser from "cookie-parser";
 import router from "./routes/userRoute.js";
@@ -11,6 +13,11 @@ import uploadRouter from "./routes/uploadRoute.js";
 
 dotenv.config();
 const app = express();
+
+// Resolve absolute path to this file's directory for reliable static serving
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, "uploads");
 
 connetDB();
 
@@ -41,11 +48,12 @@ app.use("/users", router);
 app.use("/blog/",postRouter);
 app.use("/public/posts/",publicRouter);
 app.use("/upload", uploadRouter);
-app.use("/uploads", express.static("uploads"));
+// Serve uploads from an absolute path to avoid CWD issues in production
+app.use("/uploads", express.static(uploadsDir));
 
-// Ensure uploads directory exists
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
+// Ensure uploads directory exists at the resolved path
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 const PORT = process.env.PORT || 5000;
