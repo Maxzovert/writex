@@ -87,8 +87,7 @@ const  getCurrentUser = async (req , res) => {
         res.status(200).json({
             _id : user._id,
             username : user.username,
-            email : user.email,
-            token
+            email : user.email
         }) 
     } catch (error) {
         res.status(500).json({message : "Error in GetCurrentUser" , error : error.message})

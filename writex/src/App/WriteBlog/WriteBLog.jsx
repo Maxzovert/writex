@@ -59,13 +59,6 @@ const WriteBlog = () => {
         return;
       }
       
-      console.log("Current mainImage:", mainImage);
-      if (!mainImage) {
-        toast.warning("Please add at least one image to your blog");
-        setIsPublishing(false);
-        return;
-      }
-
       const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, {
         title,
         mainImage,

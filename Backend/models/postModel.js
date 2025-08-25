@@ -31,15 +31,7 @@ const blogSchema = new mongoose.Schema({
         default: 'general',
         required : true
     },
-    profileImage: {
-        type: String
-    },
-    postImage: {
-        type : String
-    },
-    imageAlt: {
-        type: String
-    },
+
     slug: {
         type: String,
         unique: true,

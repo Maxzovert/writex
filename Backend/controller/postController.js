@@ -2,7 +2,7 @@ import Blog from "../models/postModel.js";
 
 const createBlog = async (req , res) => {
     try {
-        const {title, content, category, status, profileImage, mainImage, imageAlt} = req.body;
+        const {title, content, category, status, mainImage} = req.body;
 
         const slug = title
         .toLowerCase()
@@ -21,9 +21,7 @@ const createBlog = async (req , res) => {
             content,
             author: req.user.id,
             category: category || 'general',
-            mainImage,
-            imageAlt,
-            profileImage,
+            mainImage: mainImage || "",
             slug,
             status : status || 'draft',
         })
@@ -55,40 +53,6 @@ const getUserBlogs = async (req , res) => {
     }
 }
 
-import EditorImage from "../models/editorImageModel.js";
 
-const uploadImage = async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No file uploaded" });
-        }
 
-        // Create the URL for the uploaded image
-        const imageUrl = `/uploads/${req.file.filename}`; // Return relative URL
-
-        // Save image info to MongoDB
-        const editorImage = new EditorImage({
-            filename: req.file.filename,
-            url: imageUrl,
-            uploader: req.user.id, // From auth middleware
-            size: req.file.size
-        });
-
-        await editorImage.save();
-
-        // Return the URL that TipTap editor can use
-        res.status(200).json({
-            url: imageUrl,
-            message: "Image uploaded successfully",
-            location: imageUrl // For compatibility with some image upload handlers
-        });
-    } catch (error) {
-        console.error("Error in uploading files", error);
-        res.status(500).json({ 
-            message: "Error uploading image",
-            error: error.message 
-        });
-    }
-}
-
-export default { createBlog, getUserBlogs, uploadImage };
+export default { createBlog, getUserBlogs };
