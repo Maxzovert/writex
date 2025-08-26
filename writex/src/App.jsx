@@ -10,6 +10,7 @@ import WriteBlog from "./App/WriteBlog/WriteBLog";
 import Blog from "./App/Blogs/Blog";
 import MyBlog from "./App/User-Section/MyBlog";
 import MyProfile from "./App/User-Section/MyProfile";
+import BlogPage from "./App/Blog Detail/BlogPage";
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -74,6 +75,12 @@ const App = () => {
           path="/blogs"
           element={
               <Blog />
+          }
+        />
+        <Route
+          path="/blog/:id"
+          element={
+              <BlogPage/>
           }
         />
         <Route

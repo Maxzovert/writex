@@ -2,10 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import Navbar from "../Components/Navbar";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const Blog = () => {
   const [data , setData] = useState([]);
   const hasFatched = useRef(false);
+  const navigate = useNavigate();
 
   const handleFetchAllBlogs = async()=> {
     if(hasFatched.current) return;
@@ -97,7 +99,11 @@ const Blog = () => {
                 </p>
                 <a
                   href="#"
-                  className="text-gray-600 text-sm font-semibold mt-3 hover:text-black self-start"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(`/blog/${blog._id}`);
+                  }}
+                  className="text-gray-600 text-sm font-semibold mt-3 hover:text-black self-start cursor-pointer"
                 >
                   Read More →
                 </a>

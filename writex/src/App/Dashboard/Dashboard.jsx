@@ -222,7 +222,11 @@ const Dashboard = () => {
                   {/* Read More */}
                   <a
                     href="#"
-                    className="text-gray-600 text-sm font-semibold mt-3 hover:text-black self-start"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/blog/${blog.id}`);
+                    }}
+                    className="text-gray-600 text-sm font-semibold mt-3 hover:text-black self-start cursor-pointer"
                   >
                     Read More →
                   </a>

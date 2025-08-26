@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../Components/Navbar";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -6,6 +7,7 @@ import { toast } from "react-toastify";
 const MyBlog = () => {
   const [data, setData] = useState([]);
   const hasFetched = useRef(false);
+  const navigate = useNavigate();
 
   const handleFetchUserBlogs = async () => {
     if (hasFetched.current) return;
@@ -76,7 +78,13 @@ const MyBlog = () => {
                 <div className="flex justify-between">
                 <a
                   href="#"
-                  className="text-gray-600 text-sm font-semibold mt-3 hover:text-black self-start"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('Navigating to blog:', blog._id);
+                    console.log('Blog data:', blog);
+                    navigate(`/blog/${blog._id}`);
+                  }}
+                  className="text-gray-600 text-sm font-semibold mt-3 hover:text-black self-start cursor-pointer"
                 >
                   Read More →
                 </a>
