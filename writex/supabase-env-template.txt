@@ -1,0 +1,28 @@
+# Supabase Configuration Template
+# Copy these variables to your .env file and fill in your actual Supabase values
+# IMPORTANT: Do NOT add quotes around the values!
+
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key_here
+
+# Your existing API configuration
+VITE_API_BASE_URL=http://localhost:5000
+
+# Example of what it should look like:
+# VITE_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+# VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoaWprbG1ub3AiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTYzNjQ5NjQwMCwiZXhwIjoxOTUyMDcyNDAwfQ.example_signature_here
+
+# How to get these values:
+# 1. Go to your Supabase Console (https://supabase.com/dashboard)
+# 2. Select your project
+# 3. Go to "Settings" → "API"
+# 4. Copy the Project URL and anon (public) key
+# 5. Make sure to remove any quotes from the values!
+
+# Common mistakes to avoid:
+# ❌ VITE_SUPABASE_URL="https://my-project.supabase.co"  (with quotes)
+# ✅ VITE_SUPABASE_URL=https://my-project.supabase.co    (without quotes)
+
+# Security Note:
+# The anon key is safe to use in the frontend as it only has the permissions
+# you define in your Supabase policies. Never expose your service_role key!
