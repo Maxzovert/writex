@@ -11,6 +11,18 @@ import { BoxReveal } from "@/components/magicui/box-reveal";
 import { TextReveal } from "@/components/magicui/text-reveal";
 import { PulsatingButton } from "@/components/magicui/pulsating-button";
 import Navbar from "../Components/Navbar";
+import { motion } from 'framer-motion';
+import { 
+  PenTool, 
+  TrendingUp, 
+  Clock, 
+  Heart,
+  Eye,
+  ArrowRight,
+  Calendar,
+  User,
+  Tag
+} from 'lucide-react';
 
 const Dashboard = () => {
   const pathname = useLocation();
@@ -28,6 +40,8 @@ const Dashboard = () => {
         "From remote villages in Himachal to offbeat spots in Uttarakhand, discover breathtaking destinations beyond the tourist radar.",
       profileImage: "/images/authors/priya.jpg",
       mainImage: secondSec,
+      views: "2.4K",
+      likes: "156"
     },
     {
       id: 2,
@@ -38,7 +52,9 @@ const Dashboard = () => {
       content:
         "Start your day with these easy and nutritious breakfast ideas — perfect for busy mornings without compromising on taste.",
       profileImage: "/images/authors/aman.jpg",
-      mainImage: FirstGrid
+      mainImage: FirstGrid,
+      views: "1.8K",
+      likes: "89"
     },
     {
       id: 3,
@@ -50,6 +66,8 @@ const Dashboard = () => {
         "From AI integrations to edge computing, dive into the future of JavaScript development and what frameworks are rising.",
       profileImage: "/images/authors/ritika.jpg",
       mainImage: threeGrid,
+      views: "3.2K",
+      likes: "234"
     },
     {
       id: 4,
@@ -61,193 +79,289 @@ const Dashboard = () => {
         "A personal story on how daily journaling transformed my approach to life, focus, and emotional clarity.",
       profileImage: "/images/authors/kabir.jpg",
       mainImage: secondSec,
+      views: "1.5K",
+      likes: "67"
     },
-    {
-      id: 5,
-      title: "What Journaling Taught Me About Mindfulness",
-      author: "Kabir Arora",
-      category: "Journal",
-      date: "2025-06-18",
-      content:
-        "A personal story on how daily journaling transformed my approach to life, focus, and emotional clarity.",
-      profileImage: "/images/authors/kabir.jpg",
-      mainImage: twoGrid,
-    },
-
   ];
 
-
+  const stats = [
+    { icon: <PenTool className="w-6 h-6" />, label: "Total Posts", value: "156" },
+    { icon: <Eye className="w-6 h-6" />, label: "Total Views", value: "12.4K" },
+    { icon: <Heart className="w-6 h-6" />, label: "Total Likes", value: "892" },
+    { icon: <TrendingUp className="w-6 h-6" />, label: "Growth", value: "+23%" }
+  ];
 
   const startWritting = () => {
     navigate("/write");
   };
 
   return (
-    <div>
-      <Navbar/>
-      {/* MID SECTION */}
-      <div className="relative w-full h-[800px] mt-20 flex flex-row justify-center">
-        {/* Left Large Image Box */}
-        <div className="w-[60%] h-[800px] ml-20 mr-4 rounded-4xl overflow-hidden relative">
-          <img
-            src={FirstGrid}
-            alt="Travel"
-            className="w-full h-full object-cover rounded-4xl"
-          />
-          <h1 className="absolute bottom-6 left-6 text-white text-[100px] font-bold lexend-txt">
-            1. Travel
-          </h1>
-        </div>
-
-        {/* Right Side Boxes */}
-        <div className="w-[30%] h-[800px] mr-20 flex flex-col justify-between">
-          {/* Top Box */}
-          <div className="w-full h-[395px] rounded-4xl overflow-hidden relative">
-            <img
-              src={twoGrid}
-              alt="Food"
-              className="w-full h-full object-cover rounded-4xl"
-            />
-            <h1 className="absolute bottom-4 left-4 text-white text-[60px] lexend-txt font-semibold">
-              2. Food
+    <div className="min-h-scree">
+      <Navbar />
+      
+      {/* Hero Section */}
+      <section className="relative w-full pt-16 pb-20 px-4 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Welcome Message */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 lexend-txt mb-6">
+              Welcome back, <span className="text-gray-700">Writer!</span>
             </h1>
-          </div>
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto oxygen-regular">
+              Ready to create something amazing? Your next great story is just a click away.
+            </p>
+          </motion.div>
 
-          {/* Bottom Box */}
-          <div className="w-full h-[395px] rounded-4xl overflow-hidden relative">
+          {/* Category Grid */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
+          >
+            {/* Main Category */}
+            <div className="lg:col-span-2 h-[600px] md:h-[700px] lg:h-[800px] rounded-3xl overflow-hidden relative group">
+              <img
+                src={FirstGrid}
+                alt="Travel"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+              <div className="absolute bottom-6 left-6">
+                <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm mb-3">
+                  <Tag className="w-4 h-4" />
+                  Travel
+                </div>
+                <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white lexend-txt">
+                  Explore the World
+                </h2>
+              </div>
+            </div>
+
+            {/* Side Categories */}
+            <div className="space-y-6 h-[600px] md:h-[700px] lg:h-[800px] flex flex-col justify-between">
+              <div className="h-[290px] md:h-[340px] lg:h-[390px] rounded-3xl overflow-hidden relative group">
+                <img
+                  src={twoGrid}
+                  alt="Food"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <div className="absolute bottom-4 left-4">
+                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm mb-2">
+                    <Tag className="w-4 h-4" />
+                    Food
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-bold text-white lexend-txt">
+                    Culinary Adventures
+                  </h3>
+                </div>
+              </div>
+
+              <div className="h-[290px] md:h-[340px] lg:h-[390px] rounded-3xl overflow-hidden relative group">
+                <img
+                  src={threeGrid}
+                  alt="Journal"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <div className="absolute bottom-4 left-4">
+                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm mb-2">
+                    <Tag className="w-4 h-4" />
+                    Journal
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-bold text-white lexend-txt">
+                    Personal Stories
+                  </h3>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Call to Action Section */}
+      <section className="py-20 px-4 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="relative rounded-4xl overflow-hidden"
+          >
             <img
-              src={threeGrid}
-              alt="Journal"
-              className="w-full h-full object-cover rounded-4xl"
+              src={secondSec}
+              alt="Start Writing"
+              className="w-full h-[400px] md:h-[500px] object-cover"
             />
-            <h1 className="absolute bottom-4 left-4 text-[60px] lexend-txt font-bold text-white">
-              3. Journal
-            </h1>
-          </div>
-        </div>
-      </div>
-
-      {/* divider */}
-      <div className="border-b-2 border-gray-400 mt-24 mr-16 ml-16"></div>
-
-      {/* 2nd sec */}
-
-      <div className="flex w-full h-[1000px] mt-24 justify-center">
-        <div className="w-[85%] h-[700px] relative">
-          <img
-            src={secondSec}
-            alt=""
-            className="rounded-4xl w-full object-cover"
-          />
-          <div className="absolute inset-0 z-10 flex items-center justify-center flex-col">
-            <BoxReveal boxColor={"white"}>
-              <h1 className="text-[60px] text-white font-bold">
-                GOT SOMETHING TO SAY??
-              </h1>
-            </BoxReveal>
-            <BoxReveal boxColor={"white"}>
-              <h2 className="text-[25px] text-white font-semibold text-center mt-2 mb-1">
-                Got a hot take, a cool hack, or a tutorial that slaps?
-              </h2>
-            </BoxReveal>
-            <BoxReveal boxColor={"white"}>
-              <h2 className="text-[25px] text-white font-semibold text-center">
-                This is your space to share it.
-              </h2>
-            </BoxReveal>
-            <PulsatingButton
-              className="mt-8 bg-black text-white font-semibold text-xl mb-1"
-              pulseColor="white"
-              onClick={startWritting}
-            >
-              Start Writing
-            </PulsatingButton>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-gray-200 w-full mt-24">
-        <TextReveal className="relative mt-10 text-center text-white  tracking-wide leading-relaxed">
-          Tutorials, tips, stories, if it slaps, post it. No pressure no
-          gatekeeping, just real ones sharing real stuff
-        </TextReveal>
-      </div>
-
-      <div className="mt-24 w-full min-h-screen px-6">
-        {/* Heading */}
-        <div className="text-[64px] md:text-[100px] lexend-txt font-bold text-center mb-12">
-          Top Blogs
-        </div>
-
-        <div className="mt-12 overflow-x-auto">
-          <div className="flex justify-around gap-2 px-4">
-            {topBlogs.map((blog) => (
-              <div
-                key={blog.id}
-                className="w-[350px] h-[500px] bg-white border border-gray-300 rounded-xl shadow-lg flex-shrink-0 overflow-hidden"
+            <div className="absolute inset-0 bg-black/40"></div>
+            <div className="absolute inset-0 z-10 flex items-center justify-center flex-col text-center px-6">
+              <BoxReveal boxColor={"white"}>
+                <h1 className="text-3xl md:text-5xl lg:text-6xl text-white font-bold lexend-txt mb-6">
+                  GOT SOMETHING TO SAY??
+                </h1>
+              </BoxReveal>
+              <BoxReveal boxColor={"white"}>
+                <p className="text-lg md:text-xl lg:text-2xl text-white font-medium mb-8 max-w-3xl oxygen-regular">
+                  Got a hot take, a cool hack, or a tutorial that slaps? 
+                  This is your space to share it.
+                </p>
+              </BoxReveal>
+              <PulsatingButton
+                className="bg-white text-gray-900 font-semibold text-lg md:text-xl px-8 py-4 rounded-full hover:bg-gray-100 transition-colors"
+                pulseColor="gray"
+                onClick={startWritting}
               >
-                {/* Top 50% - Image */}
-                <div className="h-1/2 w-full">
+                Start Writing
+              </PulsatingButton>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Top Blogs Section */}
+      <section className="py-20 px-4 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Section Header */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 lexend-txt mb-6">
+              Top Blogs
+            </h2>
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto oxygen-regular">
+              Discover the most engaging content from our community of writers
+            </p>
+          </motion.div>
+
+          {/* Blogs Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+            {topBlogs.map((blog, index) => (
+              <motion.div
+                key={blog.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="bg-white/80 backdrop-blur-md rounded-3xl border border-gray-200 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group"
+              >
+                {/* Image */}
+                <div className="relative h-48 overflow-hidden">
                   <img
                     src={blog.mainImage}
-                    // alt={blog.title}
-                    className="w-full h-full"
+                    alt={blog.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
+                  <div className="absolute top-3 left-3">
+                    <span className="inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                      <Tag className="w-3 h-3" />
+                      {blog.category}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Bottom 50% - Content */}
-                <div className="h-1/2 p-4 flex flex-col justify-between">
-                  {/* Author */}
-                  <div className="flex items-center gap-3">
+                {/* Content */}
+                <div className="p-6">
+                  {/* Author Info */}
+                  <div className="flex items-center gap-3 mb-4">
                     <img
                       src={blog.profileImage}
-                      // alt={blog.author}
-                      className="w-10 h-10 rounded-full object-cover"
+                      alt={blog.author}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
                     />
-                    <span className="font-semibold text-gray-700">
-                      {blog.author}
-                    </span>
+                    <div>
+                      <div className="font-semibold text-gray-900 text-sm">{blog.author}</div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <Calendar className="w-3 h-3" />
+                        {blog.date}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-lg font-bold mt-2 text-gray-800 truncate">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 lexend-txt group-hover:text-gray-700 transition-colors">
                     {blog.title}
                   </h3>
 
                   {/* Excerpt */}
-                  <p className="text-sm text-gray-600 line-clamp-3 text-justify mt-1">
+                  <p className="text-sm text-gray-600 line-clamp-3 mb-4 oxygen-regular">
                     {blog.content}
                   </p>
 
-                  {/* Read More */}
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate(`/blog/${blog.id}`);
-                    }}
-                    className="text-gray-600 text-sm font-semibold mt-3 hover:text-black self-start cursor-pointer"
-                  >
-                    Read More →
-                  </a>
+                  {/* Stats & Read More */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        {blog.views}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Heart className="w-3 h-3" />
+                        {blog.likes}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => navigate(`/blog/${blog.id}`)}
+                      className="flex items-center gap-1 text-gray-700 hover:text-gray-900 font-medium text-sm transition-colors group-hover:gap-2"
+                    >
+                      Read More
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
+
+          {/* Bottom CTA */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mt-16"
+          >
+            <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 lexend-txt mb-4">
+              Write Your blog and get a chance to be featured in the top 5
+            </h3>
+            <button
+              onClick={startWritting}
+              className="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors"
+            >
+              <PenTool className="w-4 h-4" />
+              Start Writing Now
+            </button>
+          </motion.div>
         </div>
+      </section>
 
-        <div className="mt-20">
-          <h1 className="text-center text-4xl font-semibold lexend-txt">Write Your blog and get a chance to be featured in the top 5</h1>
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-16 px-4 lg:px-8 mt-20 rounded-t-4xl">
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="p-3 bg-gray-600 rounded-full">
+              <PenTool className="w-8 h-8 text-white" />
+            </div>
+            <span className="text-3xl font-bold lexend-txt">Writex</span>
+          </div>
+          <p className="text-gray-300 mb-8 text-lg oxygen-regular max-w-2xl mx-auto">
+            Empowering writers to share their stories with the world. Join our community and start creating today.
+          </p>
+          <div className="text-sm text-gray-500 oxygen-regular">
+            © 2024 Writex. All rights reserved. Made with ❤️ for the writing community.
+          </div>
         </div>
-      </div>
-
-      {/* Footer TO DO */}
-      <div className="bg-gray-200 w-full mt-24 rounded-t-4xl">
-        <div className="">
-
-        </div>
-      </div>
-
+      </footer>
     </div>
   );
 };

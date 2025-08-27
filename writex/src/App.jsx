@@ -11,6 +11,7 @@ import Blog from "./App/Blogs/Blog";
 import MyBlog from "./App/User-Section/MyBlog";
 import MyProfile from "./App/User-Section/MyProfile";
 import BlogPage from "./App/Blog Detail/BlogPage";
+import About from "./Pages/About/About";
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -96,6 +97,14 @@ const App = () => {
           element={
             <PrivateRoute>
               <MyProfile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/about"
+          element={
+            <PrivateRoute>
+              <About />
             </PrivateRoute>
           }
         />
