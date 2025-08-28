@@ -36,14 +36,14 @@ const Navbar = () => {
   ];
   const USERITEMS = [
     {
-      title : "Profile",
-      path : "/profile",
-      logo : <FaUser/>
+      title: "Profile",
+      path: "/profile",
+      logo: <FaUser />
     },
     {
-      title : "My Blogs",
-      path : "/myblogs",
-      logo : <TbArticleFilled/>
+      title: "My Blogs",
+      path: "/myblogs",
+      logo: <TbArticleFilled />
     }
   ];
   const handleLogout = async () => {
@@ -100,23 +100,41 @@ const Navbar = () => {
             </Button>
             <Popover>
               <PopoverTrigger>
-                <div
-                  className="h-12 w-12 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 
-                flex items-center justify-center text-gray-700 font-semibold shadow-sm
-                hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  {user?.username?.[0]?.toUpperCase() || "U"}
+                <div className="h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-700 font-semibold shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                  {user?.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt={user.username}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <span className={`${user?.profileImage ? 'hidden' : ''}`}>
+                    {user?.username?.[0]?.toUpperCase() || "U"}
+                  </span>
                 </div>
               </PopoverTrigger>
               <PopoverContent>
                 <div>
                   <div className="flex flex-row">
-                    <div
-                      className="h-12 w-12 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 
-                flex items-center justify-center text-gray-700 font-semibold shadow-sm
-                hover:shadow-md transition-shadow cursor-pointer"
-                    >
-                      {user?.username?.[0]?.toUpperCase() || "U"}
+                    <div className="h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-700 font-semibold shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                      {user?.profileImage ? (
+                        <img
+                          src={user.profileImage}
+                          alt={user.username}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <span className={`${user?.profileImage ? 'hidden' : ''}`}>
+                        {user?.username?.[0]?.toUpperCase() || "U"}
+                      </span>
                     </div>
                     <h2 className="font-semibold text-gray-400 mt-2 ml-4 text-2xl">
                       {user?.username?.[0]?.toUpperCase() + user?.username.slice(1)}

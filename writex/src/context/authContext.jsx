@@ -25,8 +25,14 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await axios.get('/users/current');
-        setUser(response.data);
+        const token = localStorage.getItem('token');
+        if (token) {
+          // Fetch user profile data including profile image
+          const response = await axios.get('/users/profile-stats');
+          setUser(response.data.user);
+        } else {
+          setUser(null);
+        }
       } catch (error) {
         setUser(null);
       } finally {

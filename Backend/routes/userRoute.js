@@ -6,8 +6,10 @@ const router = express.Router();
 
 router.post('/signup', userController.signup);
 router.post('/login', userController.login);
-router.get('/current', protectRoute,userController.getCurrentUser);
-router.post('/logout',userController.logout);
+router.get('/current', protectRoute, userController.getCurrentUser);
+router.get('/profile-stats', protectRoute, userController.getUserProfileStats);
+router.put('/profile-image', protectRoute, userController.updateProfileImage);
+router.post('/logout', userController.logout);
 
 // router.get("/protected", protectRoute, (req, res) => {
 //     res.json({ message: "You are authorized!", user: req.user });

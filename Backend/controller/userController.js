@@ -1,4 +1,5 @@
 import User from "../models/userModel.js";
+import Blog from "../models/postModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
@@ -101,4 +102,78 @@ const logout = async (req,res) => {
         res.status(500).json({message : "Error in logot" , error : error.message})
     }
 }
-export  default { signup, login , getCurrentUser ,logout};
+
+const getUserProfileStats = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        // Get user's published blogs count
+        const publishedBlogsCount = await Blog.countDocuments({ 
+            author: userId, 
+            status: 'published' 
+        });
+        
+        // Get total likes received by user's blogs
+        const userBlogs = await Blog.find({ author: userId });
+        const totalLikes = userBlogs.reduce((total, blog) => total + (blog.likes?.length || 0), 0);
+        
+        // Get user basic info including profile image
+        const user = await User.findById(userId).select('username email profileImage createdAt');
+        
+        res.status(200).json({
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                profileImage: user.profileImage,
+                createdAt: user.createdAt
+            },
+            stats: {
+                publishedBlogs: publishedBlogsCount,
+                totalLikes: totalLikes
+            }
+        });
+        
+    } catch (error) {
+        console.error("Error in getUserProfileStats:", error);
+        res.status(500).json({ 
+            message: "Error fetching user profile stats", 
+            error: error.message 
+        });
+    }
+};
+
+const updateProfileImage = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { profileImage } = req.body;
+        
+        if (!profileImage) {
+            return res.status(400).json({ message: "Profile image URL is required" });
+        }
+        
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { profileImage },
+            { new: true }
+        ).select('username email profileImage createdAt');
+        
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        
+        res.status(200).json({
+            message: "Profile image updated successfully",
+            user
+        });
+        
+    } catch (error) {
+        console.error("Error in updateProfileImage:", error);
+        res.status(500).json({ 
+            message: "Error updating profile image", 
+            error: error.message 
+        });
+    }
+};
+
+export default { signup, login, getCurrentUser, logout, getUserProfileStats, updateProfileImage };
