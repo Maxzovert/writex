@@ -399,7 +399,7 @@ const Home = () => {
                 variant="outline"
                 onClick={handleLearnMore}
                 size="lg"
-                className="border-2 border-gray-600 hover:border-gray-500 text-white px-12 py-6 text-xl h-auto rounded-2xl hover:bg-white/10 transition-all duration-300 group"
+                className="border-2 border-gray-600 hover:border-gray-500 text-black px-12 py-6 text-xl h-auto rounded-2xl hover:bg-white/10 transition-all duration-300 group"
               >
                 Tell Me More
                 <ArrowUpRight className="ml-3 w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
