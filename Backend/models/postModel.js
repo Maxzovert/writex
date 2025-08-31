@@ -9,10 +9,6 @@ const blogSchema = new mongoose.Schema({
         type: Schema.Types.Mixed,
         required: true
     },
-    description: {
-        type: String,
-        default: ""
-    },
     mainImage: {
         type: String,
         default: ""

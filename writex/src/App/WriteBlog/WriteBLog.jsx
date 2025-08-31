@@ -25,66 +25,135 @@ import {
 
 const WriteBlog = () => {
   const editorRef = useRef(null);
-  const [title, setTitle] = React.useState("");
-  const [category, setCategory] = React.useState("general");
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("General");
   const [isPublishing, setIsPublishing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [mainImage, setMainImage] = useState(null);
-  const [ShortDesc, setShortDesc] = useState("");
-  const [tags, setTags] = useState([]);
-
+  const [description, setDescription] = useState("");
+  const [tags, setTags] = useState("");
 
   const handleMainImageChange = React.useCallback((imageUrl) => {
-    // console.log('Updating main image:', imageUrl);
     setMainImage(imageUrl);
   }, []);
 
-
   const handlePublish = async (e) => {
     e.preventDefault();
-    if(!mainImage){
-      toast.warning("Please Upload atleat one Image");
+    
+    // Validation checks
+    if (!mainImage) {
+      toast.warning("Please upload at least one image");
       return;
     }
-    if(!ShortDesc){
-      toast.warning("Please Enter a Short Description");
+    if (!description.trim()) {
+      toast.warning("Please enter a short description");
       return;
     }
-    if(!title){
-      toast.warning("Please Enter a Title");
+    if (!title.trim()) {
+      toast.warning("Please enter a title");
       return;
     }
     if (!editorRef.current) {
-      toast.warning("Editor Not initailize, Please Refresh");
+      toast.warning("Editor not initialized, please refresh the page");
       return;
     }
 
     setIsPublishing(true);
 
     try {
-      const editorContent = editorRef.current.getJSON(); //You use editorRef.current.getJSON() to get the entire content of the TipTap editor in structured JSON format.
-      if (!title) {
-        toast.warning("Please Enter Title Before Publishing");
+      const editorContent = editorRef.current.getJSON();
+      
+      // Additional validation
+      if (!editorContent || Object.keys(editorContent).length === 0) {
+        toast.warning("Please add some content to your blog before publishing");
         setIsPublishing(false);
         return;
       }
-      
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, {
-        title,
+
+      const blogData = {
+        title: title.trim(),
         mainImage,
         content: editorContent,
-        category,
+        category: category.charAt(0).toUpperCase() + category.slice(1).toLowerCase(),
         status: "published",
-        tags,
-        description,
-      },{withCredentials:true}
-  );
-      toast.success("Blog published Sucessfully");
-      setDialogOpen(false); // <-- Close dialog after success
+        tags: tags.trim() || [],
+        description: description.trim(),
+      };
+
+      console.log("Publishing blog with data:", blogData);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, 
+        blogData,
+        { withCredentials: true }
+      );
+
+      if (response.data) {
+        toast.success("Blog published successfully!");
+        setDialogOpen(false);
+        
+        // Reset form
+        setTitle("");
+        setDescription("");
+        setTags("");
+        setCategory("General");
+        setMainImage(null);
+        
+        // Clear editor content
+        if (editorRef.current) {
+          editorRef.current.commands.clearContent();
+        }
+      }
     } catch (error) {
-      toast.error("Error in plublishing blog", error);
+      console.error("Publishing error:", error);
+      
+      if (error.response) {
+        // Server responded with error
+        const errorMessage = error.response.data?.message || error.response.data?.error || "Server error occurred";
+        toast.error(`Publishing failed: ${errorMessage}`);
+      } else if (error.request) {
+        // Network error
+        toast.error("Network error: Please check your internet connection");
+      } else {
+        // Other error
+        toast.error(`Publishing failed: ${error.message}`);
+      }
     } finally {
       setIsPublishing(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!title.trim() && !description.trim()) {
+      toast.warning("Please add at least a title or description to save as draft");
+      return;
+    }
+
+    try {
+      const editorContent = editorRef.current ? editorRef.current.getJSON() : {};
+      
+      const draftData = {
+        title: title.trim() || "Untitled Draft",
+        mainImage: mainImage || null,
+        content: editorContent,
+        category: category.charAt(0).toUpperCase() + category.slice(1).toLowerCase(),
+        status: "draft",
+        tags: tags.trim() || [],
+        description: description.trim() || "No description",
+      };
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, 
+        draftData,
+        { withCredentials: true }
+      );
+
+      if (response.data) {
+        toast.success("Draft saved successfully!");
+      }
+    } catch (error) {
+      console.error("Saving draft error:", error);
+      toast.error("Failed to save draft. Please try again.");
     }
   };
 
@@ -98,6 +167,7 @@ const WriteBlog = () => {
         {/* Editor */}
         <div className="w-1/2 flex flex-col">
           <h1 className="text-center font-bold text-3xl mt-14 mb-2">
+            Write Your Blog
           </h1>
           <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
             <SimpleEditor
@@ -108,7 +178,6 @@ const WriteBlog = () => {
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
-                    // onClick={handlePublish}
                     disabled={isPublishing}
                     className="text-center"
                     onClick={() => setDialogOpen(true)}
@@ -119,71 +188,101 @@ const WriteBlog = () => {
                 <DialogContent className="sm:max-w-[650px]">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-medium">
-                      Select Title and Catagory.
+                      Complete Your Blog Details
                     </DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-4">
                     <div className="grid gap-3">
-                      <Label>
-                        Title
+                      <Label htmlFor="title">
+                        Blog Title *
                       </Label>
                       <Input
-                        id="name-1"
-                        name="name"
+                        id="title"
+                        name="title"
                         className="bg-gray-200"
-                        defaultValue="Your Blog's Title"
+                        placeholder="Enter your blog title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
+                        required
                       />
                     </div>
-                    <div>
-                  <Label className="grid gap-3">
-                    Enter Short Description for your blog
-                  </Label>
-                  <Input
-                  id="desc"
-                  deccription="description"
-                  className="bg-gray-200 mt-4"
-                  value={ShortDesc}
-                  onChange={(e) => setShortDesc(e.target.value)}
-                  >
-                  </Input>
-                  </div>
-                  </div>
-                  <Label>
-                    Select Catogory
-                  </Label>
-                  <Select
-                    value={category}
-                    onValueChange={(value) => setCategory(value)}
-                  >
-                    <SelectTrigger className="w-[300px] bg-gray-200">
-                      <SelectValue placeholder="Select category"/>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">General</SelectItem>
-                      <SelectItem value="technology">Technology</SelectItem>
-                      <SelectItem value="business">Business</SelectItem>
-                      <SelectItem value="personal">Personal</SelectItem>
-                      <SelectItem value="health">Health</SelectItem>
-                      <SelectItem value="education">Education</SelectItem>
-                      <SelectItem value="entertainment">Entertainment</SelectItem>
-                      <SelectItem value="sports">Sports</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    
+                    <div className="grid gap-3">
+                      <Label htmlFor="description">
+                        Short Description *
+                      </Label>
+                      <Input
+                        id="description"
+                        name="description"
+                        className="bg-gray-200"
+                        placeholder="Enter a brief description of your blog"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        required
+                      />
+                    </div>
 
-                  <DialogFooter>
+                    <div className="grid gap-3">
+                      <Label htmlFor="tags">
+                        Tags (Optional)
+                      </Label>
+                      <Input
+                        id="tags"
+                        name="tags"
+                        className="bg-gray-200"
+                        placeholder="Enter tags separated by commas"
+                        value={tags}
+                        onChange={(e) => setTags(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid gap-3">
+                      <Label htmlFor="category">
+                        Category *
+                      </Label>
+                      <Select
+                        value={category}
+                        onValueChange={(value) => setCategory(value)}
+                      >
+                        <SelectTrigger className="w-full bg-gray-200">
+                          <SelectValue placeholder="Select category"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="General">General</SelectItem>
+                          <SelectItem value="Personal">Personal</SelectItem>
+                          <SelectItem value="Business">Business</SelectItem>
+                          <SelectItem value="Tech">Tech</SelectItem>
+                          <SelectItem value="Health">Health</SelectItem>
+                          <SelectItem value="Education">Education</SelectItem>
+                          <SelectItem value="Entertainment">Entertainment</SelectItem>
+                          <SelectItem value="Sports">Sports</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <DialogFooter className="gap-2">
+                    <DialogClose asChild>
+                      <Button variant="outline">
+                        Cancel
+                      </Button>
+                    </DialogClose>
                     <Button
                       onClick={handlePublish}
-                      disabled={isPublishing}
+                      disabled={isPublishing || !title.trim() || !description.trim()}
                     >
-                      Done
+                      {isPublishing ? "Publishing..." : "Publish Blog"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              <Button className="text-center" variant={"outline"}>
+              
+              <Button 
+                className="text-center" 
+                variant="outline"
+                onClick={handleSaveDraft}
+              >
                 Save as Draft
               </Button>
             </div>
