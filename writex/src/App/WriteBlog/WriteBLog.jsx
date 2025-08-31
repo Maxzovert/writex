@@ -30,20 +30,30 @@ const WriteBlog = () => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [mainImage, setMainImage] = useState(null);
+  const [ShortDesc, setShortDesc] = useState("");
+  const [tags, setTags] = useState([]);
 
-  // Handle mainImage changes
-  React.useEffect(() => {
-    console.log('Main image updated:', mainImage);
-  }, [mainImage]);
 
   const handleMainImageChange = React.useCallback((imageUrl) => {
-    console.log('Updating main image:', imageUrl);
+    // console.log('Updating main image:', imageUrl);
     setMainImage(imageUrl);
   }, []);
 
+
   const handlePublish = async (e) => {
     e.preventDefault();
-
+    if(!mainImage){
+      toast.warning("Please Upload atleat one Image");
+      return;
+    }
+    if(!ShortDesc){
+      toast.warning("Please Enter a Short Description");
+      return;
+    }
+    if(!title){
+      toast.warning("Please Enter a Title");
+      return;
+    }
     if (!editorRef.current) {
       toast.warning("Editor Not initailize, Please Refresh");
       return;
@@ -65,6 +75,8 @@ const WriteBlog = () => {
         content: editorContent,
         category,
         status: "published",
+        tags,
+        description,
       },{withCredentials:true}
   );
       toast.success("Blog published Sucessfully");
@@ -124,6 +136,19 @@ const WriteBlog = () => {
                         onChange={(e) => setTitle(e.target.value)}
                       />
                     </div>
+                    <div>
+                  <Label className="grid gap-3">
+                    Enter Short Description for your blog
+                  </Label>
+                  <Input
+                  id="desc"
+                  deccription="description"
+                  className="bg-gray-200 mt-4"
+                  value={ShortDesc}
+                  onChange={(e) => setShortDesc(e.target.value)}
+                  >
+                  </Input>
+                  </div>
                   </div>
                   <Label>
                     Select Catogory
@@ -140,8 +165,14 @@ const WriteBlog = () => {
                       <SelectItem value="technology">Technology</SelectItem>
                       <SelectItem value="business">Business</SelectItem>
                       <SelectItem value="personal">Personal</SelectItem>
+                      <SelectItem value="health">Health</SelectItem>
+                      <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="entertainment">Entertainment</SelectItem>
+                      <SelectItem value="sports">Sports</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
+
                   <DialogFooter>
                     <Button
                       onClick={handlePublish}

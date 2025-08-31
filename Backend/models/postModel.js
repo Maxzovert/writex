@@ -9,6 +9,10 @@ const blogSchema = new mongoose.Schema({
         type: Schema.Types.Mixed,
         required: true
     },
+    description: {
+        type: String,
+        default: ""
+    },
     mainImage: {
         type: String,
         default: ""
@@ -23,9 +27,6 @@ const blogSchema = new mongoose.Schema({
         enum: ['draft', 'published', 'archived'],
         default: 'draft'
     },
-    // tags: [{
-    //     type: String
-    // }],
     category: {
         type: String,
         default: 'general',

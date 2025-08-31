@@ -15,17 +15,17 @@ const app = express();
 connetDB();
 
 // Enable CORS
-// app.use(cors({
-//   origin: 'http://localhost:5173', // No trailing slash!
-//   credentials: true // This is important for cookies
-// }));
+app.use(cors({
+  origin: 'http://localhost:5173', // No trailing slash!
+  credentials: true // This is important for cookies
+}));
 
 // Production
 
-app.use(cors({
-  origin: 'https://writtex.onrender.com', // Vite's default port
-  credentials: true // This is important for cookies
-}));
+// app.use(cors({
+//   origin: 'https://writtex.onrender.com', // Vite's default port
+//   credentials: true // This is important for cookies
+// }));
 
 // app.options('*', cors());
 
