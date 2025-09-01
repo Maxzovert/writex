@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Navbar from "../Components/Navbar";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { Button } from "../../components/ui/button";
@@ -6,6 +6,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -32,10 +33,144 @@ const WriteBlog = () => {
   const [mainImage, setMainImage] = useState(null);
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editBlogId, setEditBlogId] = useState(null);
+  const [originalStatus, setOriginalStatus] = useState("draft");
+  
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const handleMainImageChange = React.useCallback((imageUrl) => {
     setMainImage(imageUrl);
   }, []);
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setTags("");
+    setCategory("General");
+    setMainImage(null);
+    setIsEditMode(false);
+    setEditBlogId(null);
+    setOriginalStatus("draft");
+    
+    if (editorRef.current) {
+      editorRef.current.commands.clearContent();
+    }
+  };
+
+  const hasUnsavedChanges = () => {
+    if (!isEditMode) return false;
+    
+    // Check if any field has changed from the original
+    const originalBlog = location.state?.editBlog;
+    if (!originalBlog) return false;
+    
+    return (
+      title !== originalBlog.title ||
+      category !== originalBlog.category ||
+      description !== originalBlog.description ||
+      tags !== originalBlog.tags ||
+      mainImage !== originalBlog.mainImage
+    );
+  };
+
+  const handleCancelEdit = () => {
+    if (hasUnsavedChanges()) {
+      if (window.confirm("You have unsaved changes. Are you sure you want to cancel editing? All changes will be lost.")) {
+        resetForm();
+        navigate("/myblogs");
+      }
+    } else {
+      resetForm();
+      navigate("/myblogs");
+    }
+  };
+
+  const handleNavigateAway = () => {
+    if (isEditMode && hasUnsavedChanges()) {
+      if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+        resetForm();
+        navigate("/myblogs");
+      }
+    } else {
+      navigate("/myblogs");
+    }
+  };
+
+  // Handle edit mode when component mounts
+  useEffect(() => {
+    if (location.state?.editBlog) {
+      const blog = location.state.editBlog;
+      setIsEditMode(true);
+      setEditBlogId(blog._id);
+      setTitle(blog.title || "");
+      setCategory(blog.category || "General");
+      setMainImage(blog.mainImage || null);
+      setDescription(blog.description || "");
+      setTags(blog.tags || "");
+      setOriginalStatus(blog.status || "draft");
+      
+      // Set editor content after a short delay to ensure editor is initialized
+      setTimeout(() => {
+        if (editorRef.current && blog.content) {
+          try {
+            // Handle both string and JSON content
+            const content = typeof blog.content === 'string' ? JSON.parse(blog.content) : blog.content;
+            editorRef.current.commands.setContent(content);
+          } catch (error) {
+            console.error("Error setting editor content:", error);
+            // If parsing fails, set as plain text
+            if (typeof blog.content === 'string') {
+              editorRef.current.commands.setContent([{
+                type: 'paragraph',
+                content: [{ type: 'text', text: blog.content }]
+              }]);
+            }
+          }
+        }
+      }, 100);
+    }
+
+    // Cleanup function to reset form when component unmounts
+    return () => {
+      if (isEditMode) {
+        resetForm();
+      }
+    };
+  }, [location.state, isEditMode]);
+
+  // Warn user before leaving if they have unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isEditMode && hasUnsavedChanges()) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isEditMode, hasUnsavedChanges]);
+
+  // Handle browser back button
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (isEditMode && hasUnsavedChanges()) {
+        e.preventDefault();
+        if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+          resetForm();
+          navigate("/myblogs");
+        } else {
+          // Push the current state back to prevent navigation
+          window.history.pushState(null, '', window.location.pathname);
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isEditMode, hasUnsavedChanges, navigate]);
 
   const handlePublish = async (e) => {
     e.preventDefault();
@@ -80,28 +215,44 @@ const WriteBlog = () => {
         description: description.trim(),
       };
 
-      console.log("Publishing blog with data:", blogData);
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, 
-        blogData,
-        { withCredentials: true }
-      );
+      let response;
+      
+      if (isEditMode) {
+        // Update existing blog
+        response = await axios.put(
+          `${import.meta.env.VITE_API_BASE_URL}/blog/updateblog/${editBlogId}`, 
+          blogData,
+          { withCredentials: true }
+        );
+        toast.success("Blog updated successfully!");
+      } else {
+        // Create new blog
+        response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, 
+          blogData,
+          { withCredentials: true }
+        );
+        toast.success("Blog published successfully!");
+      }
 
       if (response.data) {
-        toast.success("Blog published successfully!");
         setDialogOpen(false);
         
-        // Reset form
-        setTitle("");
-        setDescription("");
-        setTags("");
-        setCategory("General");
-        setMainImage(null);
-        
-        // Clear editor content
-        if (editorRef.current) {
-          editorRef.current.commands.clearContent();
+        if (isEditMode) {
+          // Navigate back to MyBlog page after successful edit
+          navigate("/myblogs");
+        } else {
+          // Reset form for new blog
+          setTitle("");
+          setDescription("");
+          setTags("");
+          setCategory("General");
+          setMainImage(null);
+          
+          // Clear editor content
+          if (editorRef.current) {
+            editorRef.current.commands.clearContent();
+          }
         }
       }
     } catch (error) {
@@ -110,13 +261,13 @@ const WriteBlog = () => {
       if (error.response) {
         // Server responded with error
         const errorMessage = error.response.data?.message || error.response.data?.error || "Server error occurred";
-        toast.error(`Publishing failed: ${errorMessage}`);
+        toast.error(`${isEditMode ? 'Updating' : 'Publishing'} failed: ${errorMessage}`);
       } else if (error.request) {
         // Network error
         toast.error("Network error: Please check your internet connection");
       } else {
         // Other error
-        toast.error(`Publishing failed: ${error.message}`);
+        toast.error(`${isEditMode ? 'Updating' : 'Publishing'} failed: ${error.message}`);
       }
     } finally {
       setIsPublishing(false);
@@ -142,18 +293,33 @@ const WriteBlog = () => {
         description: description.trim() || "No description",
       };
 
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, 
-        draftData,
-        { withCredentials: true }
-      );
-
-      if (response.data) {
+      let response;
+      
+      if (isEditMode) {
+        // Update existing blog as draft
+        response = await axios.put(
+          `${import.meta.env.VITE_API_BASE_URL}/blog/updateblog/${editBlogId}`, 
+          draftData,
+          { withCredentials: true }
+        );
+        toast.success("Draft updated successfully!");
+      } else {
+        // Create new draft
+        response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, 
+          draftData,
+          { withCredentials: true }
+        );
         toast.success("Draft saved successfully!");
+      }
+
+      if (response.data && isEditMode) {
+        // Navigate back to MyBlog page after successful edit
+        navigate("/myblogs");
       }
     } catch (error) {
       console.error("Saving draft error:", error);
-      toast.error("Failed to save draft. Please try again.");
+      toast.error(`Failed to save draft: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -166,15 +332,43 @@ const WriteBlog = () => {
         </div>
         {/* Editor */}
         <div className="w-1/2 flex flex-col">
-          <h1 className="text-center font-bold text-3xl mt-14 mb-2">
-            Write Your Blog
-          </h1>
+          <div className="flex items-center justify-between mt-14 mb-2 px-4">
+            {isEditMode && (
+              <button
+                onClick={handleNavigateAway}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to My Blogs
+              </button>
+            )}
+            <h1 className="text-center font-bold text-3xl flex-1">
+              {isEditMode ? "Edit Your Blog" : "Write Your Blog"}
+            </h1>
+            {isEditMode && <div className="w-24"></div>} {/* Spacer for centering */}
+          </div>
+          {isEditMode && (
+            <p className="text-center text-gray-600 mb-4">
+              Editing: {title}
+            </p>
+          )}
           <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
             <SimpleEditor
               getEditorInstance={(editor) => (editorRef.current = editor)}
               onMainImageChange={handleMainImageChange}
             />
             <div className="flex justify-center mt-4 mb-4 gap-4">
+              {isEditMode && (
+                <Button
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  className="text-center"
+                >
+                  Cancel Edit
+                </Button>
+              )}
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
@@ -182,7 +376,7 @@ const WriteBlog = () => {
                     className="text-center"
                     onClick={() => setDialogOpen(true)}
                   >
-                    {isPublishing ? "Publishing..." : "Publish Now"}
+                    {isPublishing ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Blog" : "Publish Now")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[650px]">
@@ -272,7 +466,7 @@ const WriteBlog = () => {
                       onClick={handlePublish}
                       disabled={isPublishing || !title.trim() || !description.trim()}
                     >
-                      {isPublishing ? "Publishing..." : "Publish Blog"}
+                      {isPublishing ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Blog" : "Publish Blog")}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
