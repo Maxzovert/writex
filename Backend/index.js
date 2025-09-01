@@ -15,17 +15,17 @@ const app = express();
 connetDB();
 
 // Enable CORS
-// app.use(cors({
-//   origin: 'http://localhost:5173', // No trailing slash!
-//   credentials: true // This is important for cookies
-// }));
+app.use(cors({
+  origin: 'http://localhost:5173', // No trailing slash!
+  credentials: true // This is important for cookies
+}));
 
 // Production
 
-app.use(cors({
-  origin: 'https://writtex.onrender.com', // Vite's default port
-  credentials: true // This is important for cookies
-}));
+// app.use(cors({
+//   origin: 'https://writtex.onrender.com', // Vite's default port
+//   credentials: true // This is important for cookies
+// }));
 
 // app.options('*', cors());
 
@@ -36,6 +36,16 @@ app.use(express.urlencoded({ extended: true }));
 // app.get("/", (req, res) => {
 //   res.send("Back running");
 // });
+
+// Test route to verify backend is working
+app.get("/test", (req, res) => {
+  res.json({ message: "Backend is running", timestamp: new Date().toISOString() });
+});
+
+// Test route for blog endpoints
+app.get("/blog/test", (req, res) => {
+  res.json({ message: "Blog routes are accessible", timestamp: new Date().toISOString() });
+});
 
 app.use("/users", router);
 app.use("/blog/",postRouter);
