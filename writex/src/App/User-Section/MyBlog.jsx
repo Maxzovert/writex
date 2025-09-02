@@ -15,16 +15,13 @@ import {
   PenTool,
   TrendingUp,
   Clock,
-  Heart,
   ArrowRight,
-  User,
   Plus
 } from 'lucide-react';
 
 const MyBlog = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedBlog, setSelectedBlog] = useState(null);
   const [showActions, setShowActions] = useState({});
   const [operationLoading, setOperationLoading] = useState({});
   const [statusFilter, setStatusFilter] = useState('all');
@@ -54,12 +51,9 @@ const MyBlog = () => {
     try {
       setLoading(true);
       const fetchData = await axiosInstance.get(`/blog/myblogs/`);
-      console.log("User Blogs");
-      console.log(fetchData.data.blogs);
       setData(fetchData.data.blogs);
       toast.success("Blogs fetched successfully");
     } catch (error) {
-      console.error("Error in fetching Blog", error);
       toast.error("Failed to fetch blogs");
     } finally {
       setLoading(false);
@@ -73,70 +67,6 @@ const MyBlog = () => {
 
   useEffect(() => {
     handleFetchUserBlogs();
-  }, []);
-
-  // Test function to verify authentication and API endpoints
-  const testAuth = async () => {
-    try {
-      console.log("Testing authentication...");
-      const token = localStorage.getItem('token');
-      console.log("Token:", token ? "Exists" : "Missing");
-      
-      // Test the myblogs endpoint to see if auth is working
-      const testResponse = await axiosInstance.get('/blog/myblogs/');
-      console.log("Auth test successful:", testResponse.status);
-      
-      console.log("Authentication test completed successfully");
-    } catch (error) {
-      console.error("Auth test failed:", error);
-    }
-  };
-
-  // Test function to check if delete endpoint is reachable
-  const testDeleteEndpoint = async () => {
-    try {
-      console.log("Testing delete endpoint reachability...");
-      console.log("Environment variable VITE_API_BASE_URL:", import.meta.env.VITE_API_BASE_URL);
-      
-      // Test backend test route first
-      try {
-        const testResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/test`);
-        const testData = await testResponse.json();
-        console.log("Backend test route:", testResponse.status, testData);
-      } catch (error) {
-        console.error("Backend test route failed:", error);
-      }
-      
-      // Test blog test route
-      try {
-        const blogTestResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/blog/test`);
-        const blogTestData = await blogTestResponse.json();
-        console.log("Blog test route:", blogTestResponse.status, blogTestData);
-      } catch (error) {
-        console.error("Blog test route failed:", error);
-      }
-      
-      // Test with a real blog ID if available
-      if (data.length > 0) {
-        const realBlogId = data[0]._id;
-        console.log("Testing with real blog ID:", realBlogId);
-        try {
-          await axiosInstance.delete(`/blog/deleteblog/${realBlogId}`);
-        } catch (error) {
-          console.log("Real blog ID delete test error:", error.response?.status, error.response?.data?.message);
-        }
-      } else {
-        console.log("No blogs available for testing delete endpoint");
-      }
-    } catch (error) {
-      console.error("Delete endpoint test failed:", error);
-    }
-  };
-
-  // Run auth test on component mount
-  useEffect(() => {
-    testAuth();
-    testDeleteEndpoint();
   }, []);
 
   const firstUpperCase = (str) => {
@@ -154,48 +84,31 @@ const MyBlog = () => {
       try {
         setOperationLoading(prev => ({ ...prev, [blogId]: true }));
         
-        console.log("Attempting to delete blog:", blogId);
-        console.log("API URL:", `${import.meta.env.VITE_API_BASE_URL}/blog/deleteblog/${blogId}`);
-        console.log("Environment variable:", import.meta.env.VITE_API_BASE_URL);
-        
-        // Check if we have authentication token
-        const token = localStorage.getItem('token');
-        console.log("Token exists:", !!token);
-        if (token) {
-          console.log("Token length:", token.length);
-          console.log("Token starts with:", token.substring(0, 20) + "...");
-        }
-        
-        // Check if we have authentication cookies
-        console.log("Cookies:", document.cookie);
-        
         const response = await axiosInstance.delete(`/blog/deleteblog/${blogId}`);
         
-        console.log("Delete response:", response);
-        
         if (response.status === 200) {
-          // Update local state immediately instead of refreshing
-          setData(prevData => prevData.filter(blog => blog._id !== blogId));
+          setData(prevData => {
+            const newData = prevData.filter(blog => blog._id !== blogId);
+            return newData;
+          });
           toast.success("Blog deleted successfully");
         } else {
           throw new Error(`Unexpected response status: ${response.status}`);
         }
       } catch (error) {
-        console.error("Error deleting blog:", error);
-        
         if (error.response) {
-          // Server responded with error status
-          console.error("Error response:", error.response);
-          console.error("Error status:", error.response.status);
-          console.error("Error data:", error.response.data);
-          toast.error(`Failed to delete blog: ${error.response.data?.message || error.response.statusText}`);
+          if (error.response.status === 401) {
+            toast.error("Authentication failed. Please log in again.");
+          } else if (error.response.status === 403) {
+            toast.error("You don't have permission to delete this blog.");
+          } else if (error.response.status === 404) {
+            toast.error("Blog not found. It may have already been deleted.");
+          } else {
+            toast.error(`Failed to delete blog: ${error.response.data?.message || error.response.statusText}`);
+          }
         } else if (error.request) {
-          // Network error
-          console.error("Network error:", error.request);
           toast.error("Network error: Please check your internet connection");
         } else {
-          // Other error
-          console.error("Other error:", error.message);
           toast.error(`Failed to delete blog: ${error.message}`);
         }
       } finally {
@@ -219,7 +132,6 @@ const MyBlog = () => {
       });
       
       if (response.data) {
-        // Update local state
         setData(prevData => 
           prevData.map(b => 
             b._id === blog._id ? { ...b, status: newStatus } : b
@@ -229,7 +141,6 @@ const MyBlog = () => {
         toast.success(`Blog ${newStatus === 'published' ? 'published' : 'unpublished'} successfully`);
       }
     } catch (error) {
-      console.error("Error updating blog status:", error);
       toast.error("Failed to update blog status");
     } finally {
       setOperationLoading(prev => ({ ...prev, [blog._id]: false }));
@@ -282,7 +193,7 @@ const MyBlog = () => {
     const matchesStatus = statusFilter === 'all' || blog.status === statusFilter;
     const matchesSearch = searchQuery === '' || 
       blog.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (typeof blog.content === 'string' && blog.content.toLowerCase().includes(searchQuery.toLowerCase()));
+      (typeof blog.content === "string" && blog.content.toLowerCase().includes(searchQuery.toLowerCase()));
     
     return matchesStatus && matchesSearch;
   });
@@ -392,18 +303,6 @@ const MyBlog = () => {
                 </svg>
               )}
               Refresh
-            </button>
-            <button
-              onClick={testAuth}
-              className="inline-flex items-center gap-3 bg-blue-600 text-white px-6 py-4 rounded-full font-semibold text-lg hover:bg-blue-700 transition-all duration-300"
-            >
-              Test Auth
-            </button>
-            <button
-              onClick={testDeleteEndpoint}
-              className="inline-flex items-center gap-3 bg-red-600 text-white px-6 py-4 rounded-full font-semibold text-lg hover:bg-red-700 transition-all duration-300"
-            >
-              Test Delete Endpoint
             </button>
           </motion.div>
 
