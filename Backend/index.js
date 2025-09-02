@@ -15,6 +15,7 @@ const app = express();
 connetDB();
 
 // // Enable CORS
+
 // app.use(cors({
 //   origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'], // Allow multiple ports
 //   credentials: true // This is important for cookies
