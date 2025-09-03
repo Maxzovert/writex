@@ -4,7 +4,8 @@ import Navbar from "../Components/Navbar";
 import axiosInstance from "../../lib/axiosConfig";
 import { toast } from "react-toastify";
 import { motion } from 'framer-motion';
-import { 
+import Logo from "../../assets/logo.png";
+import {
   Edit3, 
   Trash2, 
   Eye, 
@@ -445,7 +446,7 @@ const MyBlog = () => {
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                          <PenTool className="w-16 h-16 text-gray-400" />
+                          <img src={Logo} alt="" />
                         </div>
                       )}
                       
@@ -547,7 +548,7 @@ const MyBlog = () => {
                       <p className="text-sm text-gray-600 line-clamp-3 mb-4 oxygen-regular">
                         {typeof blog.content === "string"
                           ? blog.content
-                          : JSON.stringify(blog.content)}
+                          : blog.description}
                       </p>
 
                       {/* Action Buttons */}

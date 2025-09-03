@@ -35,6 +35,7 @@ const WriteBlog = () => {
   const [category, setCategory] = useState("General");
   const [isPublishing, setIsPublishing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [draftDialogOpen, setDraftDialogOpen] = useState(false);
   const [mainImage, setMainImage] = useState(null);
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
@@ -331,6 +332,9 @@ const WriteBlog = () => {
         // Navigate back to MyBlog page after successful edit
         navigate("/myblogs");
       }
+      
+      // Close the draft dialog after successful save
+      setDraftDialogOpen(false);
     } catch (error) {
       console.error("Saving draft error:", error);
       toast.error(`Failed to save draft: ${error.response?.data?.message || error.message}`);
@@ -493,13 +497,105 @@ const WriteBlog = () => {
             </div>
             
             <div className="flex items-center gap-4">
-              <Button 
-                variant="outline"
-                onClick={handleSaveDraft}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
-              >
-                Save Draft
-              </Button>
+              <Dialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
+                  >
+                    Save Draft
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-semibold">
+                      Save as Draft
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-6">
+                    <div className="grid gap-3">
+                      <Label htmlFor="draft-title" className="text-sm font-medium">
+                        Blog Title
+                      </Label>
+                      <Input
+                        id="draft-title"
+                        name="draft-title"
+                        className="bg-gray-50 border-gray-300"
+                        placeholder="Enter your blog title (optional)"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="grid gap-3">
+                      <Label htmlFor="draft-description" className="text-sm font-medium">
+                        Short Description
+                      </Label>
+                      <Input
+                        id="draft-description"
+                        name="draft-description"
+                        className="bg-gray-50 border-gray-300"
+                        placeholder="Enter a brief description (optional)"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid gap-3">
+                      <Label htmlFor="draft-tags" className="text-sm font-medium">
+                        Tags (Optional)
+                      </Label>
+                      <Input
+                        id="draft-tags"
+                        name="draft-tags"
+                        className="bg-gray-50 border-gray-300"
+                        placeholder="Enter tags separated by commas"
+                        value={tags}
+                        onChange={(e) => setTags(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid gap-3">
+                      <Label htmlFor="draft-category" className="text-sm font-medium">
+                        Category
+                      </Label>
+                      <Select
+                        value={category}
+                        onValueChange={(value) => setCategory(value)}
+                      >
+                        <SelectTrigger className="w-full bg-gray-50 border-gray-300">
+                          <SelectValue placeholder="Select category"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="General">General</SelectItem>
+                          <SelectItem value="Personal">Personal</SelectItem>
+                          <SelectItem value="Business">Business</SelectItem>
+                          <SelectItem value="Tech">Tech</SelectItem>
+                          <SelectItem value="Health">Health</SelectItem>
+                          <SelectItem value="Education">Education</SelectItem>
+                          <SelectItem value="Entertainment">Entertainment</SelectItem>
+                          <SelectItem value="Sports">Sports</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <DialogFooter className="gap-3">
+                    <DialogClose asChild>
+                      <Button variant="outline" className="border-gray-300 text-gray-700">
+                        Cancel
+                      </Button>
+                    </DialogClose>
+                    <Button
+                      onClick={handleSaveDraft}
+                      className="bg-gray-900 hover:bg-gray-800 text-white"
+                    >
+                      {isEditMode ? "Update Draft" : "Save Draft"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
