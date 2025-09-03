@@ -2,10 +2,15 @@ import React, { useRef, useState, useEffect } from "react";
 import Navbar from "../Components/Navbar";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { Button } from "../../components/ui/button";
-import axios from "axios";
-import { toast } from "react-toastify";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import axios from "axios";
+import { toast } from "react-toastify";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Dialog,
@@ -36,6 +41,14 @@ const WriteBlog = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editBlogId, setEditBlogId] = useState(null);
   const [originalStatus, setOriginalStatus] = useState("draft");
+  const [aiMessage, setAiMessage] = useState("");
+  const [aiSuggestions, setAiSuggestions] = useState([
+    "Improve your blog title to be more engaging",
+    "Add more descriptive content to your introduction",
+    "Consider adding relevant images to support your points",
+    "Break down complex ideas into smaller paragraphs",
+    "End with a strong conclusion that summarizes your main points"
+  ]);
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -53,6 +66,7 @@ const WriteBlog = () => {
     setIsEditMode(false);
     setEditBlogId(null);
     setOriginalStatus("draft");
+    setAiMessage("");
     
     if (editorRef.current) {
       editorRef.current.commands.clearContent();
@@ -323,77 +337,193 @@ const WriteBlog = () => {
     }
   };
 
+  const handleAiSuggestion = (suggestion) => {
+    setAiMessage(suggestion);
+  };
+
+  const handleAiMessageSend = () => {
+    if (aiMessage.trim()) {
+      // Here you would typically send the message to an AI service
+      // For now, we'll just show a toast
+      toast.info("AI Assistant: " + aiMessage);
+      setAiMessage("");
+    }
+  };
+
   return (
-    <div className="flex flex-col h-screen">
+    <div className="min-h-screen">
       <Navbar />
-      <div className="flex flex-row flex-1 min-h-0">
-        <div className="w-1/2 bg-gray-300 mt-20 rounded-r-4xl">
-          {/* Preview area */}
-        </div>
-        {/* Editor */}
-        <div className="w-1/2 flex flex-col">
-          <div className="flex items-center justify-between mt-14 mb-2 px-4">
-            {isEditMode && (
-              <button
-                onClick={handleNavigateAway}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      
+      <div className="flex h-[calc(100vh-4rem)] mt-16">
+        {/* AI Assistant Sidebar */}
+        <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+          {/* AI Header */}
+          <div className="p-8 border-b border-gray-200">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl flex items-center justify-center shadow-lg">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
-                Back to My Blogs
-              </button>
-            )}
-            <h1 className="text-center font-bold text-3xl flex-1">
-              {isEditMode ? "Edit Your Blog" : "Write Your Blog"}
-            </h1>
-            {isEditMode && <div className="w-24"></div>} {/* Spacer for centering */}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">AI Assistant</h2>
+                <p className="text-gray-500">Your writing companion</p>
+              </div>
+            </div>
           </div>
-          {isEditMode && (
-            <p className="text-center text-gray-600 mb-4">
-              Editing: {title}
-            </p>
-          )}
-          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
-            <SimpleEditor
-              getEditorInstance={(editor) => (editorRef.current = editor)}
-              onMainImageChange={handleMainImageChange}
-            />
-            <div className="flex justify-center mt-4 mb-4 gap-4">
-              {isEditMode && (
+
+          {/* AI Content */}
+          <div className="flex-1 p-8 space-y-8">
+            {/* Writing Tips */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Writing Tips
+              </h3>
+              <div className="space-y-3">
+                {aiSuggestions.slice(0, 3).map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    onClick={() => handleAiSuggestion(suggestion)}
+                  >
+                    <p className="text-sm text-gray-700 leading-relaxed">{suggestion}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator className="bg-gray-200" />
+
+            {/* AI Chat */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Ask AI
+              </h3>
+              <div className="space-y-3">
+                <Textarea
+                  placeholder="Ask me anything about your blog..."
+                  value={aiMessage}
+                  onChange={(e) => setAiMessage(e.target.value)}
+                  className="min-h-[100px] text-sm bg-white border-gray-300 resize-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAiMessageSend();
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleAiMessageSend}
+                  disabled={!aiMessage.trim()}
+                  className="w-full bg-gray-900 hover:bg-gray-800 text-white"
+                >
+                  Send Message
+                </Button>
+              </div>
+            </div>
+
+            <Separator className="bg-gray-200" />
+
+            {/* Quick Actions */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Quick Actions
+              </h3>
+              <div className="space-y-3">
                 <Button
                   variant="outline"
-                  onClick={handleCancelEdit}
-                  className="text-center"
+                  className="w-full justify-start border-gray-300 text-gray-700 hover:bg-gray-50"
+                  onClick={() => handleAiSuggestion("Generate a compelling title for my blog")}
                 >
-                  Cancel Edit
+                  Generate Title
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start border-gray-300 text-gray-700 hover:bg-gray-50"
+                  onClick={() => handleAiSuggestion("Help me improve my blog's introduction")}
+                >
+                  Improve Introduction
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start border-gray-300 text-gray-700 hover:bg-gray-50"
+                  onClick={() => handleAiSuggestion("Suggest relevant tags for my blog")}
+                >
+                  Suggest Tags
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Editor Section */}
+        <div className="flex-1 bg-white flex flex-col">
+          {/* Editor Header */}
+          <div className="flex items-center justify-between px-10 py-8 border-b border-gray-200">
+            <div className="flex items-center gap-6">
+              {isEditMode && (
+                <Button
+                  variant="ghost"
+                  onClick={handleNavigateAway}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back
                 </Button>
               )}
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {isEditMode ? "Edit Blog" : "Write New Blog"}
+                </h1>
+                <p className="text-gray-500 mt-1">
+                  {isEditMode ? "Make your changes and publish" : "Create something amazing"}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="outline"
+                onClick={handleSaveDraft}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
+              >
+                Save Draft
+              </Button>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
                     disabled={isPublishing}
-                    className="text-center"
-                    onClick={() => setDialogOpen(true)}
+                    className="bg-gray-900 hover:bg-gray-800 text-white px-6"
                   >
-                    {isPublishing ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Blog" : "Publish Now")}
+                    {isPublishing ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Blog" : "Publish")}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[650px]">
+                <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-medium">
+                    <DialogTitle className="text-xl font-semibold">
                       Complete Your Blog Details
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="grid gap-4">
+                  <div className="grid gap-6">
                     <div className="grid gap-3">
-                      <Label htmlFor="title">
+                      <Label htmlFor="title" className="text-sm font-medium">
                         Blog Title *
                       </Label>
                       <Input
                         id="title"
                         name="title"
-                        className="bg-gray-200"
+                        className="bg-gray-50 border-gray-300"
                         placeholder="Enter your blog title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -402,14 +532,14 @@ const WriteBlog = () => {
                     </div>
                     
                     <div className="grid gap-3">
-                      <Label htmlFor="description">
+                      <Label htmlFor="description" className="text-sm font-medium">
                         Short Description *
                       </Label>
                       <Input
                         id="description"
                         name="description"
-                        className="bg-gray-200"
-                        placeholder="Enter a brief description of your blog"
+                        className="bg-gray-50 border-gray-300"
+                        placeholder="Enter a brief description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         required
@@ -417,13 +547,13 @@ const WriteBlog = () => {
                     </div>
 
                     <div className="grid gap-3">
-                      <Label htmlFor="tags">
+                      <Label htmlFor="tags" className="text-sm font-medium">
                         Tags (Optional)
                       </Label>
                       <Input
                         id="tags"
                         name="tags"
-                        className="bg-gray-200"
+                        className="bg-gray-50 border-gray-300"
                         placeholder="Enter tags separated by commas"
                         value={tags}
                         onChange={(e) => setTags(e.target.value)}
@@ -431,14 +561,14 @@ const WriteBlog = () => {
                     </div>
 
                     <div className="grid gap-3">
-                      <Label htmlFor="category">
+                      <Label htmlFor="category" className="text-sm font-medium">
                         Category *
                       </Label>
                       <Select
                         value={category}
                         onValueChange={(value) => setCategory(value)}
                       >
-                        <SelectTrigger className="w-full bg-gray-200">
+                        <SelectTrigger className="w-full bg-gray-50 border-gray-300">
                           <SelectValue placeholder="Select category"/>
                         </SelectTrigger>
                         <SelectContent>
@@ -456,30 +586,31 @@ const WriteBlog = () => {
                     </div>
                   </div>
 
-                  <DialogFooter className="gap-2">
+                  <DialogFooter className="gap-3">
                     <DialogClose asChild>
-                      <Button variant="outline">
+                      <Button variant="outline" className="border-gray-300 text-gray-700">
                         Cancel
                       </Button>
                     </DialogClose>
                     <Button
                       onClick={handlePublish}
                       disabled={isPublishing || !title.trim() || !description.trim()}
+                      className="bg-gray-900 hover:bg-gray-800 text-white"
                     >
                       {isPublishing ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Blog" : "Publish Blog")}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              
-              <Button 
-                className="text-center" 
-                variant="outline"
-                onClick={handleSaveDraft}
-              >
-                Save as Draft
-              </Button>
             </div>
+          </div>
+
+          {/* Editor Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto">
+            <SimpleEditor
+              getEditorInstance={(editor) => (editorRef.current = editor)}
+              onMainImageChange={handleMainImageChange}
+            />
           </div>
         </div>
       </div>
