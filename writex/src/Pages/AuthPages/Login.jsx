@@ -49,83 +49,86 @@ const Login = () => {
   }
 
   return (
-    <div className="h-screen flex">
-    <div className="relative w-1/2 rounded-r-[150px] bg-stone-100">
-      <div className="absolute inset-0 z-10">
-        <DotPattern className="rounded-r-[150px]" />
-      </div>
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      {/* Left side - Branding */}
+      <div className="relative w-full lg:w-1/2 h-64 lg:h-screen rounded-b-[50px] lg:rounded-b-none lg:rounded-r-[150px] bg-stone-100">
+        <div className="absolute inset-0 z-10">
+          <DotPattern className="rounded-b-[50px] lg:rounded-b-none lg:rounded-r-[150px]" />
+        </div>
 
-      <div className="flex flex-col justify-center items-center mt-[20%]">
-        <h1 className="text-8xl font-bold z-10">Login</h1>
-        <h1 className="text-4xl font-bold z-10 mt-8 mb-8">To</h1>
-        <div className="flex items-center justify-center flex-col relative z-10">
-          <div className="text-8xl">
-            Write<LineShadowText>X</LineShadowText>
+        <div className="flex flex-col justify-center items-center h-full px-4">
+          <h1 className="text-4xl sm:text-6xl lg:text-8xl font-bold z-10 text-center">Login</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold z-10 mt-4 lg:mt-8 mb-4 lg:mb-8">To</h1>
+          <div className="flex items-center justify-center flex-col relative z-10">
+            <div className="text-4xl sm:text-6xl lg:text-8xl">
+              Write<LineShadowText>X</LineShadowText>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div className="w-1/2 flex items-center justify-center">
-      <div className="w-[500px] space-y-8 p-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-8">
-          Login To Your Account
-        </h2>
 
+      {/* Right side - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center py-8 lg:py-0">
+        <div className="w-full max-w-md lg:max-w-lg xl:w-[500px] space-y-6 lg:space-y-8 px-6 lg:p-8">
+          <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-6 lg:mb-8 text-center lg:text-left">
+            Login To Your Account
+          </h2>
 
-        <div className="space-y-3">
-          <label
-            htmlFor="email"
-            className="text-base font-medium text-gray-800"
+          <div className="space-y-3">
+            <label
+              htmlFor="email"
+              className="text-sm lg:text-base font-medium text-gray-800"
+            >
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              onChange={handleChange}
+              value={formData.email}
+              required
+              className="w-full px-4 lg:px-5 py-3 text-base lg:text-lg border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
+              placeholder="john@example.com"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label
+              htmlFor="password"
+              className="text-sm lg:text-base font-medium text-gray-800"
+            >
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              onChange={handleChange}
+              value={formData.password}
+              required
+              className="w-full px-4 lg:px-5 py-3 text-base lg:text-lg border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button 
+            className="w-full bg-gray-900 text-white py-3 lg:py-4 rounded-xl text-base lg:text-lg font-semibold hover:bg-gray-800 transition-colors duration-200 shadow-lg hover:shadow-xl cursor-pointer"
+            onClick={handleLogin}
           >
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            onChange={handleChange}
-            value={formData.email}
-            required
-            className="w-full px-5 py-3 text-lg border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
-            placeholder="john@example.com"
-          />
+            Login
+          </button>
+
+          <p className="text-center text-sm lg:text-base text-gray-600">
+            Dont have an account?{" "}
+            <a
+              href="/signup"
+              className="text-gray-900 font-semibold hover:text-gray-700 transition-colors duration-200"
+            >
+              Signup
+            </a>
+          </p>
         </div>
-
-        <div className="space-y-3">
-          <label
-            htmlFor="password"
-            className="text-base font-medium text-gray-800"
-          >
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            onChange={handleChange}
-            value={formData.password}
-            required
-            className="w-full px-5 py-3 text-lg border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
-            placeholder="••••••••"
-          />
-        </div>
-
-        <button className="w-full bg-gray-900 text-white py-4 rounded-xl text-lg font-semibold hover:bg-gray-800 transition-colors duration-200 shadow-lg hover:shadow-xl cursor-pointer"
-        onClick={handleLogin}
-        >
-          Login
-        </button>
-
-        <p className="text-center text-base text-gray-600">
-          Dont have an account?{" "}
-          <a
-            href="/signup"
-            className="text-gray-900 font-semibold hover:text-gray-700 transition-colors duration-200"
-          >
-            Signup
-          </a>
-        </p>
       </div>
     </div>
-  </div>
   )
 }
 
