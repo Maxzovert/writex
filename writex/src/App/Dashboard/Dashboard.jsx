@@ -21,7 +21,27 @@ import {
   ArrowRight,
   Calendar,
   User,
-  Tag
+  Tag,
+  MessageCircle,
+  Users,
+  Trophy,
+  Star,
+  Share2,
+  ThumbsUp,
+  Reply,
+  Bell,
+  Search,
+  Filter,
+  Plus,
+  Award,
+  Target,
+  Zap,
+  Lightbulb,
+  TrendingDown,
+  BookOpen,
+  Calendar as CalendarIcon,
+  Sparkles,
+  BarChart3
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -29,60 +49,153 @@ const Dashboard = () => {
   const [currentTab, setCurrentTab] = useState("Home");
   const navigate = useNavigate();
 
-  const topBlogs = [
+  // Community & Engagement Data
+  const recentComments = [
     {
       id: 1,
-      title: "Exploring the Hidden Gems of Northern India",
-      author: "Priya Mehra",
-      category: "Travel",
-      date: "2025-06-08",
-      content:
-        "From remote villages in Himachal to offbeat spots in Uttarakhand, discover breathtaking destinations beyond the tourist radar.",
-      profileImage: "/images/authors/priya.jpg",
-      mainImage: secondSec,
-      views: "2.4K",
-      likes: "156"
+      author: "Sarah Chen",
+      avatar: "/images/authors/sarah.jpg",
+      comment: "This is exactly what I needed! Your travel tips saved me so much time planning my trip to Japan.",
+      postTitle: "Ultimate Japan Travel Guide",
+      timeAgo: "2 hours ago",
+      likes: 12,
+      isLiked: false
     },
     {
       id: 2,
-      title: "5 Quick & Healthy Breakfast Recipes You Can Make in 10 Minutes",
-      author: "Chef Aman Singh",
-      category: "Food",
-      date: "2025-06-12",
-      content:
-        "Start your day with these easy and nutritious breakfast ideas — perfect for busy mornings without compromising on taste.",
-      profileImage: "/images/authors/aman.jpg",
-      mainImage: FirstGrid,
-      views: "1.8K",
-      likes: "89"
+      author: "Mike Rodriguez",
+      avatar: "/images/authors/mike.jpg",
+      comment: "Great insights on productivity! I've been implementing your morning routine for a week now.",
+      postTitle: "5 Morning Habits That Changed My Life",
+      timeAgo: "5 hours ago",
+      likes: 8,
+      isLiked: true
     },
     {
       id: 3,
-      title: "Top 7 JavaScript Trends to Watch in 2025",
-      author: "Ritika Sharma",
-      category: "Tech",
-      date: "2025-06-15",
-      content:
-        "From AI integrations to edge computing, dive into the future of JavaScript development and what frameworks are rising.",
-      profileImage: "/images/authors/ritika.jpg",
-      mainImage: threeGrid,
-      views: "3.2K",
-      likes: "234"
+      author: "Emma Thompson",
+      avatar: "/images/authors/emma.jpg",
+      comment: "Could you write more about sustainable living? Your previous post was so helpful!",
+      postTitle: "Zero Waste Kitchen Tips",
+      timeAgo: "1 day ago",
+      likes: 15,
+      isLiked: false
+    }
+  ];
+
+  const followerActivity = [
+    {
+      id: 1,
+      type: "new_follower",
+      user: "Alex Kumar",
+      avatar: "/images/authors/alex.jpg",
+      action: "started following you",
+      timeAgo: "30 minutes ago"
     },
     {
-      id: 4,
-      title: "What Journaling Taught Me About Mindfulness",
-      author: "Kabir Arora",
-      category: "Journal",
-      date: "2025-06-18",
-      content:
-        "A personal story on how daily journaling transformed my approach to life, focus, and emotional clarity.",
-      profileImage: "/images/authors/kabir.jpg",
-      mainImage: secondSec,
-      views: "1.5K",
-      likes: "67"
+      id: 2,
+      type: "mention",
+      user: "Lisa Park",
+      avatar: "/images/authors/lisa.jpg",
+      action: "mentioned you in their post",
+      postTitle: "Best Writing Tools for Beginners",
+      timeAgo: "2 hours ago"
     },
+    {
+      id: 3,
+      type: "share",
+      user: "David Wilson",
+      avatar: "/images/authors/david.jpg",
+      action: "shared your post",
+      postTitle: "10 Productivity Hacks for Writers",
+      timeAgo: "4 hours ago"
+    }
   ];
+
+  const trendingTopics = [
+    {
+      id: 1,
+      title: "AI in Daily Life",
+      category: "Technology",
+      searchVolume: "12.5K",
+      trend: "up",
+      difficulty: "Medium",
+      tags: ["AI", "Productivity", "Future Tech"]
+    },
+    {
+      id: 2,
+      title: "Sustainable Living Tips",
+      category: "Lifestyle",
+      searchVolume: "8.9K",
+      trend: "up",
+      difficulty: "Easy",
+      tags: ["Eco-friendly", "Green Living", "Sustainability"]
+    },
+    {
+      id: 3,
+      title: "Remote Work Productivity",
+      category: "Business",
+      searchVolume: "15.2K",
+      trend: "stable",
+      difficulty: "Medium",
+      tags: ["Work from Home", "Productivity", "Career"]
+    }
+  ];
+
+  const contentIdeas = [
+    {
+      id: 1,
+      title: "10 Morning Routines That Changed My Life",
+      type: "Listicle",
+      estimatedReadTime: "8 min",
+      difficulty: "Easy",
+      category: "Lifestyle",
+      inspiration: "Based on your previous productivity posts"
+    },
+    {
+      id: 2,
+      title: "The Complete Guide to Building a Personal Brand",
+      type: "Guide",
+      estimatedReadTime: "15 min",
+      difficulty: "Medium",
+      category: "Business",
+      inspiration: "Trending in your network"
+    },
+    {
+      id: 3,
+      title: "5 JavaScript Frameworks Every Developer Should Know in 2025",
+      type: "Tutorial",
+      estimatedReadTime: "12 min",
+      difficulty: "Hard",
+      category: "Technology",
+      inspiration: "High search volume topic"
+    }
+  ];
+
+  const seasonalContent = [
+    {
+      id: 1,
+      month: "January",
+      theme: "New Year, New Goals",
+      suggestions: ["Goal Setting", "Habit Formation", "Year Planning"],
+      color: "bg-gray-900 text-white"
+    },
+    {
+      id: 2,
+      month: "February",
+      theme: "Love & Relationships",
+      suggestions: ["Self-Love", "Relationship Tips", "Valentine's Content"],
+      color: "bg-gray-100 text-gray-700"
+    },
+    {
+      id: 3,
+      month: "March",
+      theme: "Spring & Growth",
+      suggestions: ["Spring Cleaning", "Personal Growth", "Fresh Starts"],
+      color: "bg-gray-900 text-white"
+    }
+  ];
+
 
   const stats = [
     { icon: <PenTool className="w-6 h-6" />, label: "Total Posts", value: "156" },
@@ -225,7 +338,7 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* Top Blogs Section */}
+      {/* Community & Engagement Hub */}
       <section className="py-20 px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Section Header */}
@@ -237,110 +350,320 @@ const Dashboard = () => {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 lexend-txt mb-6">
-              Top Blogs
+              Community Hub
             </h2>
             <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto oxygen-regular">
-              Discover the most engaging content from our community of writers
+              Connect, engage, and grow with your writing community
             </p>
           </motion.div>
 
-          {/* Blogs Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-            {topBlogs.map((blog, index) => (
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Recent Comments */}
               <motion.div
-                key={blog.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="lg:col-span-2 bg-white/80 backdrop-blur-md rounded-3xl border border-gray-200 p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-900 lexend-txt flex items-center gap-2">
+                  <MessageCircle className="w-6 h-6 text-blue-500" />
+                  Recent Comments
+                </h3>
+                <button className="text-blue-500 hover:text-blue-600 font-medium text-sm flex items-center gap-1">
+                  View All
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {recentComments.map((comment, index) => (
+                  <motion.div
+                    key={comment.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white/80 backdrop-blur-md rounded-3xl border border-gray-200 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group"
-              >
-                {/* Image */}
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={blog.mainImage}
-                    alt={blog.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
-                      <Tag className="w-3 h-3" />
-                      {blog.category}
-                    </span>
+                    className="p-4 bg-gray-50/50 rounded-2xl hover:bg-gray-100/50 transition-colors"
+                  >
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={comment.avatar}
+                        alt={comment.author}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-gray-900 text-sm">{comment.author}</span>
+                          <span className="text-xs text-gray-500">•</span>
+                          <span className="text-xs text-gray-500">{comment.timeAgo}</span>
+                        </div>
+                        <p className="text-sm text-gray-700 mb-2">{comment.comment}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-blue-600 font-medium">on "{comment.postTitle}"</span>
+                          <div className="flex items-center gap-3">
+                            <button className={`flex items-center gap-1 text-xs ${comment.isLiked ? 'text-red-500' : 'text-gray-500'} hover:text-red-500 transition-colors`}>
+                              <ThumbsUp className="w-3 h-3" />
+                              {comment.likes}
+                            </button>
+                            <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+                              <Reply className="w-3 h-3" />
+                              Reply
+                            </button>
+                          </div>
+                        </div>
                   </div>
                 </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
 
-                {/* Content */}
-                <div className="p-6">
-                  {/* Author Info */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <img
-                      src={blog.profileImage}
-                      alt={blog.author}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
-                    />
-                    <div>
-                      <div className="font-semibold text-gray-900 text-sm">{blog.author}</div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <Calendar className="w-3 h-3" />
-                        {blog.date}
+            {/* Follower Activity */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="bg-white/80 backdrop-blur-md rounded-3xl border border-gray-200 p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900 lexend-txt flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-green-500" />
+                  Activity
+                </h3>
+                <button className="text-green-500 hover:text-green-600 font-medium text-sm">
+                  Mark All Read
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {followerActivity.map((activity, index) => (
+                  <motion.div
+                    key={activity.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                    className="p-3 bg-gray-50/50 rounded-xl hover:bg-gray-100/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={activity.avatar}
+                        alt={activity.user}
+                        className="w-8 h-8 rounded-full object-cover border border-white shadow-sm"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-700">
+                          <span className="font-semibold">{activity.user}</span> {activity.action}
+                        </p>
+                        {activity.postTitle && (
+                          <p className="text-xs text-blue-600 mt-1">"{activity.postTitle}"</p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">{activity.timeAgo}</p>
                       </div>
                     </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
                   </div>
 
-                  {/* Title */}
-                  <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 lexend-txt group-hover:text-gray-700 transition-colors">
-                    {blog.title}
+          {/* Content Ideas & Inspiration */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            viewport={{ once: true }}
+            className="mt-12"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-3xl font-bold text-gray-900 lexend-txt flex items-center gap-3">
+                <Lightbulb className="w-8 h-8 text-blue-500" />
+                Content Ideas & Inspiration
                   </h3>
+              <button className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-full font-medium hover:bg-gray-800 transition-colors">
+                <Sparkles className="w-4 h-4" />
+                Generate Ideas
+              </button>
+            </div>
 
-                  {/* Excerpt */}
-                  <p className="text-sm text-gray-600 line-clamp-3 mb-4 oxygen-regular">
-                    {blog.content}
-                  </p>
-
-                  {/* Stats & Read More */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+            {/* Trending Topics */}
+            <div className="mb-12">
+              <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-500" />
+                Trending Topics
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {trendingTopics.map((topic, index) => (
+                  <motion.div
+                    key={topic.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                    className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200 p-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="px-2 py-1 bg-gray-900 text-white text-xs rounded-full font-medium">
+                        {topic.category}
+                      </span>
                       <div className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        {blog.views}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Heart className="w-3 h-3" />
-                        {blog.likes}
+                        {topic.trend === 'up' ? (
+                          <TrendingUp className="w-4 h-4 text-blue-500" />
+                        ) : (
+                          <TrendingDown className="w-4 h-4 text-gray-400" />
+                        )}
+                        <span className="text-xs text-gray-500">{topic.searchVolume}</span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => navigate(`/blog/${blog.id}`)}
-                      className="flex items-center gap-1 text-gray-700 hover:text-gray-900 font-medium text-sm transition-colors group-hover:gap-2"
-                    >
-                      Read More
-                      <ArrowRight className="w-3 h-3" />
+                    
+                    <h5 className="text-lg font-bold text-gray-900 mb-2 lexend-txt">{topic.title}</h5>
+                    
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {topic.tags.map((tag, idx) => (
+                        <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        topic.difficulty === 'Easy' ? 'bg-gray-900 text-white' :
+                        topic.difficulty === 'Medium' ? 'bg-gray-100 text-gray-700' :
+                        'bg-gray-200 text-gray-800'
+                      }`}>
+                        {topic.difficulty}
+                      </span>
+                      <button className="text-blue-500 hover:text-blue-600 text-sm font-medium">
+                        Write About This
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* AI-Suggested Content Ideas */}
+            <div className="mb-12">
+              <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-blue-500" />
+                AI-Suggested Content Ideas
+              </h4>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {contentIdeas.map((idea, index) => (
+                  <motion.div
+                    key={idea.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                    className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200 p-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="px-2 py-1 bg-gray-900 text-white text-xs rounded-full font-medium">
+                        {idea.type}
+                      </span>
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Clock className="w-3 h-3" />
+                        {idea.estimatedReadTime}
+                      </div>
+                    </div>
+                    
+                    <h5 className="text-lg font-bold text-gray-900 mb-2 lexend-txt">{idea.title}</h5>
+                    <p className="text-sm text-gray-600 mb-3 oxygen-regular">{idea.inspiration}</p>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        idea.difficulty === 'Easy' ? 'bg-gray-900 text-white' :
+                        idea.difficulty === 'Medium' ? 'bg-gray-100 text-gray-700' :
+                        'bg-gray-200 text-gray-800'
+                      }`}>
+                        {idea.difficulty}
+                      </span>
+                      <button className="text-blue-500 hover:text-blue-600 text-sm font-medium">
+                        Start Writing
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Seasonal Content Calendar */}
+            <div>
+              <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-blue-500" />
+                Seasonal Content Calendar
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {seasonalContent.map((season, index) => (
+                  <motion.div
+                    key={season.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                    className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200 p-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${season.color}`}>
+                        {season.month}
+                      </span>
+                      <CalendarIcon className="w-4 h-4 text-gray-400" />
+                    </div>
+                    
+                    <h5 className="text-lg font-bold text-gray-900 mb-3 lexend-txt">{season.theme}</h5>
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600 font-medium">Content Suggestions:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {season.suggestions.map((suggestion, idx) => (
+                          <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                            {suggestion}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <button className="w-full mt-4 bg-gray-900 text-white py-2 rounded-xl font-medium hover:bg-gray-800 transition-colors">
+                      Plan Content
                     </button>
+                  </motion.div>
+                ))}
                   </div>
                 </div>
               </motion.div>
-            ))}
-          </div>
+
 
           {/* Bottom CTA */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
             viewport={{ once: true }}
             className="text-center mt-16"
           >
             <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 lexend-txt mb-4">
-              Write Your blog and get a chance to be featured in the top 5
+              Ready to engage with your community?
             </h3>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={startWritting}
               className="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors"
             >
               <PenTool className="w-4 h-4" />
-              Start Writing Now
+                Start Writing
+              </button>
+              <button onClick={() => navigate("/community")} className="inline-flex items-center gap-2 bg-blue-500 text-white px-6 py-3 rounded-full font-medium hover:bg-blue-600 transition-colors">
+                <Users className="w-4 h-4" />
+                Join Community
             </button>
+            </div>
           </motion.div>
         </div>
       </section>

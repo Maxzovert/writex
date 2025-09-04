@@ -12,6 +12,7 @@ import MyBlog from "./App/User-Section/MyBlog";
 import MyProfile from "./App/User-Section/MyProfile";
 import BlogPage from "./App/Blog Detail/BlogPage";
 import About from "./Pages/About/About";
+import CommDash from "./App/Community/CommDash";
 
 const App = () => {
   const { user, loading } = useAuth();
@@ -105,6 +106,14 @@ const App = () => {
           element={
             <PrivateRoute>
               <About />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/community"
+          element={
+            <PrivateRoute>
+              <CommDash />
             </PrivateRoute>
           }
         />

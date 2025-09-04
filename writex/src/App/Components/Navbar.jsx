@@ -13,6 +13,8 @@ import { toast } from "react-toastify";
 import { FaUser } from "react-icons/fa";
 import { TbArticleFilled } from "react-icons/tb";
 import { HiMenu, HiX } from "react-icons/hi";
+import { RiFolderInfoFill } from "react-icons/ri";
+
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -33,8 +35,8 @@ const Navbar = () => {
       path: "/write",
     },
     {
-      title: "About",
-      path: "/about",
+      title: "Community",
+      path: "/community",
     },
   ];
   
@@ -48,6 +50,11 @@ const Navbar = () => {
       title: "My Blogs",
       path: "/myblogs",
       logo: <TbArticleFilled />
+    },
+    {
+      title: "About",
+      path: "/About",
+      logo: <RiFolderInfoFill />
     }
   ];
   
