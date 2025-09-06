@@ -19,7 +19,8 @@ import {
   BookA,
   Tv,
   Medal,
-  ArrowBigUp
+  ArrowBigUp,
+  MessageCircle
 } from 'lucide-react';
 
 const Blog = () => {
@@ -326,11 +327,15 @@ const Blog = () => {
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <div className="flex items-center gap-1">
                           <Eye className="w-3 h-3" />
-                          {blog.views || "0"}
+                          {blog.viewCount || "0"}
                         </div>
                         <div className="flex items-center gap-1">
                           <Heart className="w-3 h-3" />
-                          {blog.likes || "0"}
+                          {blog.likes?.length || "0"}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MessageCircle className="w-3 h-3" />
+                          {blog.comments?.length || "0"}
                         </div>
                       </div>
                       <button

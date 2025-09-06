@@ -3,20 +3,51 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import Navbar from '../Components/Navbar';
+import { useAuth } from '../../context/authContext';
+import { Button } from '../../components/ui/button';
+import { Textarea } from '../../components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Separator } from '../../components/ui/separator';
+import { 
+  Heart, 
+  MessageCircle, 
+  Eye, 
+  ThumbsUp, 
+  Reply, 
+  Trash2, 
+  MoreHorizontal,
+  Send,
+  User,
+  Calendar,
+  Clock
+} from 'lucide-react';
 
 const BlogPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [newComment, setNewComment] = useState('');
+  const [newReply, setNewReply] = useState({});
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
   useEffect(() => {
     const fetchBlog = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/public/posts/blog/${id}`);
-        setBlog(response.data.post);
-        toast.success('Blog loaded successfully');
+        // First, track the view
+        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/view`, {}, {
+          withCredentials: true
+        });
+        
+        // Then fetch the blog with interactions
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/interactions`, {
+          withCredentials: true
+        });
+        setBlog(response.data.blog);
       } catch (error) {
         console.error('Error fetching blog:', error);
         console.error('Error response:', error.response?.data);
@@ -32,6 +63,265 @@ const BlogPage = () => {
       fetchBlog();
     }
   }, [id, navigate]);
+
+  // Handle like/unlike blog post
+  const handleLikePost = async () => {
+    if (!user) {
+      toast.error('Please login to like posts');
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/like`,
+        {},
+        { withCredentials: true }
+      );
+      
+      setBlog(prev => ({
+        ...prev,
+        isLiked: response.data.isLiked,
+        likes: response.data.isLiked 
+          ? [...prev.likes, { _id: user.id, username: user.username }]
+          : prev.likes.filter(like => like._id !== user.id)
+      }));
+      
+      toast.success(response.data.message);
+    } catch (error) {
+      console.error('Error liking post:', error);
+      toast.error('Error liking post');
+    }
+  };
+
+  // Handle like/unlike comment
+  const handleLikeComment = async (commentId) => {
+    if (!user) {
+      toast.error('Please login to like comments');
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/comment/${commentId}/like`,
+        {},
+        { withCredentials: true }
+      );
+      
+      setBlog(prev => ({
+        ...prev,
+        comments: prev.comments.map(comment => 
+          comment._id === commentId 
+            ? {
+                ...comment,
+                isLiked: response.data.isLiked,
+                likes: response.data.isLiked 
+                  ? [...comment.likes, { _id: user.id, username: user.username }]
+                  : comment.likes.filter(like => like._id !== user.id)
+              }
+            : comment
+        )
+      }));
+      
+      toast.success(response.data.message);
+    } catch (error) {
+      console.error('Error liking comment:', error);
+      toast.error('Error liking comment');
+    }
+  };
+
+  // Handle like/unlike reply
+  const handleLikeReply = async (commentId, replyId) => {
+    if (!user) {
+      toast.error('Please login to like replies');
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/comment/${commentId}/reply/${replyId}/like`,
+        {},
+        { withCredentials: true }
+      );
+      
+      setBlog(prev => ({
+        ...prev,
+        comments: prev.comments.map(comment => 
+          comment._id === commentId 
+            ? {
+                ...comment,
+                replies: comment.replies.map(reply =>
+                  reply._id === replyId
+                    ? {
+                        ...reply,
+                        isLiked: response.data.isLiked,
+                        likes: response.data.isLiked 
+                          ? [...reply.likes, { _id: user.id, username: user.username }]
+                          : reply.likes.filter(like => like._id !== user.id)
+                      }
+                    : reply
+                )
+              }
+            : comment
+        )
+      }));
+      
+      toast.success(response.data.message);
+    } catch (error) {
+      console.error('Error liking reply:', error);
+      toast.error('Error liking reply');
+    }
+  };
+
+  // Handle add comment
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      toast.error('Please login to comment');
+      return;
+    }
+
+    if (!newComment.trim()) {
+      toast.error('Please enter a comment');
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/comment`,
+        { content: newComment },
+        { withCredentials: true }
+      );
+      
+      setBlog(prev => ({
+        ...prev,
+        comments: [...prev.comments, response.data.comment]
+      }));
+      
+      setNewComment('');
+      toast.success('Comment added successfully');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error('Error adding comment');
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  // Handle add reply
+  const handleAddReply = async (commentId) => {
+    if (!user) {
+      toast.error('Please login to reply');
+      return;
+    }
+
+    const replyContent = newReply[commentId];
+    if (!replyContent?.trim()) {
+      toast.error('Please enter a reply');
+      return;
+    }
+
+    setIsSubmittingReply(true);
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/comment/${commentId}/reply`,
+        { content: replyContent },
+        { withCredentials: true }
+      );
+      
+      setBlog(prev => ({
+        ...prev,
+        comments: prev.comments.map(comment => 
+          comment._id === commentId 
+            ? { ...comment, replies: [...comment.replies, response.data.reply] }
+            : comment
+        )
+      }));
+      
+      setNewReply(prev => ({ ...prev, [commentId]: '' }));
+      setReplyingTo(null);
+      toast.success('Reply added successfully');
+    } catch (error) {
+      console.error('Error adding reply:', error);
+      toast.error('Error adding reply');
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
+  // Handle delete comment
+  const handleDeleteComment = async (commentId) => {
+    if (!user) {
+      toast.error('Please login to delete comments');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this comment?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/comment/${commentId}`,
+        { withCredentials: true }
+      );
+      
+      setBlog(prev => ({
+        ...prev,
+        comments: prev.comments.filter(comment => comment._id !== commentId)
+      }));
+      
+      toast.success('Comment deleted successfully');
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      toast.error('Error deleting comment');
+    }
+  };
+
+  // Handle delete reply
+  const handleDeleteReply = async (commentId, replyId) => {
+    if (!user) {
+      toast.error('Please login to delete replies');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this reply?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/comment/${commentId}/reply/${replyId}`,
+        { withCredentials: true }
+      );
+      
+      setBlog(prev => ({
+        ...prev,
+        comments: prev.comments.map(comment => 
+          comment._id === commentId 
+            ? { ...comment, replies: comment.replies.filter(reply => reply._id !== replyId) }
+            : comment
+        )
+      }));
+      
+      toast.success('Reply deleted successfully');
+    } catch (error) {
+      console.error('Error deleting reply:', error);
+      toast.error('Error deleting reply');
+    }
+  };
+
+  // Format time ago
+  const formatTimeAgo = (date) => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - new Date(date)) / 1000);
+    
+    if (diffInSeconds < 60) return 'just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    return new Date(date).toLocaleDateString();
+  };
 
   if (loading) {
     return (
@@ -441,7 +731,7 @@ const BlogPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Back button */}
         <button
           onClick={() => navigate('/blogs')}
@@ -453,35 +743,373 @@ const BlogPage = () => {
           Back to Blogs
         </button>
 
-        {/* Blog header */}
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-            {blog.title} <span className="text-sm text-gray-600 mb-4">{blog.status}</span>
-          </h1>
-          <div className="flex items-center gap-4">
-            {blog.profileImage && (
-              <img
-                src={blog.profileImage}
-                alt={blog.author?.username || "Author"}
-                className="w-16 h-16 rounded-full object-cover"
-              />
-            )}
-            <div>
-              <p className="font-semibold text-xl text-gray-800">{firstUpperCase(blog.author?.username)}</p>
-              <p className="text-gray-600 text-lg">
-                {new Date(blog.createdAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            {/* Blog header */}
+            <div className="mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                {blog.title}
+              </h1>
+              
+              {/* Author info and stats */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  {blog.author?.profileImage ? (
+                    <img
+                      src={blog.author.profileImage}
+                      alt={blog.author?.username || "Author"}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
+                      <User className="w-6 h-6 text-gray-600" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold text-lg text-gray-800">{firstUpperCase(blog.author?.username)}</p>
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </div>
+                      {blog.readTime > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          {blog.readTime} min read
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Interaction stats */}
+                <div className="flex items-center gap-6 text-sm text-gray-500">
+                  <div className="flex items-center gap-1">
+                    <Eye className="w-4 h-4" />
+                    {blog.viewCount} views
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <MessageCircle className="w-4 h-4" />
+                    {blog.comments?.length || 0} comments
+                  </div>
+                </div>
+              </div>
+
+              {/* Main image */}
+              {blog.mainImage && (
+                <div className="mb-8">
+                  <img
+                    src={blog.mainImage}
+                    alt={blog.title}
+                    className="w-full h-64 md:h-96 object-cover rounded-lg"
+                  />
+                </div>
+              )}
+
+              {/* Like button */}
+              <div className="mb-8">
+                <Button
+                  onClick={handleLikePost}
+                  variant={blog.isLiked ? "default" : "outline"}
+                  className={`flex items-center gap-2 ${
+                    blog.isLiked 
+                      ? "bg-red-500 hover:bg-red-600 text-white" 
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 ${blog.isLiked ? "fill-current" : ""}`} />
+                  {blog.isLiked ? "Liked" : "Like"} ({blog.likes?.length || 0})
+                </Button>
+              </div>
+            </div>
+
+            {/* Blog content */}
+            <div className="prose prose-lg max-w-none mb-12">
+              {renderTipTapContent(blog.content)}
+            </div>
+
+            {/* Comments Section */}
+            <div className="border-t border-gray-200 pt-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Comments ({blog.comments?.length || 0})</h2>
+              
+              {/* Add comment form */}
+              {user ? (
+                <Card className="mb-8">
+                  <CardContent className="p-6">
+                    <form onSubmit={handleAddComment} className="space-y-4">
+                      <Textarea
+                        placeholder="Write a comment..."
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        className="min-h-[100px] resize-none"
+                        disabled={isSubmittingComment}
+                      />
+                      <div className="flex justify-end">
+                        <Button
+                          type="submit"
+                          disabled={isSubmittingComment || !newComment.trim()}
+                          className="bg-gray-900 hover:bg-gray-800 text-white"
+                        >
+                          {isSubmittingComment ? "Posting..." : "Post Comment"}
+                        </Button>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="mb-8">
+                  <CardContent className="p-6 text-center">
+                    <p className="text-gray-600 mb-4">Please login to comment</p>
+                    <Button
+                      onClick={() => navigate('/login')}
+                      className="bg-gray-900 hover:bg-gray-800 text-white"
+                    >
+                      Login
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Comments list */}
+              <div className="space-y-6">
+                {blog.comments?.map((comment) => (
+                  <Card key={comment._id} className="border border-gray-200">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          {comment.user?.profileImage ? (
+                            <img
+                              src={comment.user.profileImage}
+                              alt={comment.user.username}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                              <User className="w-4 h-4 text-gray-600" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-gray-900">{comment.user?.username}</p>
+                            <p className="text-sm text-gray-500">{formatTimeAgo(comment.createdAt)}</p>
+                          </div>
+                        </div>
+                        
+                        {/* Comment actions */}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={() => handleLikeComment(comment._id)}
+                            variant={comment.isLiked ? "default" : "ghost"}
+                            size="sm"
+                            className={`flex items-center gap-1 ${
+                              comment.isLiked 
+                                ? "bg-red-500 hover:bg-red-600 text-white" 
+                                : "text-gray-500 hover:text-red-500"
+                            }`}
+                          >
+                            <ThumbsUp className={`w-3 h-3 ${comment.isLiked ? "fill-current" : ""}`} />
+                            {comment.likes?.length || 0}
+                          </Button>
+                          
+                          <Button
+                            onClick={() => setReplyingTo(replyingTo === comment._id ? null : comment._id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            <Reply className="w-3 h-3" />
+                          </Button>
+                          
+                          {(user?.id === comment.user?._id || user?.id === blog.author?._id) && (
+                            <Button
+                              onClick={() => handleDeleteComment(comment._id)}
+                              variant="ghost"
+                              size="sm"
+                              className="text-gray-500 hover:text-red-500"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <p className="text-gray-700 mb-4">{comment.content}</p>
+                      
+                      {/* Reply form */}
+                      {replyingTo === comment._id && user && (
+                        <div className="ml-8 border-l-2 border-gray-200 pl-4 mb-4">
+                          <div className="space-y-3">
+                            <Textarea
+                              placeholder="Write a reply..."
+                              value={newReply[comment._id] || ''}
+                              onChange={(e) => setNewReply(prev => ({ ...prev, [comment._id]: e.target.value }))}
+                              className="min-h-[80px] resize-none text-sm"
+                              disabled={isSubmittingReply}
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleAddReply(comment._id)}
+                                disabled={isSubmittingReply || !newReply[comment._id]?.trim()}
+                                size="sm"
+                                className="bg-gray-900 hover:bg-gray-800 text-white"
+                              >
+                                {isSubmittingReply ? "Posting..." : "Reply"}
+                              </Button>
+                              <Button
+                                onClick={() => setReplyingTo(null)}
+                                variant="outline"
+                                size="sm"
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Replies */}
+                      {comment.replies?.length > 0 && (
+                        <div className="ml-8 border-l-2 border-gray-200 pl-4 space-y-4">
+                          {comment.replies.map((reply) => (
+                            <div key={reply._id} className="bg-gray-50 p-4 rounded-lg">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  {reply.user?.profileImage ? (
+                                    <img
+                                      src={reply.user.profileImage}
+                                      alt={reply.user.username}
+                                      className="w-6 h-6 rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
+                                      <User className="w-3 h-3 text-gray-600" />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p className="font-semibold text-sm text-gray-900">{reply.user?.username}</p>
+                                    <p className="text-xs text-gray-500">{formatTimeAgo(reply.createdAt)}</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    onClick={() => handleLikeReply(comment._id, reply._id)}
+                                    variant={reply.isLiked ? "default" : "ghost"}
+                                    size="sm"
+                                    className={`flex items-center gap-1 ${
+                                      reply.isLiked 
+                                        ? "bg-red-500 hover:bg-red-600 text-white" 
+                                        : "text-gray-500 hover:text-red-500"
+                                    }`}
+                                  >
+                                    <ThumbsUp className={`w-3 h-3 ${reply.isLiked ? "fill-current" : ""}`} />
+                                    {reply.likes?.length || 0}
+                                  </Button>
+                                  
+                                  {(user?.id === reply.user?._id || user?.id === blog.author?._id) && (
+                                    <Button
+                                      onClick={() => handleDeleteReply(comment._id, reply._id)}
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-gray-500 hover:text-red-500"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                              <p className="text-sm text-gray-700">{reply.content}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Blog content */}
-        <div className="prose prose-lg max-w-none">
-          {renderTipTapContent(blog.content)}
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-8 space-y-6">
+              {/* Blog stats */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Blog Stats</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm text-gray-600">Views</span>
+                    </div>
+                    <span className="font-semibold">{blog.viewCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm text-gray-600">Likes</span>
+                    </div>
+                    <span className="font-semibold">{blog.likes?.length || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm text-gray-600">Comments</span>
+                    </div>
+                    <span className="font-semibold">{blog.comments?.length || 0}</span>
+                  </div>
+                  {blog.uniqueViewCount && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm text-gray-600">Unique Views</span>
+                      </div>
+                      <span className="font-semibold">{blog.uniqueViewCount}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Author info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">About the Author</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-3 mb-4">
+                    {blog.author?.profileImage ? (
+                      <img
+                        src={blog.author.profileImage}
+                        alt={blog.author.username}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
+                        <User className="w-6 h-6 text-gray-600" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-gray-900">{blog.author?.username}</p>
+                      <p className="text-sm text-gray-500">Blog Author</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Published on {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>

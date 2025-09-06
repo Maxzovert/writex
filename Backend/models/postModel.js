@@ -42,6 +42,16 @@ const blogSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    uniqueViews: [{
+        user: {
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        viewedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     likes: [{
         type: Schema.Types.ObjectId,
         ref: 'User'
@@ -51,11 +61,42 @@ const blogSchema = new mongoose.Schema({
             type: Schema.Types.ObjectId,
             ref: 'User'
         },
-        content: String,
+        content: {
+            type: String,
+            required: true,
+            trim: true
+        },
         createdAt: {
             type: Date,
             default: Date.now
-        }
+        },
+        updatedAt: {
+            type: Date,
+            default: Date.now
+        },
+        likes: [{
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        }],
+        replies: [{
+            user: {
+                type: Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            content: {
+                type: String,
+                required: true,
+                trim: true
+            },
+            createdAt: {
+                type: Date,
+                default: Date.now
+            },
+            likes: [{
+                type: Schema.Types.ObjectId,
+                ref: 'User'
+            }]
+        }]
     }],
     createdAt:{
         type: Date,
