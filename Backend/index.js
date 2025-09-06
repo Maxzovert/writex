@@ -17,17 +17,17 @@ connetDB();
 
 // // Enable CORS
 
-// app.use(cors({
-//   origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
-//   credentials: true 
-// }));
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+  credentials: true 
+}));
 
 // Production
 
-app.use(cors({
-  origin: 'https://writtex.onrender.com', // Vite's default port
-  credentials: true // This is important for cooSkies
-}));
+// app.use(cors({
+//   origin: 'https://writtex.onrender.com', // Vite's default port
+//   credentials: true // This is important for cooSkies
+// }));
 
 // app.options('*', cors());
 

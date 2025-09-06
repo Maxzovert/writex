@@ -287,9 +287,9 @@ const Blog = () => {
                   <div className="p-6">
                     {/* Author Info */}
                     <div className="flex items-center gap-3 mb-4">
-                      {blog.profileImage ? (
+                      {blog.author?.profileImage ? (
                         <img
-                          src={blog.profileImage}
+                          src={blog.author.profileImage}
                           alt={blog.author?.username || "Author"}
                           className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
                         />

@@ -42,7 +42,7 @@ const createBlog = async (req , res) => {
 
 const getUserBlogs = async (req , res) => {
     try {
-        const blogs = await Blog.find({author : req.user.id}).populate("author" , "username");
+        const blogs = await Blog.find({author : req.user.id}).populate("author" , "username profileImage");
         res.status(200).json({
             message : "All Your Blog are fetched",
             blogs

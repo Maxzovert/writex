@@ -110,13 +110,15 @@ const MyProfile = () => {
         ...prev,
         name: userData.username || "User",
         profileImage: userData.profileImage || "",
+        bio: userData.bio || "Add Bio",
         totalLikes: stats.totalLikes || 0,
         totalPublishedBlogs: stats.publishedBlogs || 0
       }));
 
       setEditForm(prev => ({
         ...prev,
-        name: userData.username || "User"
+        name: userData.username || "User",
+        bio: userData.bio || "Add Bio"
       }));
 
     } catch (error) {
@@ -127,11 +129,13 @@ const MyProfile = () => {
       if (user?.username) {
         setProfile(prev => ({
           ...prev,
-          name: user.username
+          name: user.username,
+          bio: user.bio || "Add Bio"
         }));
         setEditForm(prev => ({
           ...prev,
-          name: user.username
+          name: user.username,
+          bio: user.bio || "Add Bio"
         }));
       }
     } finally {
@@ -227,13 +231,48 @@ const MyProfile = () => {
     });
   };
 
-  const handleSave = () => {
-    setProfile(prev => ({
-      ...prev,
-      ...editForm
-    }));
-    setIsEditing(false);
-    toast.success('Profile updated successfully!');
+  const handleSave = async () => {
+    try {
+      // Make API call to update profile
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_BASE_URL}/users/profile`,
+        { 
+          username: editForm.name,
+          bio: editForm.bio 
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      // Update local profile state
+      setProfile(prev => ({
+        ...prev,
+        ...editForm
+      }));
+
+      // Update user context with new data
+      if (setUser && user) {
+        setUser(prev => ({
+          ...prev,
+          username: editForm.name,
+          bio: editForm.bio
+        }));
+      }
+
+      setIsEditing(false);
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to update profile. Please try again.');
+      }
+    }
   };
 
   const handleCancel = () => {

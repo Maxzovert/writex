@@ -811,26 +811,27 @@ const BlogPage = () => {
                 </div>
               )}
 
-              {/* Like button */}
-              <div className="mb-8">
-                <Button
-                  onClick={handleLikePost}
-                  variant={blog.isLiked ? "default" : "outline"}
-                  className={`flex items-center gap-2 ${
-                    blog.isLiked 
-                      ? "bg-red-500 hover:bg-red-600 text-white" 
-                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  <Heart className={`w-4 h-4 ${blog.isLiked ? "fill-current" : ""}`} />
-                  {blog.isLiked ? "Liked" : "Like"} ({blog.likes?.length || 0})
-                </Button>
-              </div>
             </div>
 
             {/* Blog content */}
-            <div className="prose prose-lg max-w-none mb-12">
+            <div className="prose prose-lg max-w-none mb-8">
               {renderTipTapContent(blog.content)}
+            </div>
+
+            {/* Like button */}
+            <div className="mb-12">
+              <Button
+                onClick={handleLikePost}
+                variant={blog.isLiked ? "default" : "outline"}
+                className={`flex items-center gap-2 ${
+                  blog.isLiked 
+                    ? "bg-red-500 hover:bg-red-600 text-white" 
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${blog.isLiked ? "fill-current" : ""}`} />
+                {blog.isLiked ? "Liked" : "Like"} ({blog.likes?.length || 0})
+              </Button>
             </div>
 
             {/* Comments Section */}

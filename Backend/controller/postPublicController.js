@@ -3,7 +3,7 @@ import Blog from "../models/postModel.js";
 const getAllBlogs = async(req, res) => {
     try {
         const allBlogs = await Blog.find({status : 'published'})
-        .populate("author" , "username")
+        .populate("author" , "username profileImage")
         .sort({publsihedAt : -1});
         
         res.status(200).json({message: "Blog fetched" , allBlogs})
@@ -16,7 +16,7 @@ const getAllBlogs = async(req, res) => {
 const getBlogById = async (req,res) => {
     try {
         const {id} = req.params;
-        const blog = await Blog.findById(id).populate("author" , "username");
+        const blog = await Blog.findById(id).populate("author" , "username profileImage");
 
         if(!blog){
             return res.status(404).json({message : "Blog Not Found"})
@@ -36,7 +36,7 @@ const getBlogBySlug = async (req , res) => {
     try {
         const {slug} = req.params;
 
-        const blog = await Blog.findOne({slug}).populate("author" , "username");
+        const blog = await Blog.findOne({slug}).populate("author" , "username profileImage");
 
         if(!blog){
             return res.status(404).json({message : "Blog Not Found"})
