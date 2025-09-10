@@ -111,6 +111,11 @@ const MyProfile = () => {
         name: userData.username || "User",
         profileImage: userData.profileImage || "",
         bio: userData.bio || "Add Bio",
+        socialLinks: userData.socialLinks || {
+          instagram: "",
+          linkedin: "",
+          twitter: ""
+        },
         totalLikes: stats.totalLikes || 0,
         totalPublishedBlogs: stats.publishedBlogs || 0
       }));
@@ -307,36 +312,88 @@ const MyProfile = () => {
     setShowSocialModal(true);
   };
 
-  const handleSocialSave = () => {
+  const handleSocialSave = async () => {
     if (socialUrl.trim()) {
-      setProfile(prev => ({
-        ...prev,
-        socialLinks: {
-          ...prev.socialLinks,
-          [selectedSocial]: socialUrl.trim()
-        }
-      }));
-      setShowSocialModal(false);
-      setSocialUrl('');
-      toast.success(`${socialPlatforms.find(p => p.name === selectedSocial)?.label} profile connected!`);
+      try {
+        // Make API call to update social links
+        const token = localStorage.getItem('token');
+        const formattedUrl = formatSocialUrl(socialUrl.trim());
+        const updatedSocialLinks = {
+          ...profile.socialLinks,
+          [selectedSocial]: formattedUrl
+        };
+
+        await axios.put(
+          `${import.meta.env.VITE_API_BASE_URL}/users/profile`,
+          { socialLinks: updatedSocialLinks },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        // Update local state
+        setProfile(prev => ({
+          ...prev,
+          socialLinks: updatedSocialLinks
+        }));
+
+        setShowSocialModal(false);
+        setSocialUrl('');
+        toast.success(`${socialPlatforms.find(p => p.name === selectedSocial)?.label} profile connected!`);
+      } catch (error) {
+        console.error('Error updating social links:', error);
+        toast.error('Failed to save social link. Please try again.');
+      }
     } else {
       toast.error('Please enter a valid URL');
     }
   };
 
-  const handleSocialRemove = (platform) => {
-    setProfile(prev => ({
-      ...prev,
-      socialLinks: {
-        ...prev.socialLinks,
+  const handleSocialRemove = async (platform) => {
+    try {
+      // Make API call to update social links
+      const token = localStorage.getItem('token');
+      const updatedSocialLinks = {
+        ...profile.socialLinks,
         [platform]: ""
-      }
-    }));
-    toast.success(`${socialPlatforms.find(p => p.name === platform)?.label} profile removed!`);
+      };
+
+      await axios.put(
+        `${import.meta.env.VITE_API_BASE_URL}/users/profile`,
+        { socialLinks: updatedSocialLinks },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      // Update local state
+      setProfile(prev => ({
+        ...prev,
+        socialLinks: updatedSocialLinks
+      }));
+
+      toast.success(`${socialPlatforms.find(p => p.name === platform)?.label} profile removed!`);
+    } catch (error) {
+      console.error('Error removing social link:', error);
+      toast.error('Failed to remove social link. Please try again.');
+    }
   };
 
   const goBackToBlogs = () => {
     navigate('/blogs');
+  };
+
+  // Helper function to ensure URL has proper protocol
+  const formatSocialUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return `https://${url}`;
   };
 
   return (
@@ -531,7 +588,7 @@ const MyProfile = () => {
                       {hasLink ? (
                         <div className="flex items-center gap-2">
                           <a
-                            href={hasLink}
+                            href={formatSocialUrl(hasLink)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-gray-600 hover:text-gray-800 transition-colors"

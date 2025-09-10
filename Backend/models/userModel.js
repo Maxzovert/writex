@@ -28,6 +28,20 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
+    socialLinks: {
+        instagram: {
+            type: String,
+            default: ""
+        },
+        linkedin: {
+            type: String,
+            default: ""
+        },
+        twitter: {
+            type: String,
+            default: ""
+        }
+    },
     createdAt: {
         type: Date,
         default: Date.now

@@ -117,8 +117,8 @@ const getUserProfileStats = async (req, res) => {
         const userBlogs = await Blog.find({ author: userId });
         const totalLikes = userBlogs.reduce((total, blog) => total + (blog.likes?.length || 0), 0);
         
-        // Get user basic info including profile image and bio
-        const user = await User.findById(userId).select('username email profileImage bio createdAt');
+        // Get user basic info including profile image, bio, and social links
+        const user = await User.findById(userId).select('username email profileImage bio socialLinks createdAt');
         
         res.status(200).json({
             user: {
@@ -127,6 +127,7 @@ const getUserProfileStats = async (req, res) => {
                 email: user.email,
                 profileImage: user.profileImage,
                 bio: user.bio,
+                socialLinks: user.socialLinks,
                 createdAt: user.createdAt
             },
             stats: {
@@ -180,11 +181,12 @@ const updateProfileImage = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { username, bio } = req.body;
+        const { username, bio, socialLinks } = req.body;
         
         const updateData = {};
         if (username) updateData.username = username;
         if (bio) updateData.bio = bio;
+        if (socialLinks) updateData.socialLinks = socialLinks;
         
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({ message: "No valid fields to update" });
@@ -194,7 +196,7 @@ const updateProfile = async (req, res) => {
             userId,
             updateData,
             { new: true, runValidators: true }
-        ).select('username email profileImage bio createdAt');
+        ).select('username email profileImage bio socialLinks createdAt');
         
         if (!user) {
             return res.status(404).json({ message: "User not found" });
