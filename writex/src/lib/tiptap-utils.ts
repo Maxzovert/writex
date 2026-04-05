@@ -150,12 +150,10 @@ export const handleImageUpload = async (
     throw new Error("No file provided");
   }
 
-  console.log("Starting handleImageUpload with file:", file.name);
   const formData = new FormData();
   formData.append("image", file);
 
   try {
-    console.log("Sending upload request...");
     const config = {
       headers: {
         "Content-Type": "multipart/form-data"
@@ -178,11 +176,8 @@ export const handleImageUpload = async (
       config
     );
 
-    console.log("Upload response:", response.data);
-    
     if (response.data?.url) {
       const imageUrl = `${import.meta.env.VITE_API_BASE_URL}${response.data.url}`;
-      console.log("Final image URL:", imageUrl);
       return imageUrl;
     }
     

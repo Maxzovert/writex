@@ -1,6 +1,6 @@
 import type { Attrs, Node } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
-import { uploadImageToSupabase, type UploadProgressCallback } from './supabase-storage';
+import { uploadImageToCloudinary, type UploadProgressCallback } from './cloudinary-storage';
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -17,26 +17,18 @@ export const handleImageUpload = async (
 
   try {
     // Convert the progress callback format
-    const supabaseProgressCallback: UploadProgressCallback = (progress) => {
+    const cloudinaryProgressCallback: UploadProgressCallback = (progress) => {
       onProgress?.({ progress });
     };
 
-    // Upload to Supabase Storage
-    const result = await uploadImageToSupabase(file, supabaseProgressCallback, abortSignal);
-    
-    console.log("Supabase upload successful:", result);
+    const result = await uploadImageToCloudinary(file, cloudinaryProgressCallback, abortSignal);
     return result.url;
   } catch (error) {
-    console.error("Supabase image upload failed:", error);
+    console.error("Cloudinary image upload failed:", error);
     throw error;
   }
 };
 
-/**
- * Clean up any resources if needed
- * Note: Supabase handles cleanup automatically
- */
-export const revokeImageUrl = (url: string): void => {
-  // No cleanup needed for Supabase URLs
-  console.log("Image URL cleanup not needed for Supabase");
+export const revokeImageUrl = (_url: string): void => {
+  // Hosted URLs; nothing to revoke
 };

@@ -356,43 +356,20 @@ const BlogPage = () => {
       return <div className="text-gray-700 leading-relaxed text-lg">{content}</div>;
     }
 
-    // Debug: Log the content structure
-    console.log('=== TIPTAP CONTENT DEBUG ===');
-    console.log('Content type:', typeof content);
-    console.log('Content:', content);
-    console.log('Content.content:', content?.content);
-    console.log('Content.content length:', content?.content?.length);
-    
     if (content && content.content && Array.isArray(content.content)) {
-      console.log('Processing content array...');
       return content.content.map((node, index) => {
-        // Debug: Log each node
-        console.log(`=== Node ${index} ===`);
-        console.log('Node type:', node.type);
-        console.log('Node attrs:', node.attrs);
-        console.log('Node content:', node.content);
-        console.log('Node marks:', node.marks);
-        
         switch (node.type) {
           case 'paragraph':
-            console.log('Processing paragraph node...');
             return (
               <p key={index} className="mb-4 text-gray-700 leading-relaxed text-lg">
                 {node.content && node.content.map((textNode, textIndex) => {
-                  console.log(`=== Text Node ${textIndex} ===`);
-                  console.log('Text node type:', textNode.type);
-                  console.log('Text node text:', textNode.text);
-                  console.log('Text node marks:', textNode.marks);
-                  
                   if (textNode.type === 'text') {
                     let text = textNode.text;
                     let className = '';
                     
                     // Apply marks (formatting) - keeping it simple like the editor
                     if (textNode.marks) {
-                      console.log('Processing marks for text:', text);
-                      textNode.marks.forEach((mark, markIndex) => {
-                        console.log(`Processing mark ${markIndex}:`, mark.type, mark.attrs);
+                      textNode.marks.forEach((mark) => {
                         switch (mark.type) {
                           case 'bold':
                             className += ' font-bold';
@@ -407,8 +384,7 @@ const BlogPage = () => {
                             // Handle different highlight colors
                             if (mark.attrs && mark.attrs.color) {
                               const color = mark.attrs.color;
-                              console.log('Highlight color detected:', color, mark.attrs);
-                              
+
                               // Check if it's a CSS custom property or hex color
                               if (color.startsWith('var(--') || color.startsWith('#')) {
                                 // For custom colors, we'll use inline styles
@@ -682,9 +658,6 @@ const BlogPage = () => {
             );
           
           default:
-            // For debugging - log unknown node types
-            console.log('Unknown node type:', node.type, node);
-            
             // Fallback: Try to render any content we can find
             if (node.content && Array.isArray(node.content)) {
               return (

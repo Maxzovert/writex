@@ -37,7 +37,6 @@ const Blog = () => {
 
     try {
       const fetchData = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/public/posts/blogs/`);
-      console.log(fetchData.data.allBlogs)
       setData(fetchData.data.allBlogs);
       setFilteredData(fetchData.data.allBlogs);
       toast.success("Blog Fetched")

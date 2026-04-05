@@ -196,11 +196,6 @@ export function SimpleEditor({ getEditorInstance, onMainImageChange }: SimpleEdi
   >("main")
   const toolbarRef = React.useRef<HTMLDivElement>(null)
   const [mainImage, setMainImage] = React.useState<string | null>(null)
-  
-  // Debug when mainImage changes
-  React.useEffect(() => {
-    console.log("MainImage state changed:", mainImage);
-  }, [mainImage])
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -230,21 +225,12 @@ export function SimpleEditor({ getEditorInstance, onMainImageChange }: SimpleEdi
         maxSize: MAX_FILE_SIZE,
         limit: 3,
         upload: async (file, onProgress, abortSignal) => {
-          console.log("Starting image upload...");
-          try {
-            const result = await handleImageUpload(file, onProgress, abortSignal);
-            console.log("Image upload successful:", result);
-            // Immediately set the first uploaded image as main image
-            if (!mainImage) {
-              console.log("Setting as main image:", result);
-              setMainImage(result);
-              onMainImageChange?.(result);
-            }
-            return result;
-          } catch (error) {
-            console.error("Image upload failed:", error);
-            throw error;
+          const result = await handleImageUpload(file, onProgress, abortSignal);
+          if (!mainImage) {
+            setMainImage(result);
+            onMainImageChange?.(result);
           }
+          return result;
         },
         onError: (error) => {
           console.error("Upload failed:", error);

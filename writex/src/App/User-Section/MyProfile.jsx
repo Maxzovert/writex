@@ -22,7 +22,7 @@ import {
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { useAuth } from '../../context/authContext';
-import { uploadImageToSupabase } from '../../lib/supabase-storage';
+import { uploadImageToCloudinary } from '../../lib/cloudinary-storage';
 
 const MyProfile = () => {
   const navigate = useNavigate();
@@ -169,8 +169,7 @@ const MyProfile = () => {
       setUploadingImage(true);
       toast.info('Uploading image...');
       
-      // Upload to Supabase
-      const uploadResult = await uploadImageToSupabase(file);
+      const uploadResult = await uploadImageToCloudinary(file);
       
       // Update backend
       const token = localStorage.getItem('token');
