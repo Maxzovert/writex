@@ -72,3 +72,68 @@ body,
   background: #3b82f6; /* Tailwind blue-500 */
   color:#3b82f6;
 }
+
+/* TipTap tables — editing & column resize */
+.simple-editor-content .tiptap.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.simple-editor-content .tiptap.ProseMirror td,
+.simple-editor-content .tiptap.ProseMirror th {
+  min-width: 4rem;
+  border: 1px solid var(--tt-gray-light-300, #d1d5db);
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.simple-editor-content .tiptap.ProseMirror th {
+  font-weight: 600;
+  background: var(--tt-gray-light-100, #f3f4f6);
+}
+
+.simple-editor-content .tiptap.ProseMirror .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(59, 130, 246, 0.12);
+  pointer-events: none;
+}
+
+/* Must receive pointer events or column drag-to-resize does not work */
+.simple-editor-content .tiptap.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  margin-right: -1px;
+  background-color: transparent;
+  pointer-events: auto;
+  cursor: col-resize;
+  z-index: 20;
+  touch-action: none;
+}
+
+.simple-editor-content .tiptap.ProseMirror td:hover .column-resize-handle,
+.simple-editor-content .tiptap.ProseMirror th:hover .column-resize-handle {
+  background-color: rgb(59 130 246 / 0.35);
+}
+
+.simple-editor-content .tiptap.ProseMirror .column-resize-handle:hover,
+.simple-editor-content .tiptap.ProseMirror.resize-cursor .column-resize-handle {
+  background-color: #3b82f6;
+}
+
+.simple-editor-content .tiptap.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}

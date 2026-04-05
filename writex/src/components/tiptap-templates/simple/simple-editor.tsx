@@ -14,6 +14,12 @@ import { Highlight } from "@tiptap/extension-highlight"
 import { Subscript } from "@tiptap/extension-subscript"
 import { Superscript } from "@tiptap/extension-superscript"
 import { Underline } from "@tiptap/extension-underline"
+import { Table } from "@tiptap/extension-table"
+import { TableRow } from "@tiptap/extension-table-row"
+import {
+  WritexTableCell,
+  WritexTableHeader,
+} from "@/components/tiptap-extension/writex-table-cells"
 
 // --- Custom Extensions ---
 import { Link } from "@/components/tiptap-extension/link-extension"
@@ -40,6 +46,7 @@ import "@/components/tiptap-node/paragraph-node/paragraph-node.scss"
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu"
 import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
+import { TableDropdownMenu } from "@/components/tiptap-ui/table-dropdown-menu/table-dropdown-menu"
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
 import {
@@ -55,6 +62,7 @@ import {
 import { MarkButton } from "@/components/tiptap-ui/mark-button"
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
+import { ClearContentButton } from "@/components/tiptap-ui/clear-content-button/clear-content-button"
 
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon"
@@ -93,6 +101,7 @@ const MainToolbarContent = ({
       <ToolbarGroup>
         <UndoRedoButton action="undo" />
         <UndoRedoButton action="redo" />
+        <ClearContentButton text="Clear" />
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -100,6 +109,7 @@ const MainToolbarContent = ({
       <ToolbarGroup>
         <HeadingDropdownMenu levels={[1, 2, 3, 4]} />
         <ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} />
+        <TableDropdownMenu />
         <BlockquoteButton />
         <CodeBlockButton />
       </ToolbarGroup>
@@ -215,6 +225,16 @@ export function SimpleEditor({ getEditorInstance, onMainImageChange }: SimpleEdi
       TaskItem.configure({ nested: true }),
       Highlight.configure({ multicolor: true }),
       Image,
+      Table.configure({
+        resizable: true,
+        allowTableNodeSelection: true,
+        handleWidth: 6,
+        cellMinWidth: 48,
+        lastColumnResizable: true,
+      }),
+      TableRow,
+      WritexTableHeader,
+      WritexTableCell,
       Typography,
       Superscript,
       Subscript,

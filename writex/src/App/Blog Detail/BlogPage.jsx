@@ -22,6 +22,133 @@ import {
   Clock
 } from 'lucide-react';
 
+/** Renders TipTap `text` nodes (with marks) for paragraphs, table cells, etc. */
+function renderTextRuns(nodes, keyPrefix = 't') {
+  if (!nodes || !Array.isArray(nodes)) return null;
+  return nodes.map((textNode, textIndex) => {
+    if (textNode.type !== 'text') return null;
+
+    let text = textNode.text;
+    let className = '';
+    let customHighlightColor = null;
+    let linkHref = null;
+    let linkTarget = null;
+
+    if (textNode.marks) {
+      textNode.marks.forEach((mark) => {
+        switch (mark.type) {
+          case 'bold':
+            className += ' font-bold';
+            break;
+          case 'italic':
+            className += ' italic';
+            break;
+          case 'underline':
+            className += ' underline';
+            break;
+          case 'strike':
+            className += ' line-through';
+            break;
+          case 'highlight':
+            if (mark.attrs && mark.attrs.color) {
+              const color = mark.attrs.color;
+              if (color.startsWith('var(--') || color.startsWith('#')) {
+                className += ' px-1 rounded';
+                customHighlightColor = color;
+              } else {
+                switch (color) {
+                  case 'yellow':
+                    className += ' bg-yellow-200 px-1 rounded';
+                    break;
+                  case 'green':
+                    className += ' bg-green-200 px-1 rounded';
+                    break;
+                  case 'blue':
+                    className += ' bg-blue-200 px-1 rounded';
+                    break;
+                  case 'red':
+                    className += ' bg-red-200 px-1 rounded';
+                    break;
+                  case 'purple':
+                    className += ' bg-purple-200 px-1 rounded';
+                    break;
+                  case 'pink':
+                    className += ' bg-pink-200 px-1 rounded';
+                    break;
+                  case 'orange':
+                    className += ' bg-orange-200 px-1 rounded';
+                    break;
+                  case 'teal':
+                    className += ' bg-teal-200 px-1 rounded';
+                    break;
+                  case 'indigo':
+                    className += ' bg-indigo-200 px-1 rounded';
+                    break;
+                  case 'gray':
+                    className += ' bg-gray-200 px-1 rounded';
+                    break;
+                  default:
+                    className += ' bg-yellow-200 px-1 rounded';
+                    break;
+                }
+              }
+            } else {
+              className += ' bg-yellow-200 px-1 rounded';
+            }
+            break;
+          case 'code':
+            className += ' bg-gray-100 px-2 py-1 rounded font-mono text-sm';
+            break;
+          case 'link':
+            linkHref = mark.attrs?.href;
+            linkTarget = mark.attrs?.target;
+            className += ' text-blue-600 underline';
+            break;
+          default:
+            break;
+        }
+      });
+    }
+
+    const key = `${keyPrefix}-${textIndex}`;
+
+    if (linkHref) {
+      return (
+        <a
+          key={key}
+          href={linkHref}
+          target={linkTarget ?? undefined}
+          rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
+          className={className}
+        >
+          {text}
+        </a>
+      );
+    }
+
+    if (customHighlightColor) {
+      return (
+        <span
+          key={key}
+          className={className}
+          style={{
+            backgroundColor: customHighlightColor,
+            display: 'inline-block',
+          }}
+        >
+          {text}
+        </span>
+      );
+    }
+
+    return (
+      <span key={key} className={className}>
+        {text}
+      </span>
+    );
+  });
+}
+
 const BlogPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -362,111 +489,7 @@ const BlogPage = () => {
           case 'paragraph':
             return (
               <p key={index} className="mb-4 text-gray-700 leading-relaxed text-lg">
-                {node.content && node.content.map((textNode, textIndex) => {
-                  if (textNode.type === 'text') {
-                    let text = textNode.text;
-                    let className = '';
-                    
-                    // Apply marks (formatting) - keeping it simple like the editor
-                    if (textNode.marks) {
-                      textNode.marks.forEach((mark) => {
-                        switch (mark.type) {
-                          case 'bold':
-                            className += ' font-bold';
-                            break;
-                          case 'italic':
-                            className += ' italic';
-                            break;
-                          case 'underline':
-                            className += ' underline';
-                            break;
-                          case 'highlight':
-                            // Handle different highlight colors
-                            if (mark.attrs && mark.attrs.color) {
-                              const color = mark.attrs.color;
-
-                              // Check if it's a CSS custom property or hex color
-                              if (color.startsWith('var(--') || color.startsWith('#')) {
-                                // For custom colors, we'll use inline styles
-                                className += ' px-1 rounded';
-                                // Store the color for later use
-                                textNode.customHighlightColor = color;
-                              } else {
-                                // Handle predefined colors
-                                switch (color) {
-                                  case 'yellow':
-                                    className += ' bg-yellow-200 px-1 rounded';
-                                    break;
-                                  case 'green':
-                                    className += ' bg-green-200 px-1 rounded';
-                                    break;
-                                  case 'blue':
-                                    className += ' bg-blue-200 px-1 rounded';
-                                    break;
-                                  case 'red':
-                                    className += ' bg-red-200 px-1 rounded';
-                                    break;
-                                  case 'purple':
-                                    className += ' bg-purple-200 px-1 rounded';
-                                    break;
-                                  case 'pink':
-                                    className += ' bg-pink-200 px-1 rounded';
-                                    break;
-                                  case 'orange':
-                                    className += ' bg-orange-200 px-1 rounded';
-                                    break;
-                                  case 'teal':
-                                    className += ' bg-teal-200 px-1 rounded';
-                                    break;
-                                  case 'indigo':
-                                    className += ' bg-indigo-200 px-1 rounded';
-                                    break;
-                                  case 'gray':
-                                    className += ' bg-gray-200 px-1 rounded';
-                                    break;
-                                  default:
-                                    className += ' bg-yellow-200 px-1 rounded'; // Fallback
-                                    break;
-                                }
-                              }
-                            } else {
-                              className += ' bg-yellow-200 px-1 rounded'; // Fallback
-                            }
-                            break;
-                          case 'code':
-                            className += ' bg-gray-100 px-2 py-1 rounded font-mono text-sm';
-                            break;
-                          case 'link':
-                            className += ' text-blue-600 underline';
-                            break;
-                        }
-                      });
-                    }
-                    
-                    // Check if we need to apply custom highlight color
-                    if (textNode.customHighlightColor) {
-                      return (
-                        <span 
-                          key={textIndex} 
-                          className={className}
-                          style={{ 
-                            backgroundColor: textNode.customHighlightColor,
-                            display: 'inline-block'
-                          }}
-                        >
-                          {text}
-                        </span>
-                      );
-                    }
-                    
-                    return (
-                      <span key={textIndex} className={className}>
-                        {text}
-                      </span>
-                    );
-                  }
-                  return null;
-                })}
+                {renderTextRuns(node.content, `p-${index}`)}
               </p>
             );
           
@@ -656,6 +679,72 @@ const BlogPage = () => {
                 </pre>
               </div>
             );
+
+          case 'table': {
+            const rows = node.content || [];
+            const firstRow = rows[0];
+            const useThead =
+              firstRow?.content?.length > 0 &&
+              firstRow.content.every((c) => c.type === 'tableHeader');
+            const bodyRows = useThead ? rows.slice(1) : rows;
+
+            const renderRow = (row, ri, keyPrefix) => (
+              <tr key={`${keyPrefix}-${ri}`} className="border-b border-gray-200">
+                {row.content?.map((cell, ci) => {
+                  const CellTag = cell.type === 'tableHeader' ? 'th' : 'td';
+                  return (
+                    <CellTag
+                      key={ci}
+                      colSpan={cell.attrs?.colspan ?? 1}
+                      rowSpan={cell.attrs?.rowspan ?? 1}
+                      className={
+                        cell.type === 'tableHeader'
+                          ? 'border border-gray-300 bg-gray-100 px-3 py-2 text-left text-sm font-semibold text-gray-900'
+                          : 'border border-gray-300 px-3 py-2 align-top text-sm text-gray-800'
+                      }
+                      style={
+                        cell.attrs?.minHeight != null && cell.attrs.minHeight > 0
+                          ? { minHeight: `${cell.attrs.minHeight}px` }
+                          : undefined
+                      }
+                    >
+                      {cell.content?.map((block, bi) => {
+                        if (block.type === 'paragraph') {
+                          return (
+                            <p
+                              key={bi}
+                              className="mb-1 last:mb-0 leading-relaxed text-inherit"
+                            >
+                              {renderTextRuns(
+                                block.content,
+                                `${keyPrefix}-${ri}-${ci}-${bi}`
+                              )}
+                            </p>
+                          );
+                        }
+                        return null;
+                      })}
+                    </CellTag>
+                  );
+                })}
+              </tr>
+            );
+
+            return (
+              <div key={index} className="my-6 w-full overflow-x-auto rounded-lg border border-gray-200">
+                <table className="w-full min-w-[280px] border-collapse text-left">
+                  {useThead && firstRow ? (
+                    <thead>{renderRow(firstRow, 0, `tbl-${index}`)}</thead>
+                  ) : null}
+                  <tbody>
+                    {bodyRows.map((row, ri) =>
+                      renderRow(row, ri, `tbl-${index}-b`)
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            );
+          }
           
           default:
             // Fallback: Try to render any content we can find
