@@ -185,7 +185,7 @@ const Dashboard = () => {
       month: "February",
       theme: "Love & Relationships",
       suggestions: ["Self-Love", "Relationship Tips", "Valentine's Content"],
-      color: "bg-gray-100 text-gray-700"
+      color: "bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-gray-200"
     },
     {
       id: 3,
@@ -209,7 +209,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-scree">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
       {/* Hero Section */}
@@ -222,10 +222,10 @@ const Dashboard = () => {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 lexend-txt mb-6">
-              Welcome back, <span className="text-gray-700">Writer!</span>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-gray-50 lexend-txt mb-6">
+              Welcome back, <span className="text-gray-700 dark:text-gray-300">Writer!</span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto oxygen-regular">
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto oxygen-regular">
               Ready to create something amazing? Your next great story is just a click away.
             </p>
           </motion.div>
@@ -327,7 +327,7 @@ const Dashboard = () => {
                 </p>
               </BoxReveal>
               <PulsatingButton
-                className="bg-white text-gray-900 font-semibold text-lg md:text-xl px-8 py-4 rounded-full hover:bg-gray-100 transition-colors"
+                className="bg-white dark:bg-zinc-100 text-gray-900 dark:text-gray-950 font-semibold text-lg md:text-xl px-8 py-4 rounded-full hover:bg-gray-100 dark:hover:bg-white transition-colors"
                 pulseColor="gray"
                 onClick={startWritting}
               >
@@ -349,10 +349,10 @@ const Dashboard = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 lexend-txt mb-6">
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-gray-50 lexend-txt mb-6">
               Community Hub
             </h2>
-            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto oxygen-regular">
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto oxygen-regular">
               Connect, engage, and grow with your writing community
             </p>
           </motion.div>
@@ -366,10 +366,10 @@ const Dashboard = () => {
                 whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="lg:col-span-2 bg-white/80 backdrop-blur-md rounded-3xl border border-gray-200 p-6"
+              className="lg:col-span-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl border border-gray-200 dark:border-zinc-700 p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 lexend-txt flex items-center gap-2">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-50 lexend-txt flex items-center gap-2">
                   <MessageCircle className="w-6 h-6 text-blue-500" />
                   Recent Comments
                 </h3>
@@ -387,7 +387,7 @@ const Dashboard = () => {
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                    className="p-4 bg-gray-50/50 rounded-2xl hover:bg-gray-100/50 transition-colors"
+                    className="p-4 bg-gray-50/50 dark:bg-zinc-800/40 rounded-2xl hover:bg-gray-100/50 dark:hover:bg-zinc-700/40 transition-colors"
                   >
                     <div className="flex items-start gap-3">
                       <img
@@ -397,19 +397,19 @@ const Dashboard = () => {
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-gray-900 text-sm">{comment.author}</span>
-                          <span className="text-xs text-gray-500">•</span>
-                          <span className="text-xs text-gray-500">{comment.timeAgo}</span>
+                          <span className="font-semibold text-gray-900 dark:text-gray-50 text-sm">{comment.author}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">•</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{comment.timeAgo}</span>
                         </div>
-                        <p className="text-sm text-gray-700 mb-2">{comment.comment}</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">{comment.comment}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-blue-600 font-medium">on "{comment.postTitle}"</span>
                           <div className="flex items-center gap-3">
-                            <button className={`flex items-center gap-1 text-xs ${comment.isLiked ? 'text-red-500' : 'text-gray-500'} hover:text-red-500 transition-colors`}>
+                            <button className={`flex items-center gap-1 text-xs ${comment.isLiked ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'} hover:text-red-500 transition-colors`}>
                               <ThumbsUp className="w-3 h-3" />
                               {comment.likes}
                             </button>
-                            <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+                            <button className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 transition-colors">
                               <Reply className="w-3 h-3" />
                               Reply
                             </button>
@@ -428,10 +428,10 @@ const Dashboard = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
-              className="bg-white/80 backdrop-blur-md rounded-3xl border border-gray-200 p-6"
+              className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl border border-gray-200 dark:border-zinc-700 p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900 lexend-txt flex items-center gap-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50 lexend-txt flex items-center gap-2">
                   <Bell className="w-5 h-5 text-green-500" />
                   Activity
                 </h3>
@@ -448,7 +448,7 @@ const Dashboard = () => {
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
                     viewport={{ once: true }}
-                    className="p-3 bg-gray-50/50 rounded-xl hover:bg-gray-100/50 transition-colors"
+                    className="p-3 bg-gray-50/50 dark:bg-zinc-800/40 rounded-xl hover:bg-gray-100/50 dark:hover:bg-zinc-700/40 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <img
@@ -457,13 +457,13 @@ const Dashboard = () => {
                         className="w-8 h-8 rounded-full object-cover border border-white shadow-sm"
                       />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-700">
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
                           <span className="font-semibold">{activity.user}</span> {activity.action}
                         </p>
                         {activity.postTitle && (
                           <p className="text-xs text-blue-600 mt-1">"{activity.postTitle}"</p>
                         )}
-                        <p className="text-xs text-gray-500 mt-1">{activity.timeAgo}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.timeAgo}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -481,7 +481,7 @@ const Dashboard = () => {
             className="mt-12"
           >
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-3xl font-bold text-gray-900 lexend-txt flex items-center gap-3">
+              <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-50 lexend-txt flex items-center gap-3">
                 <Lightbulb className="w-8 h-8 text-blue-500" />
                 Content Ideas & Inspiration
                   </h3>
@@ -493,7 +493,7 @@ const Dashboard = () => {
 
             {/* Trending Topics */}
             <div className="mb-12">
-              <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <h4 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-6 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-blue-500" />
                 Trending Topics
               </h4>
@@ -505,7 +505,7 @@ const Dashboard = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     viewport={{ once: true }}
-                    className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200 p-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                    className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-zinc-700 p-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="px-2 py-1 bg-gray-900 text-white text-xs rounded-full font-medium">
@@ -515,17 +515,17 @@ const Dashboard = () => {
                         {topic.trend === 'up' ? (
                           <TrendingUp className="w-4 h-4 text-blue-500" />
                         ) : (
-                          <TrendingDown className="w-4 h-4 text-gray-400" />
+                          <TrendingDown className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                         )}
-                        <span className="text-xs text-gray-500">{topic.searchVolume}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{topic.searchVolume}</span>
                       </div>
                     </div>
                     
-                    <h5 className="text-lg font-bold text-gray-900 mb-2 lexend-txt">{topic.title}</h5>
+                    <h5 className="text-lg font-bold text-gray-900 dark:text-gray-50 mb-2 lexend-txt">{topic.title}</h5>
                     
                     <div className="flex flex-wrap gap-1 mb-3">
                       {topic.tags.map((tag, idx) => (
-                        <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                        <span key={idx} className="px-2 py-1 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 text-xs rounded-full">
                           {tag}
                         </span>
                       ))}
@@ -534,7 +534,7 @@ const Dashboard = () => {
                     <div className="flex items-center justify-between">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         topic.difficulty === 'Easy' ? 'bg-gray-900 text-white' :
-                        topic.difficulty === 'Medium' ? 'bg-gray-100 text-gray-700' :
+                        topic.difficulty === 'Medium' ? 'bg-gray-100 text-gray-700 dark:text-gray-300' :
                         'bg-gray-200 text-gray-800'
                       }`}>
                         {topic.difficulty}
@@ -550,7 +550,7 @@ const Dashboard = () => {
 
             {/* AI-Suggested Content Ideas */}
             <div className="mb-12">
-              <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <h4 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-6 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-blue-500" />
                 AI-Suggested Content Ideas
               </h4>
@@ -562,25 +562,25 @@ const Dashboard = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     viewport={{ once: true }}
-                    className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200 p-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                    className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-zinc-700 p-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="px-2 py-1 bg-gray-900 text-white text-xs rounded-full font-medium">
                         {idea.type}
                       </span>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                         <Clock className="w-3 h-3" />
                         {idea.estimatedReadTime}
                       </div>
                     </div>
                     
-                    <h5 className="text-lg font-bold text-gray-900 mb-2 lexend-txt">{idea.title}</h5>
-                    <p className="text-sm text-gray-600 mb-3 oxygen-regular">{idea.inspiration}</p>
+                    <h5 className="text-lg font-bold text-gray-900 dark:text-gray-50 mb-2 lexend-txt">{idea.title}</h5>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 oxygen-regular">{idea.inspiration}</p>
                     
                     <div className="flex items-center justify-between">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         idea.difficulty === 'Easy' ? 'bg-gray-900 text-white' :
-                        idea.difficulty === 'Medium' ? 'bg-gray-100 text-gray-700' :
+                        idea.difficulty === 'Medium' ? 'bg-gray-100 text-gray-700 dark:text-gray-300' :
                         'bg-gray-200 text-gray-800'
                       }`}>
                         {idea.difficulty}
@@ -596,7 +596,7 @@ const Dashboard = () => {
 
             {/* Seasonal Content Calendar */}
             <div>
-              <h4 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <h4 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-6 flex items-center gap-2">
                 <CalendarIcon className="w-5 h-5 text-blue-500" />
                 Seasonal Content Calendar
               </h4>
@@ -608,22 +608,22 @@ const Dashboard = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     viewport={{ once: true }}
-                    className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-200 p-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                    className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-zinc-700 p-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${season.color}`}>
                         {season.month}
                       </span>
-                      <CalendarIcon className="w-4 h-4 text-gray-400" />
+                      <CalendarIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                     </div>
                     
-                    <h5 className="text-lg font-bold text-gray-900 mb-3 lexend-txt">{season.theme}</h5>
+                    <h5 className="text-lg font-bold text-gray-900 dark:text-gray-50 mb-3 lexend-txt">{season.theme}</h5>
                     
                     <div className="space-y-2">
-                      <p className="text-sm text-gray-600 font-medium">Content Suggestions:</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Content Suggestions:</p>
                       <div className="flex flex-wrap gap-1">
                         {season.suggestions.map((suggestion, idx) => (
-                          <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          <span key={idx} className="px-2 py-1 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300 text-xs rounded-full">
                             {suggestion}
                           </span>
                         ))}
@@ -648,7 +648,7 @@ const Dashboard = () => {
             viewport={{ once: true }}
             className="text-center mt-16"
           >
-            <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 lexend-txt mb-4">
+            <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-gray-50 lexend-txt mb-4">
               Ready to engage with your community?
             </h3>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -680,7 +680,7 @@ const Dashboard = () => {
           <p className="text-gray-300 mb-8 text-lg oxygen-regular max-w-2xl mx-auto">
             Empowering writers to share their stories with the world. Join our community and start creating today.
           </p>
-          <div className="text-sm text-gray-500 oxygen-regular">
+          <div className="text-sm text-gray-500 dark:text-gray-400 oxygen-regular">
             © 2024 Writex. All rights reserved. Made with ❤️ for the writing community.
           </div>
         </div>

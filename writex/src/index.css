@@ -4,7 +4,8 @@
 @import "tw-animate-css";
 @source "./node_modules/preline/dist/*.js";
 /* @import "./node_modules/preline/variants.css"; */
-@custom-variant dark (&:is(.dark *));
+/* Match html/body.dark and all descendants (html alone was missed by `.dark *` only) */
+@custom-variant dark (&:where(.dark, .dark *));
 
 html, body {
   height: 100%;

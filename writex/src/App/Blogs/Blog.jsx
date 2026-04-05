@@ -27,7 +27,7 @@ const Blog = () => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [activeCategory, setActiveCategory] = useState("All");
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const hasFatched = useRef(false);
   const navigate = useNavigate();
 
@@ -130,11 +130,11 @@ const Blog = () => {
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
       {/* Enhanced Category Navigation */}
-      <section className="py-16 px-4 lg:px-8 bg-gradient-to-br from-gray-50 to-white">
+      <section className="py-16 px-4 lg:px-8 bg-gradient-to-br from-gray-50 to-white dark:from-zinc-900 dark:to-zinc-950">
         <div className="max-w-7xl mx-auto">
           {/* Section Header */}
           {/* <motion.div 
@@ -158,8 +158,8 @@ const Blog = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="flex items-center justify-center gap-3 mb-8"
           >
-            <Filter className="w-5 h-5 text-gray-600" />
-            <span className="text-gray-600 font-medium cursor-pointer" onClick={() => setShowFilters(!showFilters)}>Filter by Category</span>
+            <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <span className="text-gray-600 dark:text-gray-400 font-medium cursor-pointer" onClick={() => setShowFilters(!showFilters)}>Filter by Category</span>
           </motion.div>
 
           {/* Enhanced Category Grid */}
@@ -177,29 +177,29 @@ const Blog = () => {
                 transition={{ duration: 0.5 }}
                 onClick={() => handleCategoryFilter(category.type)}
                 className={`group relative p-4 rounded-2xl border-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${activeCategory === category.type
-                    ? 'border-gray-900 bg-gray-900 text-white shadow-xl'
-                    : 'border-gray-200 bg-white/80 backdrop-blur-sm text-gray-700 hover:border-gray-300 hover:bg-white'
+                    ? 'border-gray-900 bg-gray-900 text-white shadow-xl dark:border-blue-600 dark:bg-blue-600 dark:text-white'
+                    : 'border-gray-200 dark:border-zinc-600 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-zinc-500 hover:bg-white dark:hover:bg-zinc-800'
                   }`}
               >
                 {activeCategory === category.type && (
                   <motion.div
                     layoutId="activeCategory"
-                    className="absolute inset-0 bg-gray-900 rounded-2xl -z-10"
+                    className="absolute inset-0 bg-gray-900 dark:bg-blue-600 rounded-2xl -z-10"
                     initial={false}
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
 
                 <div className="text-center">
-                  <div className={`flex items-center justify-center mb-2 ${activeCategory === category.type ? 'text-white' : 'text-gray-600'
+                  <div className={`flex items-center justify-center mb-2 ${activeCategory === category.type ? 'text-white' : 'text-gray-600 dark:text-gray-400'
                     }`}>
                     {category.icon}
                   </div>
-                  <div className={`font-semibold text-sm mb-1 ${activeCategory === category.type ? 'text-white' : 'text-gray-900'
+                  <div className={`font-semibold text-sm mb-1 ${activeCategory === category.type ? 'text-white' : 'text-gray-900 dark:text-gray-50'
                     }`}>
                     {category.type}
                   </div>
-                  <div className={`text-xs ${activeCategory === category.type ? 'text-gray-300' : 'text-gray-500'
+                  <div className={`text-xs ${activeCategory === category.type ? 'text-gray-300 dark:text-blue-100' : 'text-gray-500 dark:text-gray-400'
                     }`}>
                     {category.count} blogs
                   </div>
@@ -243,11 +243,11 @@ const Blog = () => {
               transition={{ duration: 0.8 }}
               className="text-center py-20"
             >
-              <div className="text-gray-400 text-6xl mb-4">📝</div>
-              <div className="text-gray-500 text-xl mb-2">
+              <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">📝</div>
+              <div className="text-gray-500 dark:text-gray-400 text-xl mb-2">
                 {activeCategory === "All" ? "No blogs found yet." : `No blogs found in ${activeCategory}.`}
               </div>
-              <div className="text-gray-400 text-sm">
+              <div className="text-gray-400 dark:text-gray-500 text-sm">
                 Be the first to write something amazing!
               </div>
             </motion.div>
@@ -259,7 +259,7 @@ const Blog = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="bg-white/80 backdrop-blur-md rounded-3xl border border-gray-200 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group"
+                  className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl border border-gray-200 dark:border-zinc-700 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group"
                 >
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
@@ -270,12 +270,12 @@ const Blog = () => {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                        <span className="text-gray-400 text-lg">No Image</span>
+                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-700 flex items-center justify-center">
+                        <span className="text-gray-400 dark:text-gray-500 text-lg">No Image</span>
                       </div>
                     )}
                     <div className="absolute top-3 left-3">
-                      <span className="inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                      <span className="inline-flex items-center gap-1 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm font-medium">
                         <Tag className="w-3 h-3" />
                         {blog.category || "General"}
                       </span>
@@ -290,7 +290,7 @@ const Blog = () => {
                         <img
                           src={blog.author.profileImage}
                           alt={blog.author?.username || "Author"}
-                          className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                          className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-600 shadow-sm"
                         />
                       ) : (
                         <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center text-white font-bold text-lg">
@@ -298,10 +298,10 @@ const Blog = () => {
                         </div>
                       )}
                       <div>
-                        <div className="font-semibold text-gray-900 text-sm">
+                        <div className="font-semibold text-gray-900 dark:text-gray-50 text-sm">
                           {firstUpperCase(blog.author?.username) || "Unknown"}
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <Calendar className="w-3 h-3" />
                           {formatDate(blog.createdAt)}
                         </div>
@@ -309,12 +309,12 @@ const Blog = () => {
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-gray-700 transition-colors">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-50 mb-3 line-clamp-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
                       {blog.title || "Untitled Blog"}
                     </h3>
 
                     {/* Excerpt */}
-                    <p className="text-sm text-gray-600 line-clamp-3 mb-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4">
                       {typeof blog.content === "string"
                         ? blog.content
                         // : JSON.stringify(blog.content)}
@@ -323,7 +323,7 @@ const Blog = () => {
 
                     {/* Stats & Read More */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                         <div className="flex items-center gap-1">
                           <Eye className="w-3 h-3" />
                           {blog.viewCount || "0"}
@@ -339,7 +339,7 @@ const Blog = () => {
                       </div>
                       <button
                         onClick={() => navigate(`/blog/${blog._id}`)}
-                        className="flex items-center gap-1 text-gray-700 hover:text-gray-900 font-medium text-sm transition-colors group-hover:gap-2"
+                        className="flex items-center gap-1 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium text-sm transition-colors group-hover:gap-2"
                       >
                         Read More
                         <ArrowRight className="w-3 h-3" />
@@ -362,12 +362,12 @@ const Blog = () => {
           viewport={{ once: true }}
           className="text-center mt-16 mb-20 px-4 lg:px-8"
         >
-          <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-4">
+          <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-gray-50 mb-4">
             Found something interesting? Share your own story!
           </h3>
           <button
             onClick={() => navigate("/write")}
-            className="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors"
+            className="inline-flex items-center gap-2 bg-gray-900 dark:bg-primary text-white dark:text-primary-foreground px-6 py-3 rounded-full font-medium hover:bg-gray-800 dark:hover:bg-primary/90 transition-colors"
           >
             Start Writing Now
             <ArrowRight className="w-4 h-4" />

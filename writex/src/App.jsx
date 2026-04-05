@@ -5,6 +5,7 @@ import Dashboard from "./App/Dashboard/Dashboard";
 import SignUp from "./Pages/AuthPages/SignUp";
 import Login from "./Pages/AuthPages/Login";
 import { useAuth } from "./context/authContext";
+import { useTheme } from "./context/themeContext";
 import { SyncLoader } from "react-spinners";
 import WriteBlog from "./App/WriteBlog/WriteBLog";
 import Blog from "./App/Blogs/Blog";
@@ -13,16 +14,18 @@ import MyProfile from "./App/User-Section/MyProfile";
 import BlogPage from "./App/Blog Detail/BlogPage";
 import About from "./Pages/About/About";
 import CommDash from "./App/Community/CommDash";
+import { ThemeToggle } from "./components/ThemeToggle";
 
 const App = () => {
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   
   const PublicRoute = ({ children }) => {
     if (loading) {
       return (
-        <div className="h-screen w-screen flex items-center justify-center">
-          <SyncLoader color="#000000" />
+        <div className="h-screen w-screen flex items-center justify-center bg-background">
+          <SyncLoader color={theme === "dark" ? "#fafafa" : "#171717"} />
         </div>
       );
     }
@@ -39,6 +42,9 @@ const App = () => {
 
   return (
     <>
+      <div className="fixed right-4 top-4 z-[500] md:right-6 md:top-6">
+        <ThemeToggle />
+      </div>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route

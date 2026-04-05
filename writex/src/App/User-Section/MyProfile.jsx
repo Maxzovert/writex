@@ -396,13 +396,13 @@ const MyProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Simple Header */}
-      <div className="border-b border-gray-100">
+      <div className="border-b border-border">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <motion.button
             onClick={goBackToBlogs}
-            className="text-gray-500 hover:text-gray-700 transition-colors lexend-txt text-sm"
+            className="text-gray-500 dark:text-gray-400 hover:text-foreground transition-colors lexend-txt text-sm"
             whileHover={{ x: -2 }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -414,7 +414,7 @@ const MyProfile = () => {
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-2 border-border border-t-muted-foreground rounded-full animate-spin"></div>
         </div>
       ) : (
         <div className="max-w-4xl mx-auto px-6 py-16">
@@ -422,7 +422,7 @@ const MyProfile = () => {
           <div className="text-center mb-16">
             {/* Profile Image */}
             <div className="relative inline-block mb-6">
-              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-100">
+              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-border">
                 {uploadingImage ? (
                   <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                     <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
@@ -464,23 +464,23 @@ const MyProfile = () => {
                   type="text"
                   value={editForm.name}
                   onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="text-3xl font-light text-gray-900 bg-transparent border-b border-gray-200 focus:border-gray-400 focus:outline-none text-center w-full transition-colors"
+                  className="text-3xl font-light text-gray-900 dark:text-gray-50 bg-transparent border-b border-border focus:border-primary focus:outline-none text-center w-full transition-colors"
                   placeholder="Enter your name"
                 />
                 <textarea
                   value={editForm.bio}
                   onChange={(e) => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
-                  className="text-gray-600 bg-transparent border-b border-gray-200 focus:border-gray-400 focus:outline-none resize-none text-center w-full transition-colors"
+                  className="text-gray-600 dark:text-gray-400 bg-transparent border-b border-border focus:border-primary focus:outline-none resize-none text-center w-full transition-colors"
                   placeholder="Tell us about yourself"
                   rows={3}
                 />
               </div>
             ) : (
               <div>
-                <h1 className="text-3xl font-light text-gray-900 oxygen-bold mb-3">
+                <h1 className="text-3xl font-light text-gray-900 dark:text-gray-50 oxygen-bold mb-3">
                   {profile.name || "User"}
                 </h1>
-                <p className="text-gray-600 lexend-txt max-w-md mx-auto leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-400 lexend-txt max-w-md mx-auto leading-relaxed">
                   {profile.bio}
                 </p>
               </div>
@@ -498,7 +498,7 @@ const MyProfile = () => {
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="px-6 py-2 text-gray-500 text-sm rounded-full hover:text-gray-700 transition-colors"
+                    className="px-6 py-2 text-gray-500 dark:text-gray-400 text-sm rounded-full hover:text-foreground transition-colors"
                   >
                     Cancel
                   </button>
@@ -506,7 +506,7 @@ const MyProfile = () => {
               ) : (
                 <button
                   onClick={handleEdit}
-                  className="px-6 py-2 text-gray-500 text-sm rounded-full hover:text-gray-700 transition-colors border border-gray-200 hover:border-gray-300"
+                  className="px-6 py-2 text-gray-500 dark:text-gray-400 text-sm rounded-full hover:text-foreground transition-colors border border-border hover:border-muted-foreground"
                 >
                   Edit Profile
                 </button>
@@ -517,16 +517,16 @@ const MyProfile = () => {
           {/* Stats Section */}
           <div className="grid grid-cols-2 gap-8 mb-16">
             <div className="text-center">
-              <div className="text-4xl font-light text-gray-900 oxygen-bold mb-2">
+              <div className="text-4xl font-light text-gray-900 dark:text-gray-50 oxygen-bold mb-2">
                 {profile.totalLikes}
               </div>
-              <div className="text-sm text-gray-500 lexend-txt">Total Likes</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 lexend-txt">Total Likes</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-light text-gray-900 oxygen-bold mb-2">
+              <div className="text-4xl font-light text-gray-900 dark:text-gray-50 oxygen-bold mb-2">
                 {profile.totalPublishedBlogs}
               </div>
-              <div className="text-sm text-gray-500 lexend-txt">Published Blogs</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 lexend-txt">Published Blogs</div>
             </div>
           </div>
 
@@ -535,11 +535,11 @@ const MyProfile = () => {
             {/* Favorite Topics */}
             <div>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-medium text-gray-900 lexend-txt">Favorite Topics</h2>
+                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50 lexend-txt">Favorite Topics</h2>
                 {isEditing && (
                   <button
                     onClick={handleAddTopic}
-                    className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+                    className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -550,13 +550,13 @@ const MyProfile = () => {
                 {(isEditing ? editForm.favoriteTopics : profile.favoriteTopics).map((topic, index) => (
                   <div
                     key={index}
-                    className="px-4 py-2 bg-gray-50 text-gray-700 text-sm rounded-full lexend-txt flex items-center gap-2"
+                    className="px-4 py-2 bg-muted/50 text-gray-700 dark:text-gray-200 text-sm rounded-full lexend-txt flex items-center gap-2"
                   >
                     {topic}
                     {isEditing && (
                       <button
                         onClick={() => handleRemoveTopic(index)}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-gray-400 hover:text-gray-600 dark:text-gray-400 transition-colors"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -568,7 +568,7 @@ const MyProfile = () => {
 
             {/* Social Media */}
             <div>
-              <h2 className="text-lg font-medium text-gray-900 lexend-txt mb-6">Social Media</h2>
+              <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50 lexend-txt mb-6">Social Media</h2>
               
               <div className="space-y-3">
                 {socialPlatforms.map((platform) => {
@@ -576,12 +576,12 @@ const MyProfile = () => {
                   const hasLink = profile.socialLinks[platform.name];
                   
                   return (
-                    <div key={platform.name} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div key={platform.name} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-gray-600">
+                        <div className="w-8 h-8 bg-card rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-400 border border-border">
                           <Icon className="w-4 h-4" />
                         </div>
-                        <span className="text-gray-700 lexend-txt">{platform.label}</span>
+                        <span className="text-foreground lexend-txt">{platform.label}</span>
                       </div>
                       
                       {hasLink ? (
@@ -590,7 +590,7 @@ const MyProfile = () => {
                             href={formatSocialUrl(hasLink)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 transition-colors"
                           >
                             Visit
                           </a>
@@ -604,7 +604,7 @@ const MyProfile = () => {
                       ) : (
                         <button
                           onClick={() => openSocialModal(platform.name)}
-                          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                          className="text-sm text-gray-500 dark:text-gray-400 hover:text-foreground transition-colors"
                         >
                           Connect
                         </button>
@@ -621,14 +621,14 @@ const MyProfile = () => {
       {/* Social Media Modal */}
       {showSocialModal && (
         <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
+          <div className="bg-card text-card-foreground rounded-lg p-6 max-w-md w-full mx-4 shadow-lg border border-border">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900 lexend-txt">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 lexend-txt">
                 Connect to {socialPlatforms.find(p => p.name === selectedSocial)?.label}
               </h3>
               <button
                 onClick={() => setShowSocialModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-400 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -636,7 +636,7 @@ const MyProfile = () => {
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 lexend-txt">
+                <label className="block text-sm font-medium text-foreground mb-2 lexend-txt">
                   Profile URL
                 </label>
                 <input
@@ -644,7 +644,7 @@ const MyProfile = () => {
                   value={socialUrl}
                   onChange={(e) => setSocialUrl(e.target.value)}
                   placeholder={`Enter your ${socialPlatforms.find(p => p.name === selectedSocial)?.label} profile URL`}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-gray-400 focus:outline-none text-gray-900 lexend-txt"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background focus:border-ring focus:outline-none text-gray-900 dark:text-gray-50 lexend-txt"
                 />
               </div>
               
@@ -657,7 +657,7 @@ const MyProfile = () => {
                 </button>
                 <button
                   onClick={() => setShowSocialModal(false)}
-                  className="flex-1 px-4 py-2 text-gray-600 text-sm rounded-lg hover:text-gray-800 transition-colors"
+                  className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 text-sm rounded-lg hover:text-gray-800 transition-colors"
                 >
                   Cancel
                 </button>

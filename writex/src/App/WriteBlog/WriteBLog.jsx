@@ -355,14 +355,14 @@ const WriteBlog = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
       <div className="flex h-[calc(100vh-4rem)] mt-16">
         {/* AI Assistant Sidebar */}
-        <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+        <div className="w-96 bg-card border-r border-border flex flex-col text-card-foreground">
           {/* AI Header */}
-          <div className="p-8 border-b border-gray-200">
+          <div className="p-8 border-b border-border">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl flex items-center justify-center shadow-lg">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -370,8 +370,8 @@ const WriteBlog = () => {
                 </svg>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">AI Assistant</h2>
-                <p className="text-gray-500">Your writing companion</p>
+                <h2 className="text-xl font-bold text-foreground">AI Assistant</h2>
+                <p className="text-muted-foreground">Your writing companion</p>
               </div>
             </div>
           </div>
@@ -380,8 +380,8 @@ const WriteBlog = () => {
           <div className="flex-1 p-8 space-y-8">
             {/* Writing Tips */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 Writing Tips
@@ -390,21 +390,21 @@ const WriteBlog = () => {
                 {aiSuggestions.slice(0, 3).map((suggestion, index) => (
                   <div
                     key={index}
-                    className="p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    className="p-4 bg-muted/50 border border-border rounded-lg hover:bg-muted cursor-pointer transition-colors"
                     onClick={() => handleAiSuggestion(suggestion)}
                   >
-                    <p className="text-sm text-gray-700 leading-relaxed">{suggestion}</p>
+                    <p className="text-sm text-foreground/90 leading-relaxed">{suggestion}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <Separator className="bg-gray-200" />
+            <Separator className="bg-border" />
 
             {/* AI Chat */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
                 Ask AI
@@ -414,7 +414,7 @@ const WriteBlog = () => {
                   placeholder="Ask me anything about your blog..."
                   value={aiMessage}
                   onChange={(e) => setAiMessage(e.target.value)}
-                  className="min-h-[100px] text-sm bg-white border-gray-300 resize-none"
+                  className="min-h-[100px] text-sm bg-background border-border resize-none"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
@@ -425,19 +425,19 @@ const WriteBlog = () => {
                 <Button
                   onClick={handleAiMessageSend}
                   disabled={!aiMessage.trim()}
-                  className="w-full bg-gray-900 hover:bg-gray-800 text-white"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   Send Message
                 </Button>
               </div>
             </div>
 
-            <Separator className="bg-gray-200" />
+            <Separator className="bg-border" />
 
             {/* Quick Actions */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 Quick Actions
@@ -445,21 +445,21 @@ const WriteBlog = () => {
               <div className="space-y-3">
                 <Button
                   variant="outline"
-                  className="w-full justify-start border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="w-full justify-start border-border text-foreground hover:bg-accent"
                   onClick={() => handleAiSuggestion("Generate a compelling title for my blog")}
                 >
                   Generate Title
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full justify-start border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="w-full justify-start border-border text-foreground hover:bg-accent"
                   onClick={() => handleAiSuggestion("Help me improve my blog's introduction")}
                 >
                   Improve Introduction
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full justify-start border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="w-full justify-start border-border text-foreground hover:bg-accent"
                   onClick={() => handleAiSuggestion("Suggest relevant tags for my blog")}
                 >
                   Suggest Tags
@@ -470,15 +470,15 @@ const WriteBlog = () => {
         </div>
 
         {/* Editor Section */}
-        <div className="flex-1 bg-white flex flex-col">
+        <div className="flex-1 bg-background flex flex-col">
           {/* Editor Header */}
-          <div className="flex items-center justify-between px-10 py-8 border-b border-gray-200">
+          <div className="flex items-center justify-between px-10 py-8 border-b border-border">
             <div className="flex items-center gap-6">
               {isEditMode && (
                 <Button
                   variant="ghost"
                   onClick={handleNavigateAway}
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-accent"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -487,10 +487,10 @@ const WriteBlog = () => {
                 </Button>
               )}
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-foreground">
                   {isEditMode ? "Edit Blog" : "Write New Blog"}
                 </h1>
-                <p className="text-gray-500 mt-1">
+                <p className="text-muted-foreground mt-1">
                   {isEditMode ? "Make your changes and publish" : "Create something amazing"}
                 </p>
               </div>
@@ -501,7 +501,7 @@ const WriteBlog = () => {
                 <DialogTrigger asChild>
                   <Button 
                     variant="outline"
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
+                    className="border-border text-foreground hover:bg-accent px-6"
                   >
                     Save Draft
                   </Button>
@@ -520,7 +520,7 @@ const WriteBlog = () => {
                       <Input
                         id="draft-title"
                         name="draft-title"
-                        className="bg-gray-50 border-gray-300"
+                        className="bg-muted/40 border-border"
                         placeholder="Enter your blog title (optional)"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -534,7 +534,7 @@ const WriteBlog = () => {
                       <Input
                         id="draft-description"
                         name="draft-description"
-                        className="bg-gray-50 border-gray-300"
+                        className="bg-muted/40 border-border"
                         placeholder="Enter a brief description (optional)"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
@@ -548,7 +548,7 @@ const WriteBlog = () => {
                       <Input
                         id="draft-tags"
                         name="draft-tags"
-                        className="bg-gray-50 border-gray-300"
+                        className="bg-muted/40 border-border"
                         placeholder="Enter tags separated by commas"
                         value={tags}
                         onChange={(e) => setTags(e.target.value)}
@@ -563,7 +563,7 @@ const WriteBlog = () => {
                         value={category}
                         onValueChange={(value) => setCategory(value)}
                       >
-                        <SelectTrigger className="w-full bg-gray-50 border-gray-300">
+                        <SelectTrigger className="w-full bg-muted/40 border-border">
                           <SelectValue placeholder="Select category"/>
                         </SelectTrigger>
                         <SelectContent>
@@ -589,7 +589,7 @@ const WriteBlog = () => {
                     </DialogClose>
                     <Button
                       onClick={handleSaveDraft}
-                      className="bg-gray-900 hover:bg-gray-800 text-white"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       {isEditMode ? "Update Draft" : "Save Draft"}
                     </Button>
@@ -600,7 +600,7 @@ const WriteBlog = () => {
                 <DialogTrigger asChild>
                   <Button
                     disabled={isPublishing}
-                    className="bg-gray-900 hover:bg-gray-800 text-white px-6"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-6"
                   >
                     {isPublishing ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Blog" : "Publish")}
                   </Button>
@@ -619,7 +619,7 @@ const WriteBlog = () => {
                       <Input
                         id="title"
                         name="title"
-                        className="bg-gray-50 border-gray-300"
+                        className="bg-muted/40 border-border"
                         placeholder="Enter your blog title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -634,7 +634,7 @@ const WriteBlog = () => {
                       <Input
                         id="description"
                         name="description"
-                        className="bg-gray-50 border-gray-300"
+                        className="bg-muted/40 border-border"
                         placeholder="Enter a brief description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
@@ -649,7 +649,7 @@ const WriteBlog = () => {
                       <Input
                         id="tags"
                         name="tags"
-                        className="bg-gray-50 border-gray-300"
+                        className="bg-muted/40 border-border"
                         placeholder="Enter tags separated by commas"
                         value={tags}
                         onChange={(e) => setTags(e.target.value)}
@@ -664,7 +664,7 @@ const WriteBlog = () => {
                         value={category}
                         onValueChange={(value) => setCategory(value)}
                       >
-                        <SelectTrigger className="w-full bg-gray-50 border-gray-300">
+                        <SelectTrigger className="w-full bg-muted/40 border-border">
                           <SelectValue placeholder="Select category"/>
                         </SelectTrigger>
                         <SelectContent>
@@ -691,7 +691,7 @@ const WriteBlog = () => {
                     <Button
                       onClick={handlePublish}
                       disabled={isPublishing || !title.trim() || !description.trim()}
-                      className="bg-gray-900 hover:bg-gray-800 text-white"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       {isPublishing ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Blog" : "Publish Blog")}
                     </Button>

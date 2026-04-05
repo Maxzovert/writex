@@ -95,6 +95,23 @@ body,
 .simple-editor-content .tiptap.ProseMirror th {
   font-weight: 600;
   background: var(--tt-gray-light-100, #f3f4f6);
+  color: var(--tt-gray-light-900, #111827);
+}
+
+/* Dark mode: header row and borders must not stay “paper white” */
+.dark .simple-editor-content .tiptap.ProseMirror td,
+.dark .simple-editor-content .tiptap.ProseMirror th {
+  border-color: var(--tt-gray-dark-300);
+}
+
+.dark .simple-editor-content .tiptap.ProseMirror td {
+  background: var(--tt-gray-dark-50);
+  color: var(--tt-gray-dark-900);
+}
+
+.dark .simple-editor-content .tiptap.ProseMirror th {
+  background: var(--tt-gray-dark-200);
+  color: var(--tt-gray-dark-900);
 }
 
 .simple-editor-content .tiptap.ProseMirror .selectedCell:after {

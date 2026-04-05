@@ -87,7 +87,7 @@ const Home = () => {
 
   return (
     <>
-      <div className="relative h-[800px] w-full overflow-hidden flex justify-center bg-stone-200 border-b-4 rounded-b-4xl">
+      <div className="relative h-[800px] w-full overflow-hidden flex justify-center bg-stone-200 dark:bg-stone-950 border-b-4 border-border rounded-b-4xl text-foreground">
         <div className="absolute inset-0 z-0">
           <DotPattern />
         </div>
@@ -95,7 +95,7 @@ const Home = () => {
           <div className="text-9xl mt-[200px]">
             Write<LineShadowText>X</LineShadowText>
           </div>
-            <p>Lowkey deep, highkey real — post what hits different</p>
+            <p className="text-muted-foreground">Lowkey deep, highkey real — post what hits different</p>
           <InteractiveHoverButton className="mt-8" onClick={handleClick}>
             Go To Dashboard
           </InteractiveHoverButton>
@@ -105,7 +105,7 @@ const Home = () => {
       {/* Gen-Z Focused Landing Page */}
       
       {/* Hero Section 2 */}
-      <section className="py-24 bg-gradient-to-br from-gray-50 to-white">
+      <section className="py-24 bg-gradient-to-br from-gray-50 to-white dark:from-zinc-900 dark:to-zinc-950">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -118,14 +118,14 @@ const Home = () => {
               <Flame className="w-4 h-4" />
               <span>Fresh & New - Join the Wave</span>
             </div>
-                         <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                         <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-gray-50 mb-6 leading-tight">
                Write What You
                <br />
-               <span className="bg-gradient-to-r from-gray-700 via-gray-800 to-black bg-clip-text text-transparent">
+               <span className="bg-gradient-to-r from-gray-700 via-gray-800 to-black dark:from-gray-200 dark:via-gray-100 dark:to-white bg-clip-text text-transparent">
                  Actually Feel
                </span>
              </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
               Stop writing for algorithms. Start writing for humans. 
               Share your thoughts, stories, and vibes with people who actually care.
             </p>
@@ -141,7 +141,7 @@ const Home = () => {
             <Button 
               onClick={handleGetStarted}
               size="lg"
-              className="bg-black hover:bg-gray-800 text-white px-10 py-6 text-lg h-auto rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+              className="bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 text-white px-10 py-6 text-lg h-auto rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
             >
               Start Writing Now
               <ArrowRight className="ml-3 w-5 h-5" />
@@ -150,7 +150,7 @@ const Home = () => {
               variant="outline"
               onClick={handleLearnMore}
               size="lg"
-              className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 px-10 py-6 text-lg h-auto rounded-xl hover:bg-gray-50 transition-all duration-300"
+              className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 dark:text-gray-300 px-10 py-6 text-lg h-auto rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all duration-300"
             >
               See What's Up
             </Button>
@@ -162,7 +162,7 @@ const Home = () => {
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.5 }}
             viewport={{ once: true }}
-            className="flex flex-wrap justify-center items-center gap-8 text-gray-500 text-sm"
+            className="flex flex-wrap justify-center items-center gap-8 text-gray-500 dark:text-gray-400 text-sm"
           >
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-500" />
@@ -181,7 +181,7 @@ const Home = () => {
       </section>
 
       {/* Features Section - Gen-Z Style */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-white dark:bg-zinc-900">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -190,12 +190,12 @@ const Home = () => {
             viewport={{ once: true }}
             className="text-center mb-20"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-50 mb-6">
               Everything You Need to
               <br />
-              <span className="text-gray-600">Slay Your Writing</span>
+              <span className="text-gray-600 dark:text-gray-400">Slay Your Writing</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               Tools that actually make sense and don't overcomplicate things
             </p>
           </motion.div>
@@ -210,16 +210,16 @@ const Home = () => {
                 viewport={{ once: true }}
                 className="group"
               >
-                <div className="bg-gradient-to-br from-gray-50 to-white p-10 rounded-3xl border border-gray-200 hover:border-gray-300 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
+                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-zinc-800/80 dark:to-zinc-900 p-10 rounded-3xl border border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
                                      <div className="w-16 h-16 bg-gradient-to-br from-gray-700 to-black rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-300">
                     <div className="text-white">
                       {feature.icon}
                     </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-4">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 leading-relaxed text-lg">
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg">
                     {feature.description}
                   </p>
                 </div>
@@ -230,7 +230,7 @@ const Home = () => {
       </section>
 
       {/* Vibes Grid */}
-      <section className="py-24 bg-gray-50">
+      <section className="py-24 bg-gray-50 dark:bg-zinc-950">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -239,10 +239,10 @@ const Home = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-50 mb-6">
               Why WriteX is Actually Different
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               No corporate speak, just real talk
             </p>
           </motion.div>
@@ -255,12 +255,12 @@ const Home = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="flex items-start gap-4 p-6 bg-white rounded-2xl border border-gray-200 hover:shadow-lg transition-all duration-300"
+                className="flex items-start gap-4 p-6 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-700 hover:shadow-lg transition-all duration-300"
               >
                                  <div className="w-6 h-6 bg-gradient-to-r from-gray-600 to-black rounded-full flex items-center justify-center flex-shrink-0 mt-1">
                   <CheckCircle className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-gray-700 font-medium">{vibe}</span>
+                <span className="text-gray-700 dark:text-gray-300 font-medium">{vibe}</span>
               </motion.div>
             ))}
           </div>
@@ -268,7 +268,7 @@ const Home = () => {
       </section>
 
       {/* Why Choose Section */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-white dark:bg-zinc-900">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -277,10 +277,10 @@ const Home = () => {
             viewport={{ once: true }}
             className="text-center mb-20"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-50 mb-6">
               Built Different
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               We're not just another writing platform
             </p>
           </motion.div>
@@ -300,10 +300,10 @@ const Home = () => {
                     {item.icon}
                   </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-3">
                   {item.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                   {item.description}
                 </p>
               </motion.div>
@@ -313,7 +313,7 @@ const Home = () => {
       </section>
 
       {/* Early Adopters Section */}
-      <section className="py-24 bg-gray-50">
+      <section className="py-24 bg-gray-50 dark:bg-zinc-950">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -322,10 +322,10 @@ const Home = () => {
             viewport={{ once: true }}
             className="text-center mb-20"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-50 mb-6">
               What Early Adopters Say
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               Real feedback from people who've been here since day one
             </p>
           </motion.div>
@@ -340,21 +340,21 @@ const Home = () => {
                 viewport={{ once: true }}
                 className="group"
               >
-                <div className="bg-gradient-to-br from-gray-50 to-white p-10 rounded-3xl border border-gray-200 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
+                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-zinc-800/80 dark:to-zinc-900 p-10 rounded-3xl border border-gray-200 dark:border-zinc-700 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center">
                                              <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-black rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
                         {user.avatar}
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900 text-lg">{user.name}</div>
-                        <div className="text-gray-600">{user.role}</div>
+                        <div className="font-semibold text-gray-900 dark:text-gray-50 text-lg">{user.name}</div>
+                        <div className="text-gray-600 dark:text-gray-400">{user.role}</div>
                       </div>
                     </div>
                     <div className="text-3xl">{user.vibe}</div>
                   </div>
                   
-                  <p className="text-gray-700 leading-relaxed text-lg italic">
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg italic">
                     "{user.content}"
                   </p>
                 </div>
@@ -390,7 +390,7 @@ const Home = () => {
               <Button 
                 onClick={handleGetStarted}
                 size="lg"
-                className="bg-white hover:bg-gray-100 text-gray-900 px-12 py-6 text-xl h-auto rounded-2xl shadow-2xl hover:shadow-white/20 transition-all duration-300 transform hover:-translate-y-2 group"
+                className="bg-white hover:bg-gray-100 dark:bg-zinc-100 dark:hover:bg-white text-gray-900 dark:text-gray-950 px-12 py-6 text-xl h-auto rounded-2xl shadow-2xl hover:shadow-white/20 transition-all duration-300 transform hover:-translate-y-2 group"
               >
                 Let's Go! 🚀
                 <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
@@ -399,7 +399,7 @@ const Home = () => {
                 variant="outline"
                 onClick={handleLearnMore}
                 size="lg"
-                className="border-2 border-gray-600 hover:border-gray-500 text-black px-12 py-6 text-xl h-auto rounded-2xl hover:bg-white/10 transition-all duration-300 group"
+                className="border-2 border-gray-600 hover:border-gray-500 text-white px-12 py-6 text-xl h-auto rounded-2xl hover:bg-white/10 transition-all duration-300 group"
               >
                 Tell Me More
                 <ArrowUpRight className="ml-3 w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
@@ -414,7 +414,7 @@ const Home = () => {
       </section>
 
       {/* Footer - Matching Other Components */}
-      <footer className="bg-stone-200 text-gray-900 py-16">
+      <footer className="bg-stone-200 dark:bg-stone-950 text-gray-900 dark:text-stone-100 py-16">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className="md:col-span-2">
@@ -424,7 +424,7 @@ const Home = () => {
                 </div>
                 <span className="text-2xl font-bold">WriteX</span>
               </div>
-              <p className="text-gray-700 text-lg leading-relaxed max-w-md">
+              <p className="text-gray-700 dark:text-stone-300 text-lg leading-relaxed max-w-md">
                 Empowering the next generation of writers to share their authentic voice. 
                 No corporate BS, just real creativity.
               </p>
@@ -432,26 +432,26 @@ const Home = () => {
             
             <div>
               <h3 className="font-semibold text-lg mb-6">Product</h3>
-              <ul className="space-y-3 text-gray-700">
-                <li className="hover:text-black transition-colors duration-300 cursor-pointer">Features</li>
-                <li className="hover:text-black transition-colors duration-300 cursor-pointer">Pricing</li>
-                <li className="hover:text-black transition-colors duration-300 cursor-pointer">API</li>
-                <li className="hover:text-black transition-colors duration-300 cursor-pointer">Integrations</li>
+              <ul className="space-y-3 text-gray-700 dark:text-stone-300">
+                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Features</li>
+                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Pricing</li>
+                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">API</li>
+                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Integrations</li>
               </ul>
             </div>
             
             <div>
               <h3 className="font-semibold text-lg mb-6">Company</h3>
-              <ul className="space-y-3 text-gray-700">
-                <li className="hover:text-black transition-colors duration-300 cursor-pointer">About</li>
-                <li className="hover:text-black transition-colors duration-300 cursor-pointer">Blog</li>
-                <li className="hover:text-black transition-colors duration-300 cursor-pointer">Careers</li>
-                <li className="hover:text-black transition-colors duration-300 cursor-pointer">Press</li>
+              <ul className="space-y-3 text-gray-700 dark:text-stone-300">
+                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">About</li>
+                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Blog</li>
+                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Careers</li>
+                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Press</li>
               </ul>
             </div>
           </div>
           
-          <div className="border-t border-gray-300 pt-8 text-center text-gray-600">
+          <div className="border-t border-gray-300 dark:border-stone-700 pt-8 text-center text-gray-600 dark:text-stone-400">
             <p>&copy; 2024 WriteX. Built with ❤️ for the next generation of writers.</p>
           </div>
         </div>

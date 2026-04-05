@@ -162,9 +162,9 @@ const MyBlog = () => {
       case 'draft':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'archived':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-600';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-600';
     }
   };
 
@@ -201,12 +201,12 @@ const MyBlog = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-foreground">
         <Navbar />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your blogs...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-gray-100 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading your blogs...</p>
           </div>
         </div>
       </div>
@@ -214,7 +214,7 @@ const MyBlog = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-foreground">
       <Navbar />
       
       {/* Hero Section */}
@@ -226,10 +226,10 @@ const MyBlog = () => {
             transition={{ duration: 0.8 }}
             className="text-center mb-16"
           >
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 lexend-txt mb-6">
-              My <span className="text-gray-700">Blogs</span>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-gray-50 lexend-txt mb-6">
+              My <span className="text-gray-700 dark:text-gray-300">Blogs</span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto oxygen-regular">
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto oxygen-regular">
               Manage and organize your published content. Edit, unpublish, or delete your blogs as needed.
             </p>
           </motion.div>
@@ -241,39 +241,39 @@ const MyBlog = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16"
           >
-            <div className="bg-white rounded-3xl p-6 border border-gray-200 text-center">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-gray-200 dark:border-zinc-700 text-center">
               <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4">
                 <PenTool className="w-6 h-6 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900">{data.length}</div>
-              <div className="text-gray-600">Total Blogs</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">{data.length}</div>
+              <div className="text-gray-600 dark:text-gray-400">Total Blogs</div>
             </div>
-            <div className="bg-white rounded-3xl p-6 border border-gray-200 text-center">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-gray-200 dark:border-zinc-700 text-center">
               <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Eye className="w-6 h-6 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">
                 {data.filter(blog => blog.status === 'published').length}
               </div>
-              <div className="text-gray-600">Published</div>
+              <div className="text-gray-600 dark:text-gray-400">Published</div>
             </div>
-            <div className="bg-white rounded-3xl p-6 border border-gray-200 text-center">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-gray-200 dark:border-zinc-700 text-center">
               <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <EyeOff className="w-6 h-6 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">
                 {data.filter(blog => blog.status === 'draft').length}
               </div>
-              <div className="text-gray-600">Drafts</div>
+              <div className="text-gray-600 dark:text-gray-400">Drafts</div>
             </div>
-            <div className="bg-white rounded-3xl p-6 border border-gray-200 text-center">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-gray-200 dark:border-zinc-700 text-center">
               <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">
                 {data.reduce((total, blog) => total + (blog.viewCount || 0), 0)}
               </div>
-              <div className="text-gray-600">Total Views</div>
+              <div className="text-gray-600 dark:text-gray-400">Total Views</div>
             </div>
           </motion.div>
 
@@ -286,7 +286,7 @@ const MyBlog = () => {
           >
             <button
               onClick={() => navigate("/write")}
-              className="inline-flex items-center gap-3 bg-gray-900 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-800 transition-all duration-300 hover:scale-105 shadow-lg"
+              className="inline-flex items-center gap-3 bg-gray-900 dark:bg-primary text-white dark:text-primary-foreground px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-800 dark:hover:bg-primary/90 transition-all duration-300 hover:scale-105 shadow-lg"
             >
               <Plus className="w-5 h-5" />
               Write New Blog
@@ -294,7 +294,7 @@ const MyBlog = () => {
             <button
               onClick={refreshBlogs}
               disabled={loading}
-              className="inline-flex items-center gap-3 bg-white text-gray-900 px-6 py-4 rounded-full font-semibold text-lg hover:bg-gray-50 transition-all duration-300 border-2 border-gray-200 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-3 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-50 px-6 py-4 rounded-full font-semibold text-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all duration-300 border-2 border-gray-200 dark:border-zinc-600 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
@@ -321,28 +321,28 @@ const MyBlog = () => {
                 placeholder="Search blogs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent w-64"
+                className="pl-10 pr-4 py-2 border border-gray-200 dark:border-zinc-600 rounded-full bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-300 focus:border-transparent w-64"
               />
-              <svg className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
 
             {/* Status Filter */}
-            <div className="flex bg-white rounded-full border border-gray-200 p-1 shadow-sm">
+            <div className="flex bg-white dark:bg-zinc-900 rounded-full border border-gray-200 dark:border-zinc-600 p-1 shadow-sm">
               {['all', 'published', 'draft'].map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
                   className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                     statusFilter === status
-                      ? 'bg-gray-900 text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      ? 'bg-gray-900 dark:bg-primary text-white dark:text-primary-foreground shadow-md'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-zinc-800'
                   }`}
                 >
                   {status === 'all' ? 'All Blogs' : firstUpperCase(status)}
                   {status !== 'all' && (
-                    <span className="ml-2 bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-xs">
+                    <span className="ml-2 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 px-2 py-0.5 rounded-full text-xs">
                       {data.filter(blog => blog.status === status).length}
                     </span>
                   )}
@@ -363,16 +363,16 @@ const MyBlog = () => {
               transition={{ duration: 0.8 }}
               className="text-center py-20"
             >
-              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-                <PenTool className="w-12 h-12 text-gray-400" />
+              <div className="w-24 h-24 bg-gray-200 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <PenTool className="w-12 h-12 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-2xl font-semibold text-gray-900 mb-4">No blogs yet</h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-4">No blogs yet</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
                 Start your writing journey by creating your first blog post. Share your thoughts, experiences, and knowledge with the world.
               </p>
               <button
                 onClick={() => navigate("/write")}
-                className="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors"
+                className="inline-flex items-center gap-2 bg-gray-900 dark:bg-primary text-white dark:text-primary-foreground px-6 py-3 rounded-full font-medium hover:bg-gray-800 dark:hover:bg-primary/90 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Write Your First Blog
@@ -385,11 +385,11 @@ const MyBlog = () => {
               transition={{ duration: 0.8 }}
               className="text-center py-20"
             >
-              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-                <EyeOff className="w-12 h-12 text-gray-400" />
+              <div className="w-24 h-24 bg-gray-200 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <EyeOff className="w-12 h-12 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-2xl font-semibold text-gray-900 mb-4">No blogs found</h3>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-4">No blogs found</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
                 {searchQuery ? 'No blogs match your search query.' : 'No blogs match your current filter.'} Try changing the filter or create a new blog post.
               </p>
               <div className="flex gap-4 justify-center">
@@ -398,13 +398,13 @@ const MyBlog = () => {
                     setStatusFilter('all');
                     setSearchQuery('');
                   }}
-                  className="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors"
+                  className="inline-flex items-center gap-2 bg-gray-900 dark:bg-primary text-white dark:text-primary-foreground px-6 py-3 rounded-full font-medium hover:bg-gray-800 dark:hover:bg-primary/90 transition-colors"
                 >
                   Show All Blogs
                 </button>
                 <button
                   onClick={() => navigate("/write")}
-                  className="inline-flex items-center gap-2 bg-white text-gray-900 px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition-colors border-2 border-gray-200"
+                  className="inline-flex items-center gap-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-50 px-6 py-3 rounded-full font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors border-2 border-gray-200 dark:border-zinc-600"
                 >
                   <Plus className="w-4 h-4" />
                   Write New Blog
@@ -420,7 +420,7 @@ const MyBlog = () => {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="text-center mb-8"
               >
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Showing {filteredBlogs.length} of {data.length} blogs
                   {searchQuery && ` matching "${searchQuery}"`}
                   {statusFilter !== 'all' && ` (${firstUpperCase(statusFilter)} only)`}
@@ -434,7 +434,7 @@ const MyBlog = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
-                    className="bg-white rounded-3xl border border-gray-200 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group"
+                    className="bg-white dark:bg-zinc-900 rounded-3xl border border-gray-200 dark:border-zinc-700 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group"
                   >
                     {/* Image */}
                     <div className="relative h-48 overflow-hidden">
@@ -445,7 +445,7 @@ const MyBlog = () => {
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-700 flex items-center justify-center">
                           <img src={Logo} alt="" />
                         </div>
                       )}
@@ -463,17 +463,17 @@ const MyBlog = () => {
                         <div className="relative" ref={actionsRef}>
                           <button
                             onClick={() => toggleActions(blog._id)}
-                            className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
+                            className="p-2 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm rounded-full hover:bg-white dark:hover:bg-zinc-800 transition-colors"
                           >
-                            <MoreVertical className="w-4 h-4 text-gray-700" />
+                            <MoreVertical className="w-4 h-4 text-gray-700 dark:text-gray-300" />
                           </button>
                           
                           {showActions[blog._id] && (
-                            <div className="absolute right-0 top-12 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 min-w-[160px] z-10">
+                            <div className="absolute right-0 top-12 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-200 dark:border-zinc-700 py-2 min-w-[160px] z-10">
                               <button
                                 onClick={() => handleEditBlog(blog)}
                                 disabled={operationLoading[blog._id]}
-                                className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-800 flex items-center gap-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 {operationLoading[blog._id] ? (
                                   <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
@@ -485,7 +485,7 @@ const MyBlog = () => {
                               <button
                                 onClick={() => handleToggleStatus(blog)}
                                 disabled={operationLoading[blog._id]}
-                                className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-800 flex items-center gap-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 {operationLoading[blog._id] ? (
                                   <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
@@ -504,7 +504,7 @@ const MyBlog = () => {
                               <button
                                 onClick={() => handleDeleteBlog(blog._id)}
                                 disabled={operationLoading[blog._id]}
-                                className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 {operationLoading[blog._id] ? (
                                   <div className="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin"></div>
@@ -522,7 +522,7 @@ const MyBlog = () => {
                     {/* Content */}
                     <div className="p-6">
                       {/* Meta Info */}
-                      <div className="flex items-center gap-4 mb-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {formatDate(blog.createdAt)}
@@ -540,22 +540,22 @@ const MyBlog = () => {
                       </div>
 
                       {/* Title */}
-                      <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 lexend-txt group-hover:text-gray-700 transition-colors">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-3 line-clamp-2 lexend-txt group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
                         {blog.title}
                       </h3>
 
                       {/* Excerpt */}
-                      <p className="text-sm text-gray-600 line-clamp-3 mb-4 oxygen-regular">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 oxygen-regular">
                         {typeof blog.content === "string"
                           ? blog.content
                           : blog.description}
                       </p>
 
                       {/* Action Buttons */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-zinc-800">
                         <button
                           onClick={() => navigate(`/blog/${blog._id}`)}
-                          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium text-sm transition-colors group-hover:gap-3"
+                          className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium text-sm transition-colors group-hover:gap-3"
                         >
                           Read Full Blog
                           <ArrowRight className="w-3 h-3" />
@@ -565,7 +565,7 @@ const MyBlog = () => {
                           <button
                             onClick={() => handleEditBlog(blog)}
                             disabled={operationLoading[blog._id]}
-                            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Edit Blog"
                           >
                             {operationLoading[blog._id] ? (
@@ -577,7 +577,7 @@ const MyBlog = () => {
                           <button
                             onClick={() => handleToggleStatus(blog)}
                             disabled={operationLoading[blog._id]}
-                            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title={blog.status === 'published' ? 'Unpublish Blog' : 'Publish Blog'}
                           >
                             {operationLoading[blog._id] ? (

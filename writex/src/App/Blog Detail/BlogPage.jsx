@@ -53,56 +53,70 @@ function renderTextRuns(nodes, keyPrefix = 't') {
             if (mark.attrs && mark.attrs.color) {
               const color = mark.attrs.color;
               if (color.startsWith('var(--') || color.startsWith('#')) {
-                className += ' px-1 rounded';
+                className +=
+                  ' px-1 rounded text-gray-900 dark:text-gray-100 ring-1 ring-black/10 dark:ring-white/20';
                 customHighlightColor = color;
               } else {
                 switch (color) {
                   case 'yellow':
-                    className += ' bg-yellow-200 px-1 rounded';
+                    className +=
+                      ' bg-yellow-200 dark:bg-yellow-950/80 text-gray-900 dark:text-yellow-50 px-1 rounded';
                     break;
                   case 'green':
-                    className += ' bg-green-200 px-1 rounded';
+                    className +=
+                      ' bg-green-200 dark:bg-green-950/80 text-gray-900 dark:text-green-50 px-1 rounded';
                     break;
                   case 'blue':
-                    className += ' bg-blue-200 px-1 rounded';
+                    className +=
+                      ' bg-blue-200 dark:bg-blue-950/80 text-gray-900 dark:text-blue-50 px-1 rounded';
                     break;
                   case 'red':
-                    className += ' bg-red-200 px-1 rounded';
+                    className +=
+                      ' bg-red-200 dark:bg-red-950/80 text-gray-900 dark:text-red-50 px-1 rounded';
                     break;
                   case 'purple':
-                    className += ' bg-purple-200 px-1 rounded';
+                    className +=
+                      ' bg-purple-200 dark:bg-purple-950/80 text-gray-900 dark:text-purple-50 px-1 rounded';
                     break;
                   case 'pink':
-                    className += ' bg-pink-200 px-1 rounded';
+                    className +=
+                      ' bg-pink-200 dark:bg-pink-950/80 text-gray-900 dark:text-pink-50 px-1 rounded';
                     break;
                   case 'orange':
-                    className += ' bg-orange-200 px-1 rounded';
+                    className +=
+                      ' bg-orange-200 dark:bg-orange-950/80 text-gray-900 dark:text-orange-50 px-1 rounded';
                     break;
                   case 'teal':
-                    className += ' bg-teal-200 px-1 rounded';
+                    className +=
+                      ' bg-teal-200 dark:bg-teal-950/80 text-gray-900 dark:text-teal-50 px-1 rounded';
                     break;
                   case 'indigo':
-                    className += ' bg-indigo-200 px-1 rounded';
+                    className +=
+                      ' bg-indigo-200 dark:bg-indigo-950/80 text-gray-900 dark:text-indigo-50 px-1 rounded';
                     break;
                   case 'gray':
-                    className += ' bg-gray-200 px-1 rounded';
+                    className +=
+                      ' bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-zinc-100 px-1 rounded';
                     break;
                   default:
-                    className += ' bg-yellow-200 px-1 rounded';
+                    className +=
+                      ' bg-yellow-200 dark:bg-yellow-950/80 text-gray-900 dark:text-yellow-50 px-1 rounded';
                     break;
                 }
               }
             } else {
-              className += ' bg-yellow-200 px-1 rounded';
+              className +=
+                ' bg-yellow-200 dark:bg-yellow-950/80 text-gray-900 dark:text-yellow-50 px-1 rounded';
             }
             break;
           case 'code':
-            className += ' bg-gray-100 px-2 py-1 rounded font-mono text-sm';
+            className +=
+              ' bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-2 py-1 rounded font-mono text-sm border border-zinc-200 dark:border-zinc-600';
             break;
           case 'link':
             linkHref = mark.attrs?.href;
             linkTarget = mark.attrs?.target;
-            className += ' text-blue-600 underline';
+            className += ' text-blue-600 dark:text-blue-400 underline';
             break;
           default:
             break;
@@ -480,7 +494,7 @@ const BlogPage = () => {
   // Function to render TipTap content
   const renderTipTapContent = (content) => {
     if (typeof content === "string") {
-      return <div className="text-gray-700 leading-relaxed text-lg">{content}</div>;
+      return <div className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">{content}</div>;
     }
 
     if (content && content.content && Array.isArray(content.content)) {
@@ -488,7 +502,7 @@ const BlogPage = () => {
         switch (node.type) {
           case 'paragraph':
             return (
-              <p key={index} className="mb-4 text-gray-700 leading-relaxed text-lg">
+              <p key={index} className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
                 {renderTextRuns(node.content, `p-${index}`)}
               </p>
             );
@@ -496,12 +510,12 @@ const BlogPage = () => {
           case 'heading':
             const HeadingTag = `h${node.attrs?.level || 1}`;
             const headingStyles = {
-              1: 'text-3xl font-bold text-gray-900 mb-4 mt-8 first:mt-0',
-              2: 'text-2xl font-bold text-gray-800 mb-3 mt-6',
-              3: 'text-xl font-semibold text-gray-800 mb-3 mt-5',
-              4: 'text-lg font-semibold text-gray-700 mb-2 mt-4',
-              5: 'text-base font-semibold text-gray-700 mb-2 mt-3',
-              6: 'text-sm font-semibold text-gray-700 mb-2 mt-2'
+              1: 'text-3xl font-bold text-gray-900 dark:text-gray-50 mb-4 mt-8 first:mt-0',
+              2: 'text-2xl font-bold text-gray-800 dark:text-gray-200 mb-3 mt-6',
+              3: 'text-xl font-semibold text-gray-800 dark:text-gray-200 mb-3 mt-5',
+              4: 'text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2 mt-4',
+              5: 'text-base font-semibold text-gray-700 dark:text-gray-300 mb-2 mt-3',
+              6: 'text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 mt-2'
             };
             
             return (
@@ -529,14 +543,14 @@ const BlogPage = () => {
                   style={{ maxHeight: '500px' }}
                 />
                 {node.attrs?.alt && (
-                  <p className="text-sm text-gray-500 mt-2 italic">{node.attrs.alt}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">{node.attrs.alt}</p>
                 )}
               </div>
             );
           
           case 'blockquote':
             return (
-              <blockquote key={index} className="border-l-4 border-gray-300 pl-4 my-4 italic text-gray-600 bg-gray-50 py-2 rounded-r">
+              <blockquote key={index} className="border-l-4 border-gray-300 dark:border-zinc-600 pl-4 my-4 italic text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800/60 py-2 rounded-r">
                 {node.content && node.content.map((contentNode, contentIndex) => {
                   if (contentNode.type === 'text') {
                     return contentNode.text;
@@ -556,7 +570,7 @@ const BlogPage = () => {
           
           case 'bulletList':
             return (
-              <ul key={index} className="list-disc list-inside mb-4 text-gray-700 leading-relaxed">
+              <ul key={index} className="list-disc list-inside mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                 {node.content && node.content.map((listItem, listIndex) => (
                   <li key={listIndex} className="mb-1">
                     {listItem.content && listItem.content.map((contentNode, contentIndex) => {
@@ -580,7 +594,7 @@ const BlogPage = () => {
           
           case 'orderedList':
             return (
-              <ol key={index} className="list-decimal list-inside mb-4 text-gray-700 leading-relaxed">
+              <ol key={index} className="list-decimal list-inside mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                 {node.content && node.content.map((listItem, listIndex) => (
                   <li key={listIndex} className="mb-1">
                     {listItem.content && listItem.content.map((contentNode, contentIndex) => {
@@ -604,14 +618,14 @@ const BlogPage = () => {
           
           case 'taskList':
             return (
-              <ul key={index} className="list-none mb-4 text-gray-700 leading-relaxed space-y-2">
+              <ul key={index} className="list-none mb-4 text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
                 {node.content && node.content.map((taskItem, taskIndex) => (
                   <li key={taskIndex} className="flex items-start gap-3">
                     <input
                       type="checkbox"
                       checked={taskItem.attrs?.checked || false}
                       readOnly
-                      className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      className="mt-1 w-4 h-4 text-blue-600 dark:text-blue-400 bg-gray-100 dark:bg-zinc-800 border-gray-300 dark:border-zinc-600 rounded focus:ring-blue-500"
                     />
                     <span className="flex-1">
                       {taskItem.content && taskItem.content.map((contentNode, contentIndex) => {
@@ -642,7 +656,7 @@ const BlogPage = () => {
                   type="checkbox"
                   checked={node.attrs?.checked || false}
                   readOnly
-                  className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  className="mt-1 w-4 h-4 text-blue-600 dark:text-blue-400 bg-gray-100 dark:bg-zinc-800 border-gray-300 dark:border-zinc-600 rounded focus:ring-blue-500"
                 />
                 <span className="flex-1">
                   {node.content && node.content.map((contentNode, contentIndex) => {
@@ -667,8 +681,8 @@ const BlogPage = () => {
           case 'codeBlock':
             return (
               <div key={index} className="my-4">
-                <pre className="bg-gray-100 p-4 rounded overflow-x-auto">
-                  <code className="text-sm text-gray-800 font-mono">
+                <pre className="bg-gray-100 dark:bg-zinc-900 p-4 rounded overflow-x-auto border border-zinc-200 dark:border-zinc-700">
+                  <code className="text-sm text-gray-800 dark:text-zinc-200 font-mono">
                     {node.content && node.content.map((textNode, textIndex) => {
                       if (textNode.type === 'text') {
                         return textNode.text;
@@ -689,7 +703,7 @@ const BlogPage = () => {
             const bodyRows = useThead ? rows.slice(1) : rows;
 
             const renderRow = (row, ri, keyPrefix) => (
-              <tr key={`${keyPrefix}-${ri}`} className="border-b border-gray-200">
+              <tr key={`${keyPrefix}-${ri}`} className="border-b border-gray-200 dark:border-zinc-700">
                 {row.content?.map((cell, ci) => {
                   const CellTag = cell.type === 'tableHeader' ? 'th' : 'td';
                   return (
@@ -699,8 +713,8 @@ const BlogPage = () => {
                       rowSpan={cell.attrs?.rowspan ?? 1}
                       className={
                         cell.type === 'tableHeader'
-                          ? 'border border-gray-300 bg-gray-100 px-3 py-2 text-left text-sm font-semibold text-gray-900'
-                          : 'border border-gray-300 px-3 py-2 align-top text-sm text-gray-800'
+                          ? 'border border-gray-300 dark:border-zinc-600 bg-gray-100 dark:bg-zinc-700 px-3 py-2 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100'
+                          : 'border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 px-3 py-2 align-top text-sm text-gray-800 dark:text-zinc-200'
                       }
                       style={
                         cell.attrs?.minHeight != null && cell.attrs.minHeight > 0
@@ -731,8 +745,8 @@ const BlogPage = () => {
             );
 
             return (
-              <div key={index} className="my-6 w-full overflow-x-auto rounded-lg border border-gray-200">
-                <table className="w-full min-w-[280px] border-collapse text-left">
+              <div key={index} className="my-6 w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-zinc-600 bg-white dark:bg-zinc-950">
+                <table className="w-full min-w-[280px] border-collapse text-left text-foreground">
                   {useThead && firstRow ? (
                     <thead>{renderRow(firstRow, 0, `tbl-${index}`)}</thead>
                   ) : null}
@@ -750,11 +764,11 @@ const BlogPage = () => {
             // Fallback: Try to render any content we can find
             if (node.content && Array.isArray(node.content)) {
               return (
-                <div key={index} className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-                  <p className="text-sm text-yellow-800 mb-2">
+                <div key={index} className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-950/40 border border-yellow-200 dark:border-yellow-800 rounded">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">
                     <strong>Content Type:</strong> {node.type}
                   </p>
-                  <div className="text-gray-700">
+                  <div className="text-gray-700 dark:text-gray-300">
                     {node.content.map((contentNode, contentIndex) => {
                       if (contentNode.type === 'text') {
                         return <span key={contentIndex}>{contentNode.text}</span>;
@@ -784,20 +798,20 @@ const BlogPage = () => {
     
     // Fallback for other content types
     return (
-      <div className="text-gray-700 leading-relaxed text-lg">
-        <pre className="whitespace-pre-wrap bg-gray-100 p-4 rounded border">{JSON.stringify(content, null, 2)}</pre>
+      <div className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+        <pre className="whitespace-pre-wrap bg-gray-100 dark:bg-zinc-800 p-4 rounded border border-border">{JSON.stringify(content, null, 2)}</pre>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Back button */}
         <button
           onClick={() => navigate('/blogs')}
-          className="mb-8 flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200"
+          className="mb-8 flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-50 transition-colors duration-200"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -810,7 +824,7 @@ const BlogPage = () => {
           <div className="lg:col-span-2">
             {/* Blog header */}
             <div className="mb-8">
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-50 mb-6 leading-tight">
                 {blog.title}
               </h1>
               
@@ -824,13 +838,13 @@ const BlogPage = () => {
                       className="w-12 h-12 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-                      <User className="w-6 h-6 text-gray-600" />
+                    <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-zinc-600 flex items-center justify-center">
+                      <User className="w-6 h-6 text-gray-600 dark:text-zinc-200" />
                     </div>
                   )}
                   <div>
-                    <p className="font-semibold text-lg text-gray-800">{firstUpperCase(blog.author?.username)}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <p className="font-semibold text-lg text-gray-800 dark:text-gray-200">{firstUpperCase(blog.author?.username)}</p>
+                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         {new Date(blog.createdAt).toLocaleDateString('en-US', {
@@ -850,7 +864,7 @@ const BlogPage = () => {
                 </div>
 
                 {/* Interaction stats */}
-                <div className="flex items-center gap-6 text-sm text-gray-500">
+                <div className="flex items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
                   <div className="flex items-center gap-1">
                     <Eye className="w-4 h-4" />
                     {blog.viewCount} views
@@ -888,7 +902,7 @@ const BlogPage = () => {
                 className={`flex items-center gap-2 ${
                   blog.isLiked 
                     ? "bg-red-500 hover:bg-red-600 text-white" 
-                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    : "border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800"
                 }`}
               >
                 <Heart className={`w-4 h-4 ${blog.isLiked ? "fill-current" : ""}`} />
@@ -897,8 +911,8 @@ const BlogPage = () => {
             </div>
 
             {/* Comments Section */}
-            <div className="border-t border-gray-200 pt-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Comments ({blog.comments?.length || 0})</h2>
+            <div className="border-t border-gray-200 dark:border-zinc-700 pt-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-6">Comments ({blog.comments?.length || 0})</h2>
               
               {/* Add comment form */}
               {user ? (
@@ -927,7 +941,7 @@ const BlogPage = () => {
               ) : (
                 <Card className="mb-8">
                   <CardContent className="p-6 text-center">
-                    <p className="text-gray-600 mb-4">Please login to comment</p>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">Please login to comment</p>
                     <Button
                       onClick={() => navigate('/login')}
                       className="bg-gray-900 hover:bg-gray-800 text-white"
@@ -941,7 +955,7 @@ const BlogPage = () => {
               {/* Comments list */}
               <div className="space-y-6">
                 {blog.comments?.map((comment) => (
-                  <Card key={comment._id} className="border border-gray-200">
+                  <Card key={comment._id} className="border border-gray-200 dark:border-zinc-700">
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
@@ -952,13 +966,13 @@ const BlogPage = () => {
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-                              <User className="w-4 h-4 text-gray-600" />
+                            <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-zinc-600 flex items-center justify-center">
+                              <User className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                             </div>
                           )}
                           <div>
-                            <p className="font-semibold text-gray-900">{comment.user?.username}</p>
-                            <p className="text-sm text-gray-500">{formatTimeAgo(comment.createdAt)}</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-50">{comment.user?.username}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{formatTimeAgo(comment.createdAt)}</p>
                           </div>
                         </div>
                         
@@ -971,7 +985,7 @@ const BlogPage = () => {
                             className={`flex items-center gap-1 ${
                               comment.isLiked 
                                 ? "bg-red-500 hover:bg-red-600 text-white" 
-                                : "text-gray-500 hover:text-red-500"
+                                : "text-gray-500 dark:text-gray-400 hover:text-red-500"
                             }`}
                           >
                             <ThumbsUp className={`w-3 h-3 ${comment.isLiked ? "fill-current" : ""}`} />
@@ -982,7 +996,7 @@ const BlogPage = () => {
                             onClick={() => setReplyingTo(replyingTo === comment._id ? null : comment._id)}
                             variant="ghost"
                             size="sm"
-                            className="text-gray-500 hover:text-gray-700"
+                            className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300"
                           >
                             <Reply className="w-3 h-3" />
                           </Button>
@@ -992,7 +1006,7 @@ const BlogPage = () => {
                               onClick={() => handleDeleteComment(comment._id)}
                               variant="ghost"
                               size="sm"
-                              className="text-gray-500 hover:text-red-500"
+                              className="text-gray-500 dark:text-gray-400 hover:text-red-500"
                             >
                               <Trash2 className="w-3 h-3" />
                             </Button>
@@ -1000,11 +1014,11 @@ const BlogPage = () => {
                         </div>
                       </div>
                       
-                      <p className="text-gray-700 mb-4">{comment.content}</p>
+                      <p className="text-gray-700 dark:text-gray-300 mb-4">{comment.content}</p>
                       
                       {/* Reply form */}
                       {replyingTo === comment._id && user && (
-                        <div className="ml-8 border-l-2 border-gray-200 pl-4 mb-4">
+                        <div className="ml-8 border-l-2 border-gray-200 dark:border-zinc-700 pl-4 mb-4">
                           <div className="space-y-3">
                             <Textarea
                               placeholder="Write a reply..."
@@ -1036,9 +1050,9 @@ const BlogPage = () => {
                       
                       {/* Replies */}
                       {comment.replies?.length > 0 && (
-                        <div className="ml-8 border-l-2 border-gray-200 pl-4 space-y-4">
+                        <div className="ml-8 border-l-2 border-gray-200 dark:border-zinc-700 pl-4 space-y-4">
                           {comment.replies.map((reply) => (
-                            <div key={reply._id} className="bg-gray-50 p-4 rounded-lg">
+                            <div key={reply._id} className="bg-gray-50 dark:bg-zinc-800/60 p-4 rounded-lg">
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                   {reply.user?.profileImage ? (
@@ -1048,13 +1062,13 @@ const BlogPage = () => {
                                       className="w-6 h-6 rounded-full object-cover"
                                     />
                                   ) : (
-                                    <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
-                                      <User className="w-3 h-3 text-gray-600" />
+                                    <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-zinc-600 flex items-center justify-center">
+                                      <User className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                                     </div>
                                   )}
                                   <div>
-                                    <p className="font-semibold text-sm text-gray-900">{reply.user?.username}</p>
-                                    <p className="text-xs text-gray-500">{formatTimeAgo(reply.createdAt)}</p>
+                                    <p className="font-semibold text-sm text-gray-900 dark:text-gray-50">{reply.user?.username}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{formatTimeAgo(reply.createdAt)}</p>
                                   </div>
                                 </div>
                                 
@@ -1066,7 +1080,7 @@ const BlogPage = () => {
                                     className={`flex items-center gap-1 ${
                                       reply.isLiked 
                                         ? "bg-red-500 hover:bg-red-600 text-white" 
-                                        : "text-gray-500 hover:text-red-500"
+                                        : "text-gray-500 dark:text-gray-400 hover:text-red-500"
                                     }`}
                                   >
                                     <ThumbsUp className={`w-3 h-3 ${reply.isLiked ? "fill-current" : ""}`} />
@@ -1078,14 +1092,14 @@ const BlogPage = () => {
                                       onClick={() => handleDeleteReply(comment._id, reply._id)}
                                       variant="ghost"
                                       size="sm"
-                                      className="text-gray-500 hover:text-red-500"
+                                      className="text-gray-500 dark:text-gray-400 hover:text-red-500"
                                     >
                                       <Trash2 className="w-3 h-3" />
                                     </Button>
                                   )}
                                 </div>
                               </div>
-                              <p className="text-sm text-gray-700">{reply.content}</p>
+                              <p className="text-sm text-gray-700 dark:text-gray-300">{reply.content}</p>
                             </div>
                           ))}
                         </div>
@@ -1108,30 +1122,30 @@ const BlogPage = () => {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">Views</span>
+                      <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Views</span>
                     </div>
                     <span className="font-semibold">{blog.viewCount}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">Likes</span>
+                      <Heart className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Likes</span>
                     </div>
                     <span className="font-semibold">{blog.likes?.length || 0}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <MessageCircle className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">Comments</span>
+                      <MessageCircle className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Comments</span>
                     </div>
                     <span className="font-semibold">{blog.comments?.length || 0}</span>
                   </div>
                   {blog.uniqueViewCount && (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-600">Unique Views</span>
+                        <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Unique Views</span>
                       </div>
                       <span className="font-semibold">{blog.uniqueViewCount}</span>
                     </div>
@@ -1153,16 +1167,16 @@ const BlogPage = () => {
                         className="w-12 h-12 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
-                        <User className="w-6 h-6 text-gray-600" />
+                      <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-zinc-600 flex items-center justify-center">
+                        <User className="w-6 h-6 text-gray-600 dark:text-gray-400" />
                       </div>
                     )}
                     <div>
-                      <p className="font-semibold text-gray-900">{blog.author?.username}</p>
-                      <p className="text-sm text-gray-500">Blog Author</p>
+                      <p className="font-semibold text-gray-900 dark:text-gray-50">{blog.author?.username}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Blog Author</p>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     Published on {new Date(blog.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
