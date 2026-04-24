@@ -29,6 +29,28 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
+/** Unique title so repeated auto-saves do not collide on slug ("Untitled draft" → same slug). */
+function makeDefaultDraftTitle() {
+  return `Untitled draft ${Date.now()}`;
+}
+
+function parseBlogContent(raw) {
+  if (raw == null) return null;
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  return raw;
+}
+
+function editorHasMeaningfulText(editor) {
+  if (!editor || typeof editor.getText !== "function") return false;
+  return editor.getText().trim().length > 0;
+}
+
 const WriteBlog = () => {
   const editorRef = useRef(null);
   const [title, setTitle] = useState("");
@@ -54,6 +76,47 @@ const WriteBlog = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  /** Latest form state for unload / keepalive save (refs avoid stale closures). */
+  const formStateRef = useRef({
+    title: "",
+    description: "",
+    tags: "",
+    category: "General",
+    mainImage: null,
+    isEditMode: false,
+    editBlogId: null,
+  });
+  const originalEditSnapshotRef = useRef(null);
+  const autoSaveOnExitSentRef = useRef(false);
+
+  useEffect(() => {
+    formStateRef.current = {
+      title,
+      description,
+      tags,
+      category,
+      mainImage,
+      isEditMode,
+      editBlogId,
+    };
+  }, [title, description, tags, category, mainImage, isEditMode, editBlogId]);
+
+  useEffect(() => {
+    if (location.state?.editBlog) {
+      const blog = location.state.editBlog;
+      originalEditSnapshotRef.current = {
+        title: blog.title || "",
+        description: blog.description || "",
+        tags: blog.tags || "",
+        category: blog.category || "General",
+        mainImage: blog.mainImage || null,
+        content: parseBlogContent(blog.content),
+      };
+    } else {
+      originalEditSnapshotRef.current = null;
+    }
+  }, [location.state]);
+
   const handleMainImageChange = React.useCallback((imageUrl) => {
     setMainImage(imageUrl);
   }, []);
@@ -76,19 +139,33 @@ const WriteBlog = () => {
 
   const hasUnsavedChanges = () => {
     if (!isEditMode) return false;
-    
-    // Check if any field has changed from the original
+
     const originalBlog = location.state?.editBlog;
     if (!originalBlog) return false;
-    
+
+    let contentChanged = false;
+    const origContent = parseBlogContent(originalBlog.content);
+    if (editorRef.current && origContent != null) {
+      try {
+        contentChanged =
+          JSON.stringify(editorRef.current.getJSON()) !== JSON.stringify(origContent);
+      } catch {
+        contentChanged = editorHasMeaningfulText(editorRef.current);
+      }
+    } else if (editorRef.current) {
+      contentChanged = editorHasMeaningfulText(editorRef.current);
+    }
+
     return (
       title !== originalBlog.title ||
       category !== originalBlog.category ||
       description !== originalBlog.description ||
       tags !== originalBlog.tags ||
-      mainImage !== originalBlog.mainImage
+      mainImage !== originalBlog.mainImage ||
+      contentChanged
     );
   };
+
 
   const handleCancelEdit = () => {
     if (hasUnsavedChanges()) {
@@ -186,6 +263,96 @@ const WriteBlog = () => {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [isEditMode, hasUnsavedChanges, navigate]);
+
+  /** Auto-save draft when the tab/window closes (uses keepalive fetch; does not run on in-app SPA navigation). */
+  useEffect(() => {
+    const trySave = () => {
+      if (autoSaveOnExitSentRef.current) return;
+      if (!localStorage.getItem("token")) return;
+
+      const editor = editorRef.current;
+      if (!editor) return;
+
+      const s = formStateRef.current;
+      const hasBody =
+        editorHasMeaningfulText(editor) ||
+        s.title.trim() ||
+        s.description.trim() ||
+        s.mainImage;
+
+      if (!hasBody) return;
+
+      if (s.isEditMode && originalEditSnapshotRef.current) {
+        const o = originalEditSnapshotRef.current;
+        let contentChanged = true;
+        try {
+          const cur = editor.getJSON();
+          contentChanged =
+            o.content == null
+              ? editorHasMeaningfulText(editor)
+              : JSON.stringify(cur) !== JSON.stringify(o.content);
+        } catch {
+          contentChanged = true;
+        }
+
+        const metaChanged =
+          s.title.trim() !== (o.title || "").trim() ||
+          (s.category || "") !== (o.category || "") ||
+          s.description.trim() !== (o.description || "").trim() ||
+          (s.tags || "") !== (o.tags || "") ||
+          s.mainImage !== o.mainImage;
+
+        if (!contentChanged && !metaChanged) return;
+      }
+
+      autoSaveOnExitSentRef.current = true;
+
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const draftTitle = s.title.trim() || makeDefaultDraftTitle();
+      const draftData = {
+        title: draftTitle,
+        mainImage: s.mainImage || null,
+        content: editor.getJSON(),
+        category:
+          (s.category || "General").charAt(0).toUpperCase() +
+          (s.category || "General").slice(1).toLowerCase(),
+        status: "draft",
+        tags: (s.tags || "").trim() || [],
+        description: (s.description || "").trim() || "No description",
+      };
+
+      const base = import.meta.env.VITE_API_BASE_URL;
+      const url =
+        s.isEditMode && s.editBlogId
+          ? `${base}/blog/updateblog/${s.editBlogId}`
+          : `${base}/blog/addblog`;
+      const method = s.isEditMode && s.editBlogId ? "PUT" : "POST";
+
+      try {
+        fetch(url, {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(draftData),
+          keepalive: true,
+          credentials: "include",
+        }).catch(() => {});
+      } catch {
+        autoSaveOnExitSentRef.current = false;
+      }
+    };
+
+    window.addEventListener("pagehide", trySave);
+    window.addEventListener("beforeunload", trySave);
+    return () => {
+      window.removeEventListener("pagehide", trySave);
+      window.removeEventListener("beforeunload", trySave);
+    };
+  }, []);
 
   const handlePublish = async (e) => {
     e.preventDefault();
@@ -290,16 +457,17 @@ const WriteBlog = () => {
   };
 
   const handleSaveDraft = async () => {
-    if (!title.trim() && !description.trim()) {
-      toast.warning("Please add at least a title or description to save as draft");
+    const hasEditor = editorHasMeaningfulText(editorRef.current);
+    if (!title.trim() && !description.trim() && !hasEditor) {
+      toast.warning("Add some writing, a title, or a description to save as draft");
       return;
     }
 
     try {
       const editorContent = editorRef.current ? editorRef.current.getJSON() : {};
-      
+
       const draftData = {
-        title: title.trim() || "Untitled Draft",
+        title: title.trim() || makeDefaultDraftTitle(),
         mainImage: mainImage || null,
         content: editorContent,
         category: category.charAt(0).toUpperCase() + category.slice(1).toLowerCase(),
