@@ -88,6 +88,12 @@ const WriteBlog = () => {
   });
   const originalEditSnapshotRef = useRef(null);
   const autoSaveOnExitSentRef = useRef(false);
+  /** Skip auto-save when leaving after a successful publish/draft save (avoid duplicate POST). */
+  const suppressAutoSaveRef = useRef(false);
+  /** Latest keepalive draft save impl (refs only; safe for unload / unmount). */
+  const keepaliveDraftSaveRef = useRef(() => {});
+  /** After first frame: ignore React Strict Mode fake unmount (no ghost drafts in dev). */
+  const spaLeaveSaveReadyRef = useRef(false);
 
   useEffect(() => {
     formStateRef.current = {
@@ -169,20 +175,17 @@ const WriteBlog = () => {
 
   const handleCancelEdit = () => {
     if (hasUnsavedChanges()) {
-      if (window.confirm("You have unsaved changes. Are you sure you want to cancel editing? All changes will be lost.")) {
-        resetForm();
+      if (window.confirm("You have unsaved changes. Are you sure you want to cancel editing? A draft will be saved automatically.")) {
         navigate("/myblogs");
       }
     } else {
-      resetForm();
       navigate("/myblogs");
     }
   };
 
   const handleNavigateAway = () => {
     if (isEditMode && hasUnsavedChanges()) {
-      if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
-        resetForm();
+      if (window.confirm("You have unsaved changes. Are you sure you want to leave? A draft will be saved automatically.")) {
         navigate("/myblogs");
       }
     } else {
@@ -250,8 +253,7 @@ const WriteBlog = () => {
     const handlePopState = (e) => {
       if (isEditMode && hasUnsavedChanges()) {
         e.preventDefault();
-        if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
-          resetForm();
+        if (window.confirm("You have unsaved changes. Are you sure you want to leave? A draft will be saved automatically.")) {
           navigate("/myblogs");
         } else {
           // Push the current state back to prevent navigation
@@ -264,95 +266,116 @@ const WriteBlog = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [isEditMode, hasUnsavedChanges, navigate]);
 
-  /** Auto-save draft when the tab/window closes (uses keepalive fetch; does not run on in-app SPA navigation). */
+  /** Tab close / refresh: keepalive save. */
   useEffect(() => {
-    const trySave = () => {
-      if (autoSaveOnExitSentRef.current) return;
-      if (!localStorage.getItem("token")) return;
-
-      const editor = editorRef.current;
-      if (!editor) return;
-
-      const s = formStateRef.current;
-      const hasBody =
-        editorHasMeaningfulText(editor) ||
-        s.title.trim() ||
-        s.description.trim() ||
-        s.mainImage;
-
-      if (!hasBody) return;
-
-      if (s.isEditMode && originalEditSnapshotRef.current) {
-        const o = originalEditSnapshotRef.current;
-        let contentChanged = true;
-        try {
-          const cur = editor.getJSON();
-          contentChanged =
-            o.content == null
-              ? editorHasMeaningfulText(editor)
-              : JSON.stringify(cur) !== JSON.stringify(o.content);
-        } catch {
-          contentChanged = true;
-        }
-
-        const metaChanged =
-          s.title.trim() !== (o.title || "").trim() ||
-          (s.category || "") !== (o.category || "") ||
-          s.description.trim() !== (o.description || "").trim() ||
-          (s.tags || "") !== (o.tags || "") ||
-          s.mainImage !== o.mainImage;
-
-        if (!contentChanged && !metaChanged) return;
-      }
-
-      autoSaveOnExitSentRef.current = true;
-
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const draftTitle = s.title.trim() || makeDefaultDraftTitle();
-      const draftData = {
-        title: draftTitle,
-        mainImage: s.mainImage || null,
-        content: editor.getJSON(),
-        category:
-          (s.category || "General").charAt(0).toUpperCase() +
-          (s.category || "General").slice(1).toLowerCase(),
-        status: "draft",
-        tags: (s.tags || "").trim() || [],
-        description: (s.description || "").trim() || "No description",
-      };
-
-      const base = import.meta.env.VITE_API_BASE_URL;
-      const url =
-        s.isEditMode && s.editBlogId
-          ? `${base}/blog/updateblog/${s.editBlogId}`
-          : `${base}/blog/addblog`;
-      const method = s.isEditMode && s.editBlogId ? "PUT" : "POST";
-
-      try {
-        fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(draftData),
-          keepalive: true,
-          credentials: "include",
-        }).catch(() => {});
-      } catch {
-        autoSaveOnExitSentRef.current = false;
-      }
-    };
-
-    window.addEventListener("pagehide", trySave);
-    window.addEventListener("beforeunload", trySave);
+    const onHide = () => keepaliveDraftSaveRef.current();
+    window.addEventListener("pagehide", onHide);
+    window.addEventListener("beforeunload", onHide);
     return () => {
-      window.removeEventListener("pagehide", trySave);
-      window.removeEventListener("beforeunload", trySave);
+      window.removeEventListener("pagehide", onHide);
+      window.removeEventListener("beforeunload", onHide);
     };
   }, []);
+
+  /**
+   * In-app navigation (Router links, back after route change, etc.): save draft on unmount.
+   * Registered last so cleanup runs before other effects clear the editor (e.g. edit-mode reset).
+   * rAF gate avoids React Strict Mode's synthetic unmount creating drafts in dev.
+   */
+  useEffect(() => {
+    let rafId = 0;
+    spaLeaveSaveReadyRef.current = false;
+    rafId = requestAnimationFrame(() => {
+      spaLeaveSaveReadyRef.current = true;
+    });
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (spaLeaveSaveReadyRef.current) {
+        keepaliveDraftSaveRef.current();
+      }
+    };
+  }, []);
+
+  keepaliveDraftSaveRef.current = () => {
+    if (suppressAutoSaveRef.current) return;
+    if (autoSaveOnExitSentRef.current) return;
+    if (!localStorage.getItem("token")) return;
+
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const s = formStateRef.current;
+    const hasBody =
+      editorHasMeaningfulText(editor) ||
+      s.title.trim() ||
+      s.description.trim() ||
+      s.mainImage;
+
+    if (!hasBody) return;
+
+    if (s.isEditMode && originalEditSnapshotRef.current) {
+      const o = originalEditSnapshotRef.current;
+      let contentChanged = true;
+      try {
+        const cur = editor.getJSON();
+        contentChanged =
+          o.content == null
+            ? editorHasMeaningfulText(editor)
+            : JSON.stringify(cur) !== JSON.stringify(o.content);
+      } catch {
+        contentChanged = true;
+      }
+
+      const metaChanged =
+        s.title.trim() !== (o.title || "").trim() ||
+        (s.category || "") !== (o.category || "") ||
+        s.description.trim() !== (o.description || "").trim() ||
+        (s.tags || "") !== (o.tags || "") ||
+        s.mainImage !== o.mainImage;
+
+      if (!contentChanged && !metaChanged) return;
+    }
+
+    autoSaveOnExitSentRef.current = true;
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const draftTitle = s.title.trim() || makeDefaultDraftTitle();
+    const draftData = {
+      title: draftTitle,
+      mainImage: s.mainImage || null,
+      content: editor.getJSON(),
+      category:
+        (s.category || "General").charAt(0).toUpperCase() +
+        (s.category || "General").slice(1).toLowerCase(),
+      status: "draft",
+      tags: (s.tags || "").trim() || [],
+      description: (s.description || "").trim() || "No description",
+    };
+
+    const base = import.meta.env.VITE_API_BASE_URL;
+    const url =
+      s.isEditMode && s.editBlogId
+        ? `${base}/blog/updateblog/${s.editBlogId}`
+        : `${base}/blog/addblog`;
+    const method = s.isEditMode && s.editBlogId ? "PUT" : "POST";
+
+    try {
+      fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(draftData),
+        keepalive: true,
+        credentials: "include",
+      }).catch(() => {});
+    } catch {
+      autoSaveOnExitSentRef.current = false;
+    }
+  };
 
   const handlePublish = async (e) => {
     e.preventDefault();
@@ -421,7 +444,7 @@ const WriteBlog = () => {
         setDialogOpen(false);
         
         if (isEditMode) {
-          // Navigate back to MyBlog page after successful edit
+          suppressAutoSaveRef.current = true;
           navigate("/myblogs");
         } else {
           // Reset form for new blog
@@ -497,7 +520,7 @@ const WriteBlog = () => {
       }
 
       if (response.data && isEditMode) {
-        // Navigate back to MyBlog page after successful edit
+        suppressAutoSaveRef.current = true;
         navigate("/myblogs");
       }
       
