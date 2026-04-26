@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import axios from "axios";
+import axiosInstance from "../../lib/axiosConfig";
 import { toast } from "react-toastify";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -414,20 +414,24 @@ const WriteBlog = () => {
 
       let response;
       
+      const token = localStorage.getItem("token");
+      const authRequestConfig = {
+        withCredentials: true,
+        ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+      };
+
       if (isEditMode) {
-        // Update existing blog
-        response = await axios.put(
-          `${import.meta.env.VITE_API_BASE_URL}/blog/updateblog/${editBlogId}`, 
+        response = await axiosInstance.put(
+          `/blog/updateblog/${editBlogId}`,
           blogData,
-          { withCredentials: true }
+          authRequestConfig
         );
         toast.success("Blog updated successfully!");
       } else {
-        // Create new blog
-        response = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, 
+        response = await axiosInstance.post(
+          `/blog/addblog`,
           blogData,
-          { withCredentials: true }
+          authRequestConfig
         );
         toast.success("Blog published successfully!");
       }
@@ -485,22 +489,26 @@ const WriteBlog = () => {
         description: description.trim() || "No description",
       };
 
+      const token = localStorage.getItem("token");
+      const authRequestConfig = {
+        withCredentials: true,
+        ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+      };
+
       let response;
-      
+
       if (isEditMode) {
-        // Update existing blog as draft
-        response = await axios.put(
-          `${import.meta.env.VITE_API_BASE_URL}/blog/updateblog/${editBlogId}`, 
+        response = await axiosInstance.put(
+          `/blog/updateblog/${editBlogId}`,
           draftData,
-          { withCredentials: true }
+          authRequestConfig
         );
         toast.success("Draft updated successfully!");
       } else {
-        // Create new draft
-        response = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/blog/addblog`, 
+        response = await axiosInstance.post(
+          `/blog/addblog`,
           draftData,
-          { withCredentials: true }
+          authRequestConfig
         );
         toast.success("Draft saved successfully!");
       }
