@@ -104,6 +104,7 @@ const Blog = () => {
   ];
 
   const firstUpperCase = (str) => {
+    if (!str) return "Unknown";
     const capName = str.charAt(0).toUpperCase() + str.slice(1);
     return capName;
   }
