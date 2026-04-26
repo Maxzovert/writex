@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { getSafeImageUrl } from "../../lib/image-url";
 import {
   Eye,
   Heart,
@@ -253,7 +254,10 @@ const Blog = () => {
             </motion.div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-              {filteredData.map((blog, index) => (
+              {filteredData.map((blog, index) => {
+                const safeMainImage = getSafeImageUrl(blog.mainImage);
+                const safeAuthorImage = getSafeImageUrl(blog.author?.profileImage);
+                return (
                 <motion.div
                   key={blog._id}
                   initial={{ opacity: 0, y: 20 }}
@@ -263,9 +267,9 @@ const Blog = () => {
                 >
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
-                    {blog.mainImage ? (
+                    {safeMainImage ? (
                       <img
-                        src={blog.mainImage}
+                        src={safeMainImage}
                         alt={blog.title || "Blog Image"}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
@@ -286,9 +290,9 @@ const Blog = () => {
                   <div className="p-6">
                     {/* Author Info */}
                     <div className="flex items-center gap-3 mb-4">
-                      {blog.author?.profileImage ? (
+                      {safeAuthorImage ? (
                         <img
-                          src={blog.author.profileImage}
+                          src={safeAuthorImage}
                           alt={blog.author?.username || "Author"}
                           className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-600 shadow-sm"
                         />
@@ -347,7 +351,7 @@ const Blog = () => {
                     </div>
                   </div>
                 </motion.div>
-              ))}
+              )})}
             </div>
           )}
         </div>

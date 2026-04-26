@@ -5,19 +5,22 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../../context/authContext';
+import { FaEye, FaEyeSlash } from 'react-icons/fa'
 
 const Login = () => {
   const navigate = useNavigate();
   const { setUser } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
+    rememberMe: false
   })
-
+  const [isVIsible , setISVisible] = useState(false)
   const handleChange = (e) => {
+    const { id, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.id]: e.target.value
+      [id]: type === "checkbox" ? checked : value
     })
   }
 
@@ -33,7 +36,8 @@ const Login = () => {
       // const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/users/login`, {
       const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/login`, {
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        rememberMe: formData.rememberMe
       }
       // , { withCredentials: true}
       );
@@ -48,6 +52,10 @@ const Login = () => {
     }
   }
 
+  const toggleVisibility = () => {
+    setISVisible(!isVIsible)
+  }
+  
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-background text-foreground">
       {/* Left side - Branding */}
@@ -99,15 +107,38 @@ const Login = () => {
             >
               Password
             </label>
+            <div className="relative">
+              <input
+                type={isVIsible ? "text" : "password"}
+                id="password"
+                onChange={handleChange}
+                value={formData.password}
+                required
+                className="w-full pr-12 px-4 lg:px-5 py-3 text-base lg:text-lg border-2 border-border rounded-xl bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={toggleVisibility}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-200"
+                aria-label={isVIsible ? "Hide password" : "Show password"}
+              >
+                {isVIsible ? <FaEyeSlash className="w-5 h-5" /> : <FaEye className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
             <input
-              type="password"
-              id="password"
+              type="checkbox"
+              id="rememberMe"
+              checked={formData.rememberMe}
               onChange={handleChange}
-              value={formData.password}
-              required
-              className="w-full px-4 lg:px-5 py-3 text-base lg:text-lg border-2 border-border rounded-xl bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
-              placeholder="••••••••"
+              className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
             />
+            <label htmlFor="rememberMe" className="text-sm text-muted-foreground">
+              Remember me
+            </label>
           </div>
 
           <button 

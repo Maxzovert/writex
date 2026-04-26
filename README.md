@@ -33,10 +33,9 @@ JWT_SECRET=replace-with-strong-secret
 
 Optionally, in `writex/` create `.env` for frontend settings:
 ```
-VITE_API_URL=http://localhost:5000
-# If you use Supabase in the app:
-# VITE_SUPABASE_URL=...
-# VITE_SUPABASE_ANON_KEY=...
+VITE_API_BASE_URL=http://localhost:5000
+VITE_CLOUDINARY_CLOUD_NAME=your-cloud-name
+VITE_CLOUDINARY_UPLOAD_PRESET=your-upload-preset
 ```
 
 ## Install
@@ -91,7 +90,7 @@ npm run preview
 - `writex/src/` – React app code (routes, components, TipTap editor, styles)
 
 ## Notes
-- Ensure the backend `PORT` matches the frontend `VITE_API_URL` if calling APIs locally.
+- Ensure the backend `PORT` matches the frontend `VITE_API_BASE_URL` if calling APIs locally.
 - If CORS is enabled, add your frontend origin in the backend CORS configuration.
 
 ## Contributing

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import Navbar from '../Components/Navbar';
 import { useAuth } from '../../context/authContext';
+import { getSafeImageUrl } from '../../lib/image-url';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -491,6 +492,9 @@ const BlogPage = () => {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
+  const safeAuthorImage = getSafeImageUrl(blog.author?.profileImage);
+  const safeMainImage = getSafeImageUrl(blog.mainImage);
+
   // Function to render TipTap content
   const renderTipTapContent = (content) => {
     if (typeof content === "string") {
@@ -532,11 +536,13 @@ const BlogPage = () => {
               </HeadingTag>
             );
           
-          case 'image':
+          case 'image': {
+            const safeNodeImage = getSafeImageUrl(node.attrs?.src);
+            if (!safeNodeImage) return null;
             return (
               <div key={index} className="my-4 text-center">
                 <img
-                  src={node.attrs?.src}
+                  src={safeNodeImage}
                   alt={node.attrs?.alt || 'Blog image'}
                   title={node.attrs?.title}
                   className="max-w-full h-auto rounded"
@@ -547,6 +553,7 @@ const BlogPage = () => {
                 )}
               </div>
             );
+          }
           
           case 'blockquote':
             return (
@@ -831,9 +838,9 @@ const BlogPage = () => {
               {/* Author info and stats */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
-                  {blog.author?.profileImage ? (
+                  {safeAuthorImage ? (
                     <img
-                      src={blog.author.profileImage}
+                      src={safeAuthorImage}
                       alt={blog.author?.username || "Author"}
                       className="w-12 h-12 rounded-full object-cover"
                     />
@@ -877,10 +884,10 @@ const BlogPage = () => {
               </div>
 
               {/* Main image */}
-              {blog.mainImage && (
+              {safeMainImage && (
                 <div className="mb-8">
                   <img
-                    src={blog.mainImage}
+                    src={safeMainImage}
                     alt={blog.title}
                     className="w-full h-64 md:h-96 object-cover rounded-lg"
                   />
@@ -959,9 +966,9 @@ const BlogPage = () => {
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          {comment.user?.profileImage ? (
+                          {getSafeImageUrl(comment.user?.profileImage) ? (
                             <img
-                              src={comment.user.profileImage}
+                              src={getSafeImageUrl(comment.user?.profileImage)}
                               alt={comment.user.username}
                               className="w-8 h-8 rounded-full object-cover"
                             />
@@ -1055,9 +1062,9 @@ const BlogPage = () => {
                             <div key={reply._id} className="bg-gray-50 dark:bg-zinc-800/60 p-4 rounded-lg">
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex items-center gap-2">
-                                  {reply.user?.profileImage ? (
+                                  {getSafeImageUrl(reply.user?.profileImage) ? (
                                     <img
-                                      src={reply.user.profileImage}
+                                      src={getSafeImageUrl(reply.user?.profileImage)}
                                       alt={reply.user.username}
                                       className="w-6 h-6 rounded-full object-cover"
                                     />
@@ -1160,9 +1167,9 @@ const BlogPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3 mb-4">
-                    {blog.author?.profileImage ? (
+                    {safeAuthorImage ? (
                       <img
-                        src={blog.author.profileImage}
+                        src={safeAuthorImage}
                         alt={blog.author.username}
                         className="w-12 h-12 rounded-full object-cover"
                       />

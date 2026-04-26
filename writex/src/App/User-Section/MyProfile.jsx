@@ -23,6 +23,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import { useAuth } from '../../context/authContext';
 import { uploadImageToCloudinary } from '../../lib/cloudinary-storage';
+import { getSafeImageUrl } from '../../lib/image-url';
 
 const MyProfile = () => {
   const navigate = useNavigate();
@@ -395,6 +396,8 @@ const MyProfile = () => {
     return `https://${url}`;
   };
 
+  const safeProfileImage = getSafeImageUrl(profile.profileImage);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Simple Header */}
@@ -427,9 +430,9 @@ const MyProfile = () => {
                   <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                     <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
                   </div>
-                ) : profile.profileImage ? (
+                ) : safeProfileImage ? (
                   <img
-                    src={profile.profileImage}
+                    src={safeProfileImage}
                     alt={profile.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -440,7 +443,7 @@ const MyProfile = () => {
                 ) : null}
                 
                 {/* Fallback avatar */}
-                <div className={`w-full h-full bg-gray-100 flex items-center justify-center ${profile.profileImage ? 'hidden' : ''}`}>
+                <div className={`w-full h-full bg-gray-100 flex items-center justify-center ${safeProfileImage ? 'hidden' : ''}`}>
                   <span className="text-2xl font-light text-gray-400 lexend-txt">
                     {profile.name ? profile.name.charAt(0).toUpperCase() : "U"}
                   </span>

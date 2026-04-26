@@ -3,13 +3,13 @@ import Blog from "../models/postModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-const generateToken = (userId) => {
+const generateToken = (userId, rememberMe = false) => {
     return jwt.sign({id:userId}, process.env.JWT_SECRET,{
-        expiresIn:'7d'
+        expiresIn: rememberMe ? '365d' : '7d'
     })
 }
 const signup = async (req , res) => {
-    const {username , email , password} = req.body;
+    const {username , email , password, rememberMe} = req.body;
 
     try {
         const userExist = await User.findOne({email});
@@ -18,7 +18,7 @@ const signup = async (req , res) => {
         }
 
         const user = await User.create({ username, email, password});
-        const token = generateToken(user._id)
+        const token = generateToken(user._id, Boolean(rememberMe))
 
         // res.cookie('token' ,token , {
         //     httpOnly : true,
@@ -44,7 +44,7 @@ const signup = async (req , res) => {
 
 
 const login = async (req , res) => {
-    const {email , password} = req.body;
+    const {email , password, rememberMe} = req.body;
     try {
         const user = await User.findOne({email});
         if(!user) {
@@ -56,7 +56,7 @@ const login = async (req , res) => {
             return res.status(400).json({message : "Invalid Credentials"})
         }
 
-        const token = generateToken(user._id);
+        const token = generateToken(user._id, Boolean(rememberMe));
 
         // res.cookie('token' , token , {
         //     httpOnly: true,

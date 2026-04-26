@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../Components/Navbar";
 import axiosInstance from "../../lib/axiosConfig";
+import { getSafeImageUrl } from "../../lib/image-url";
 import { toast } from "react-toastify";
 import { motion } from 'framer-motion';
 import Logo from "../../assets/logo.png";
@@ -428,7 +429,9 @@ const MyBlog = () => {
               </motion.div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-                {filteredBlogs.map((blog, index) => (
+                {filteredBlogs.map((blog, index) => {
+                  const safeMainImage = getSafeImageUrl(blog.mainImage);
+                  return (
                   <motion.div
                     key={blog._id}
                     initial={{ opacity: 0, y: 20 }}
@@ -438,9 +441,9 @@ const MyBlog = () => {
                   >
                     {/* Image */}
                     <div className="relative h-48 overflow-hidden">
-                      {blog.mainImage ? (
+                      {safeMainImage ? (
                         <img
-                          src={blog.mainImage}
+                          src={safeMainImage}
                           alt={blog.title || "Blog Image"}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
@@ -592,7 +595,7 @@ const MyBlog = () => {
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                )})}
               </div>
             </>
           )}

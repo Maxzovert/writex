@@ -15,12 +15,14 @@ const SignUp = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    rememberMe: false,
   });
 
   const handleChange = (e) => {
+    const { id, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.id]: e.target.value,
+      [id]: type === "checkbox" ? checked : value,
     });
   };
 
@@ -45,7 +47,8 @@ const SignUp = () => {
       const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/signup`, {
         username: formData.name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        rememberMe: formData.rememberMe
       });
       setUser(response.data);
       toast.success("Account Created Successfully");
@@ -151,6 +154,19 @@ const SignUp = () => {
               className="w-full px-4 lg:px-5 py-3 text-base lg:text-lg border-2 border-border rounded-xl bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
               placeholder="••••••••"
             />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={formData.rememberMe}
+              onChange={handleChange}
+              className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
+            />
+            <label htmlFor="rememberMe" className="text-sm text-muted-foreground">
+              Remember me 
+            </label>
           </div>
 
           <button
