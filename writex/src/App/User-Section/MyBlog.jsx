@@ -26,6 +26,7 @@ const MyBlog = () => {
   const [loading, setLoading] = useState(true);
   const [showActions, setShowActions] = useState({});
   const [operationLoading, setOperationLoading] = useState({});
+  const [deleteTargetBlogId, setDeleteTargetBlogId] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const hasFetched = useRef(false);
@@ -82,40 +83,39 @@ const MyBlog = () => {
   };
 
   const handleDeleteBlog = async (blogId) => {
-    if (window.confirm("Are you sure you want to delete this blog? This action cannot be undone.")) {
-      try {
-        setOperationLoading(prev => ({ ...prev, [blogId]: true }));
-        
-        const response = await axiosInstance.delete(`/blog/deleteblog/${blogId}`);
-        
-        if (response.status === 200) {
-          setData(prevData => {
-            const newData = prevData.filter(blog => blog._id !== blogId);
-            return newData;
-          });
-          toast.success("Blog deleted successfully");
-        } else {
-          throw new Error(`Unexpected response status: ${response.status}`);
-        }
-      } catch (error) {
-        if (error.response) {
-          if (error.response.status === 401) {
-            toast.error("Authentication failed. Please log in again.");
-          } else if (error.response.status === 403) {
-            toast.error("You don't have permission to delete this blog.");
-          } else if (error.response.status === 404) {
-            toast.error("Blog not found. It may have already been deleted.");
-          } else {
-            toast.error(`Failed to delete blog: ${error.response.data?.message || error.response.statusText}`);
-          }
-        } else if (error.request) {
-          toast.error("Network error: Please check your internet connection");
-        } else {
-          toast.error(`Failed to delete blog: ${error.message}`);
-        }
-      } finally {
-        setOperationLoading(prev => ({ ...prev, [blogId]: false }));
+    try {
+      setOperationLoading(prev => ({ ...prev, [blogId]: true }));
+      
+      const response = await axiosInstance.delete(`/blog/deleteblog/${blogId}`);
+      
+      if (response.status === 200) {
+        setData(prevData => {
+          const newData = prevData.filter(blog => blog._id !== blogId);
+          return newData;
+        });
+        toast.success("Blog deleted successfully");
+      } else {
+        throw new Error(`Unexpected response status: ${response.status}`);
       }
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status === 401) {
+          toast.error("Authentication failed. Please log in again.");
+        } else if (error.response.status === 403) {
+          toast.error("You don't have permission to delete this blog.");
+        } else if (error.response.status === 404) {
+          toast.error("Blog not found. It may have already been deleted.");
+        } else {
+          toast.error(`Failed to delete blog: ${error.response.data?.message || error.response.statusText}`);
+        }
+      } else if (error.request) {
+        toast.error("Network error: Please check your internet connection");
+      } else {
+        toast.error(`Failed to delete blog: ${error.message}`);
+      }
+    } finally {
+      setOperationLoading(prev => ({ ...prev, [blogId]: false }));
+      setDeleteTargetBlogId(null);
     }
   };
 
@@ -505,7 +505,7 @@ const MyBlog = () => {
                                 )}
                               </button>
                               <button
-                                onClick={() => handleDeleteBlog(blog._id)}
+                                onClick={() => setDeleteTargetBlogId(blog._id)}
                                 disabled={operationLoading[blog._id]}
                                 className="w-full px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
@@ -601,6 +601,35 @@ const MyBlog = () => {
           )}
         </div>
       </section>
+
+      {deleteTargetBlogId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-2">
+              Delete this blog?
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              This action cannot be undone. Your blog post will be permanently removed.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteTargetBlogId(null)}
+                disabled={operationLoading[deleteTargetBlogId]}
+                className="px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteBlog(deleteTargetBlogId)}
+                disabled={operationLoading[deleteTargetBlogId]}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {operationLoading[deleteTargetBlogId] ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

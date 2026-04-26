@@ -305,14 +305,6 @@ const WriteBlog = () => {
     if (!editor) return;
 
     const s = formStateRef.current;
-    const hasBody =
-      editorHasMeaningfulText(editor) ||
-      s.title.trim() ||
-      s.description.trim() ||
-      s.mainImage;
-
-    if (!hasBody) return;
-
     if (s.isEditMode && originalEditSnapshotRef.current) {
       const o = originalEditSnapshotRef.current;
       let contentChanged = true;
@@ -480,12 +472,6 @@ const WriteBlog = () => {
   };
 
   const handleSaveDraft = async () => {
-    const hasEditor = editorHasMeaningfulText(editorRef.current);
-    if (!title.trim() && !description.trim() && !hasEditor) {
-      toast.warning("Add some writing, a title, or a description to save as draft");
-      return;
-    }
-
     try {
       const editorContent = editorRef.current ? editorRef.current.getJSON() : {};
 
