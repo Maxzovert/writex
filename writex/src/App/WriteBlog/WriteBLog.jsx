@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
   DialogFooter,
   DialogClose
@@ -49,6 +50,19 @@ function parseBlogContent(raw) {
 function editorHasMeaningfulText(editor) {
   if (!editor || typeof editor.getText !== "function") return false;
   return editor.getText().trim().length > 0;
+}
+
+/** New post: only auto-save on leave if the user actually started the draft (content or any field). */
+function newBlogHasDraftableChanges(editor, s) {
+  if (!editor) return false;
+  if (editorHasMeaningfulText(editor)) return true;
+  if (s.title.trim()) return true;
+  if (s.description.trim()) return true;
+  if ((s.tags || "").trim()) return true;
+  if (s.mainImage != null) return true;
+  const cat = (s.category || "General").toLowerCase();
+  if (cat !== "general") return true;
+  return false;
 }
 
 const WriteBlog = () => {
@@ -326,6 +340,8 @@ const WriteBlog = () => {
         s.mainImage !== o.mainImage;
 
       if (!contentChanged && !metaChanged) return;
+    } else if (!s.isEditMode) {
+      if (!newBlogHasDraftableChanges(editor, s)) return;
     }
 
     autoSaveOnExitSentRef.current = true;
@@ -458,11 +474,15 @@ const WriteBlog = () => {
       }
     } catch (error) {
       console.error("Publishing error:", error);
-      
-      if (error.response) {
-        // Server responded with error
-        const errorMessage = error.response.data?.message || error.response.data?.error || "Server error occurred";
-        toast.error(`${isEditMode ? 'Updating' : 'Publishing'} failed: ${errorMessage}`);
+
+      if (error.response?.status === 413) {
+        toast.error(
+          "Post is too large for the server. Try fewer or smaller images, shorten the article, or contact support."
+        );
+      } else if (error.response) {
+        const errorMessage =
+          error.response.data?.message || error.response.data?.error || "Server error occurred";
+        toast.error(`${isEditMode ? "Updating" : "Publishing"} failed: ${errorMessage}`);
       } else if (error.request) {
         // Network error
         toast.error("Network error: Please check your internet connection");
@@ -522,7 +542,13 @@ const WriteBlog = () => {
       setDraftDialogOpen(false);
     } catch (error) {
       console.error("Saving draft error:", error);
-      toast.error(`Failed to save draft: ${error.response?.data?.message || error.message}`);
+      if (error.response?.status === 413) {
+        toast.error(
+          "Draft is too large to save. Try fewer or smaller images or shorten the content."
+        );
+      } else {
+        toast.error(`Failed to save draft: ${error.response?.data?.message || error.message}`);
+      }
     }
   };
 
@@ -696,6 +722,9 @@ const WriteBlog = () => {
                     <DialogTitle className="text-xl font-semibold">
                       Save as Draft
                     </DialogTitle>
+                    <DialogDescription>
+                      Optional details for your draft. You can publish later from My blogs.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-6">
                     <div className="grid gap-3">
@@ -795,6 +824,9 @@ const WriteBlog = () => {
                     <DialogTitle className="text-xl font-semibold">
                       Complete Your Blog Details
                     </DialogTitle>
+                    <DialogDescription>
+                      Add title, description, tags, and category before publishing.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-6">
                     <div className="grid gap-3">

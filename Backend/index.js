@@ -32,8 +32,11 @@ app.use(cors({
 // app.options('*', cors());
 
 // app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Default Express JSON limit (~100kb) causes 413 for long posts / many images (URLs in JSON).
+// Cap below MongoDB's 16MB per-document limit.
+const jsonBodyLimit = process.env.JSON_BODY_LIMIT || "12mb";
+app.use(express.json({ limit: jsonBodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: jsonBodyLimit }));
 
 // app.get("/", (req, res) => {
 //   res.send("Back running");
