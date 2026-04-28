@@ -101,6 +101,7 @@ const WriteBlog = () => {
     editBlogId: null,
   });
   const originalEditSnapshotRef = useRef(null);
+  const originalEditTextRef = useRef("");
   const autoSaveOnExitSentRef = useRef(false);
   /** Skip auto-save when leaving after a successful publish/draft save (avoid duplicate POST). */
   const suppressAutoSaveRef = useRef(false);
@@ -164,16 +165,13 @@ const WriteBlog = () => {
     if (!originalBlog) return false;
 
     let contentChanged = false;
-    const origContent = parseBlogContent(originalBlog.content);
-    if (editorRef.current && origContent != null) {
+    if (editorRef.current) {
       try {
-        contentChanged =
-          JSON.stringify(editorRef.current.getJSON()) !== JSON.stringify(origContent);
+        const currentText = editorRef.current.getText().trim();
+        contentChanged = currentText !== originalEditTextRef.current;
       } catch {
         contentChanged = editorHasMeaningfulText(editorRef.current);
       }
-    } else if (editorRef.current) {
-      contentChanged = editorHasMeaningfulText(editorRef.current);
     }
 
     return (
@@ -189,7 +187,7 @@ const WriteBlog = () => {
 
   const handleCancelEdit = () => {
     if (hasUnsavedChanges()) {
-      if (window.confirm("You have unsaved changes. Are you sure you want to cancel editing? A draft will be saved automatically.")) {
+      if (window.confirm("You have unsaved changes. Are you sure you want to cancel editing?")) {
         navigate("/myblogs");
       }
     } else {
@@ -199,7 +197,7 @@ const WriteBlog = () => {
 
   const handleNavigateAway = () => {
     if (isEditMode && hasUnsavedChanges()) {
-      if (window.confirm("You have unsaved changes. Are you sure you want to leave? A draft will be saved automatically.")) {
+      if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
         navigate("/myblogs");
       }
     } else {
@@ -227,6 +225,7 @@ const WriteBlog = () => {
             // Handle both string and JSON content
             const content = typeof blog.content === 'string' ? JSON.parse(blog.content) : blog.content;
             editorRef.current.commands.setContent(content);
+            originalEditTextRef.current = editorRef.current.getText().trim();
           } catch (error) {
             console.error("Error setting editor content:", error);
             // If parsing fails, set as plain text
@@ -235,6 +234,7 @@ const WriteBlog = () => {
                 type: 'paragraph',
                 content: [{ type: 'text', text: blog.content }]
               }]);
+              originalEditTextRef.current = editorRef.current.getText().trim();
             }
           }
         }
@@ -267,7 +267,7 @@ const WriteBlog = () => {
     const handlePopState = (e) => {
       if (isEditMode && hasUnsavedChanges()) {
         e.preventDefault();
-        if (window.confirm("You have unsaved changes. Are you sure you want to leave? A draft will be saved automatically.")) {
+        if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
           navigate("/myblogs");
         } else {
           // Push the current state back to prevent navigation
@@ -292,9 +292,8 @@ const WriteBlog = () => {
   }, []);
 
   /**
-   * In-app navigation (Router links, back after route change, etc.): save draft on unmount.
-   * Registered last so cleanup runs before other effects clear the editor (e.g. edit-mode reset).
-   * rAF gate avoids React Strict Mode's synthetic unmount creating drafts in dev.
+   * In-app navigation should NOT auto-save drafts.
+   * Auto-save is restricted to browser reload/close via beforeunload/pagehide.
    */
   useEffect(() => {
     let rafId = 0;
@@ -304,9 +303,7 @@ const WriteBlog = () => {
     });
     return () => {
       cancelAnimationFrame(rafId);
-      if (spaLeaveSaveReadyRef.current) {
-        keepaliveDraftSaveRef.current();
-      }
+      spaLeaveSaveReadyRef.current = false;
     };
   }, []);
 
@@ -323,11 +320,8 @@ const WriteBlog = () => {
       const o = originalEditSnapshotRef.current;
       let contentChanged = true;
       try {
-        const cur = editor.getJSON();
-        contentChanged =
-          o.content == null
-            ? editorHasMeaningfulText(editor)
-            : JSON.stringify(cur) !== JSON.stringify(o.content);
+        const currentText = editor.getText().trim();
+        contentChanged = currentText !== originalEditTextRef.current;
       } catch {
         contentChanged = true;
       }
