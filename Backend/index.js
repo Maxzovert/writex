@@ -25,7 +25,7 @@ connetDB();
 // Production
 
 app.use(cors({
-  origin: 'https://writtex.onrender.com', // Vite's default port
+  origin:  ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175' ,'https://writtex.onrender.com'], // Vite's default port
   credentials: true // This is important for cooSkies
 }));
 
