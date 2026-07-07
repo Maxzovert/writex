@@ -31,7 +31,8 @@ body,
 }
 
 .content-wrapper {
-  height: calc(100% - var(--tt-toolbar-height));
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 
   &::-webkit-scrollbar {
@@ -54,13 +55,23 @@ body,
 }
 
 .simple-editor-content {
-  max-width: 640px;
+  max-width: 48rem;
   width: 100%;
   margin: 0 auto;
 }
 
+.simple-editor-content--wide {
+  max-width: 72rem;
+}
+
 .simple-editor-content .tiptap.ProseMirror {
-  padding: 3rem 3rem;
+  padding: 1.5rem 1.25rem 3rem;
+  min-height: 280px;
+}
+
+.simple-editor-content--wide .tiptap.ProseMirror {
+  padding: 2rem 2.5rem 4rem;
+  min-height: 360px;
 }
 
 @media screen and (max-width: 480px) {

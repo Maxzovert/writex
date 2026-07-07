@@ -79,11 +79,15 @@ import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/new-tiptap-utils"
+import { cn } from "@/lib/tiptap-utils"
 
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss"
 
-import content from "@/components/tiptap-templates/simple/data/content.json"
+const EMPTY_EDITOR_CONTENT = {
+  type: "doc",
+  content: [{ type: "paragraph" }],
+}
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -196,9 +200,20 @@ const MobileToolbarContent = ({
 interface SimpleEditorProps {
   getEditorInstance?: (editor: any) => void;
   onMainImageChange?: (imageUrl: string | null) => void;
+  initialContent?: Record<string, unknown>;
+  onContentChange?: () => void;
+  className?: string;
+  wide?: boolean;
 }
 
-export function SimpleEditor({ getEditorInstance, onMainImageChange }: SimpleEditorProps) {
+export function SimpleEditor({
+  getEditorInstance,
+  onMainImageChange,
+  initialContent,
+  onContentChange,
+  className,
+  wide = false,
+}: SimpleEditorProps) {
   const isMobile = useMobile()
   const windowSize = useWindowSize()
   const [mobileView, setMobileView] = React.useState<
@@ -260,7 +275,10 @@ export function SimpleEditor({ getEditorInstance, onMainImageChange }: SimpleEdi
       TrailingNode,
       Link.configure({ openOnClick: false }),
     ],
-    content: content,
+    content: initialContent ?? EMPTY_EDITOR_CONTENT,
+    onUpdate: () => {
+      onContentChange?.()
+    },
   })
 
   React.useEffect(() => {
@@ -282,6 +300,7 @@ export function SimpleEditor({ getEditorInstance, onMainImageChange }: SimpleEdi
 
   return (
     <EditorContext.Provider value={{ editor }}>
+      <div className={cn("simple-editor-root flex h-full min-h-0 flex-col", className)}>
       <Toolbar
         ref={toolbarRef}
         style={
@@ -310,8 +329,9 @@ export function SimpleEditor({ getEditorInstance, onMainImageChange }: SimpleEdi
         <EditorContent
           editor={editor}
           role="presentation"
-          className="simple-editor-content"
+          className={cn("simple-editor-content", wide && "simple-editor-content--wide")}
         />
+      </div>
       </div>
     </EditorContext.Provider>
   )

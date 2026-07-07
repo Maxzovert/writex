@@ -20,8 +20,11 @@ import {
   Send,
   User,
   Calendar,
-  Clock
+  Clock,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
+import { useFocusMode } from '@/hooks/use-focus-mode';
 
 /** Renders TipTap `text` nodes (with marks) for paragraphs, table cells, etc. */
 function renderTextRuns(nodes, keyPrefix = 't') {
@@ -175,6 +178,7 @@ const BlogPage = () => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const { isFocusMode, toggleFocusMode } = useFocusMode();
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -813,18 +817,30 @@ const BlogPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
+      {!isFocusMode && <Navbar />}
+      {!isFocusMode && (
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Back button */}
+        <div className="mb-8 flex items-center justify-between gap-4">
         <button
           onClick={() => navigate('/blogs')}
-          className="mb-8 flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-50 transition-colors duration-200"
+          className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50 transition-colors duration-200"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back to Blogs
         </button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleFocusMode}
+          className="border-gray-300 dark:border-zinc-600"
+        >
+          <Maximize2 className="h-4 w-4" />
+          <span className="ml-1.5 hidden sm:inline">Reading mode</span>
+        </Button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
@@ -1196,6 +1212,79 @@ const BlogPage = () => {
           </div>
         </div>
       </div>
+      )}
+
+      {isFocusMode && blog && (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-background text-foreground">
+          <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm sm:px-8">
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Reading mode</p>
+              <h1 className="truncate text-lg font-semibold text-foreground sm:text-xl">{blog.title}</h1>
+            </div>
+            <Button variant="outline" size="sm" onClick={toggleFocusMode} className="shrink-0 border-gray-300 dark:border-zinc-600">
+              <Minimize2 className="h-4 w-4" />
+              <span className="ml-1.5 hidden sm:inline">Exit focus</span>
+            </Button>
+          </header>
+
+          <article className="min-h-0 flex-1 overflow-y-auto">
+            <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:max-w-6xl sm:px-10 sm:py-12">
+              <h1 className="mb-6 text-3xl font-bold leading-tight text-foreground sm:text-5xl">
+                {blog.title}
+              </h1>
+
+              <div className="mb-8 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  {safeAuthorImage ? (
+                    <img
+                      src={safeAuthorImage}
+                      alt={blog.author?.username || "Author"}
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 dark:bg-zinc-700">
+                      <User className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                    </div>
+                  )}
+                  <span className="font-medium text-foreground">{firstUpperCase(blog.author?.username)}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </div>
+                {blog.readTime > 0 && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {blog.readTime} min read
+                  </div>
+                )}
+              </div>
+
+              {safeMainImage && (
+                <div className="mb-10 overflow-hidden rounded-2xl">
+                  <img
+                    src={safeMainImage}
+                    alt={blog.title}
+                    className="h-auto max-h-[28rem] w-full object-cover"
+                  />
+                </div>
+              )}
+
+              <div className="prose prose-lg max-w-none dark:prose-invert sm:prose-xl">
+                {renderTipTapContent(blog.content)}
+              </div>
+
+              <p className="mt-12 text-center text-xs text-muted-foreground">
+                Press Esc to exit reading mode
+              </p>
+            </div>
+          </article>
+        </div>
+      )}
     </div>
   );
 };

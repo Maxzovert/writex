@@ -1,32 +1,70 @@
 import Blog from "../models/postModel.js";
 
-const createBlog = async (req , res) => {
-    try {
-        const {title, content, category, status, mainImage} = req.body;
-
-        const slug = title
+const generateSlug = (title) =>
+    title
         .toLowerCase()
         .replace(/[^a-z0-9 -]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
         .trim('-');
 
-        const existingPost = await Blog.findOne({slug});
-        if(existingPost){
-            return res.status(400).json({message : "Blog with this title already exist"});
+const createUniqueSlug = async (title, excludeBlogId = null) => {
+    const baseSlug = generateSlug(title) || 'untitled-draft';
+    let slug = baseSlug;
+    let suffix = 1;
+
+    while (true) {
+        const query = { slug };
+        if (excludeBlogId) {
+            query._id = { $ne: excludeBlogId };
         }
 
-        const newPost = new Blog({
+        const existingPost = await Blog.findOne(query);
+        if (!existingPost) {
+            return slug;
+        }
+
+        suffix += 1;
+        slug = `${baseSlug}-${suffix}`;
+    }
+};
+
+const createBlog = async (req , res) => {
+    try {
+        const {title, content, category, status, mainImage, description} = req.body;
+
+        const postData = {
             title,
             content,
             author: req.user.id,
             category: category || 'general',
             mainImage: mainImage || "",
-            slug,
             status : status || 'draft',
-        })
+            ...(description !== undefined && { description }),
+        };
 
-        const savedPost = await newPost.save();
+        let slug = await createUniqueSlug(title);
+        let savedPost = null;
+
+        for (let attempt = 0; attempt < 5; attempt++) {
+            try {
+                const newPost = new Blog({ ...postData, slug });
+                savedPost = await newPost.save();
+                break;
+            } catch (error) {
+                if (error.code === 11000 && attempt < 4) {
+                    const baseSlug = generateSlug(title) || 'untitled-draft';
+                    slug = `${baseSlug}-${Date.now()}-${attempt + 1}`;
+                    continue;
+                }
+                throw error;
+            }
+        }
+
+        if (!savedPost) {
+            throw new Error("Failed to create blog after multiple attempts");
+        }
+
         await savedPost.populate('author','username');
 
         res.status(201).json({
@@ -58,18 +96,7 @@ const updateBlog = async (req , res) => {
         const {title , content , category , status , mainImage , description} = req.body;
         const blogId = req.params.id;
         
-        const slug = title
-        .toLowerCase()
-        .replace(/[^a-z0-9 -]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .trim('-');
-        
-        // Check for duplicate slug, but exclude the current blog being updated
-        const existingPost = await Blog.findOne({slug, _id: { $ne: blogId }});
-        if(existingPost){
-            return res.status(400).json({message : "Blog with this title already exist"});
-        }
+        const slug = await createUniqueSlug(title, blogId);
         
         const updatePost = await Blog.findByIdAndUpdate(blogId, {title , content , category , status , mainImage , description , slug}, {new : true});
         res.status(200).json({

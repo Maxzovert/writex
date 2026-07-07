@@ -1,23 +1,31 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import Navbar from "../Components/Navbar";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import axiosInstance from "../../lib/axiosConfig";
 import { toast } from "react-toastify";
 import { useLocation, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Sparkles,
+  PanelLeftOpen,
+  PanelLeftClose,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
+import { useFocusMode } from "@/hooks/use-focus-mode";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogTrigger,
   DialogFooter,
   DialogClose
@@ -30,40 +38,93 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-/** Unique title so repeated auto-saves do not collide on slug ("Untitled draft" → same slug). */
-function makeDefaultDraftTitle() {
-  return `Untitled draft ${Date.now()}`;
-}
+const AUTO_SAVE_DELAY_MS = 1000;
+const DRAFT_BACKUP_KEY = "writex_draft_backup";
+const DRAFT_BACKUP_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-function parseBlogContent(raw) {
-  if (raw == null) return null;
-  if (typeof raw === "string") {
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return null;
+const EMPTY_EDITOR_CONTENT = {
+  type: "doc",
+  content: [{ type: "paragraph" }],
+};
+
+const parseBlogContent = (content) => {
+  if (!content) return EMPTY_EDITOR_CONTENT;
+  try {
+    return typeof content === "string" ? JSON.parse(content) : content;
+  } catch {
+    if (typeof content === "string") {
+      return {
+        type: "doc",
+        content: [{ type: "paragraph", content: [{ type: "text", text: content }] }],
+      };
+    }
+    return EMPTY_EDITOR_CONTENT;
+  }
+};
+
+const normalizeTags = (value) => {
+  if (Array.isArray(value)) return value.join(", ");
+  return value || "";
+};
+
+const isEditorContentEmpty = (content) => {
+  if (!content || content.type !== "doc") return true;
+  if (!content.content || content.content.length === 0) return true;
+  if (content.content.length === 1) {
+    const node = content.content[0];
+    if (node.type === "paragraph" && (!node.content || node.content.length === 0)) {
+      return true;
     }
   }
-  return raw;
-}
-
-function editorHasMeaningfulText(editor) {
-  if (!editor || typeof editor.getText !== "function") return false;
-  return editor.getText().trim().length > 0;
-}
-
-/** New post: only auto-save on leave if the user actually started the draft (content or any field). */
-function newBlogHasDraftableChanges(editor, s) {
-  if (!editor) return false;
-  if (editorHasMeaningfulText(editor)) return true;
-  if (s.title.trim()) return true;
-  if (s.description.trim()) return true;
-  if ((s.tags || "").trim()) return true;
-  if (s.mainImage != null) return true;
-  const cat = (s.category || "General").toLowerCase();
-  if (cat !== "general") return true;
   return false;
-}
+};
+
+const formatCategory = (category) =>
+  category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+
+const isMeaningfulSnapshot = (snapshot) => {
+  if (!snapshot) return false;
+  return Boolean(
+    (snapshot.title?.trim() && snapshot.title !== "Untitled Draft") ||
+    (snapshot.description?.trim() && snapshot.description !== "No description") ||
+    !isEditorContentEmpty(snapshot.content)
+  );
+};
+
+const persistDraftBackup = (snapshot, editBlogId) => {
+  if (!isMeaningfulSnapshot(snapshot)) return;
+  localStorage.setItem(
+    DRAFT_BACKUP_KEY,
+    JSON.stringify({ snapshot, editBlogId, savedAt: Date.now() })
+  );
+};
+
+const clearDraftBackup = () => {
+  localStorage.removeItem(DRAFT_BACKUP_KEY);
+};
+
+const saveDraftWithKeepalive = (draftData, editBlogId) => {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  const url = editBlogId
+    ? `${baseUrl}/blog/updateblog/${editBlogId}`
+    : `${baseUrl}/blog/addblog`;
+
+  fetch(url, {
+    method: editBlogId ? "PUT" : "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(draftData),
+    keepalive: true,
+    credentials: "include",
+  }).catch(() => {
+    // Best-effort save while the page is closing
+  });
+};
 
 const WriteBlog = () => {
   const editorRef = useRef(null);
@@ -78,7 +139,27 @@ const WriteBlog = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editBlogId, setEditBlogId] = useState(null);
   const [originalStatus, setOriginalStatus] = useState("draft");
+  const [editorRevision, setEditorRevision] = useState(0);
+  const [saveStatus, setSaveStatus] = useState("idle");
+  const [editorInitialContent, setEditorInitialContent] = useState(EMPTY_EDITOR_CONTENT);
+  const [editorSessionKey, setEditorSessionKey] = useState("new");
+  const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [aiMessage, setAiMessage] = useState("");
+
+  useEffect(() => {
+    if (window.innerWidth < 1024) {
+      setAiPanelOpen(false);
+    }
+  }, []);
+
+  const { isFocusMode, toggleFocusMode } = useFocusMode();
+
+  const handleToggleFocusMode = () => {
+    if (!isFocusMode) {
+      setAiPanelOpen(false);
+    }
+    toggleFocusMode();
+  };
   const [aiSuggestions, setAiSuggestions] = useState([
     "Improve your blog title to be more engaging",
     "Add more descriptive content to your introduction",
@@ -89,58 +170,72 @@ const WriteBlog = () => {
   
   const location = useLocation();
   const navigate = useNavigate();
-
-  /** Latest form state for unload / keepalive save (refs avoid stale closures). */
+  const lastSavedSnapshotRef = useRef(null);
+  const autoSaveReadyRef = useRef(false);
+  const isSavingRef = useRef(false);
+  const autoSaveTimerRef = useRef(null);
+  const latestSnapshotRef = useRef(null);
+  const editBlogIdRef = useRef(null);
   const formStateRef = useRef({
     title: "",
     description: "",
     tags: "",
     category: "General",
     mainImage: null,
-    isEditMode: false,
-    editBlogId: null,
   });
-  const originalEditSnapshotRef = useRef(null);
-  const originalEditTextRef = useRef("");
-  const autoSaveOnExitSentRef = useRef(false);
-  /** Skip auto-save when leaving after a successful publish/draft save (avoid duplicate POST). */
-  const suppressAutoSaveRef = useRef(false);
-  /** Latest keepalive draft save impl (refs only; safe for unload / unmount). */
-  const keepaliveDraftSaveRef = useRef(() => {});
-  /** After first frame: ignore React Strict Mode fake unmount (no ghost drafts in dev). */
-  const spaLeaveSaveReadyRef = useRef(false);
 
   useEffect(() => {
-    formStateRef.current = {
-      title,
-      description,
-      tags,
-      category,
-      mainImage,
-      isEditMode,
-      editBlogId,
-    };
-  }, [title, description, tags, category, mainImage, isEditMode, editBlogId]);
+    editBlogIdRef.current = editBlogId;
+  }, [editBlogId]);
 
   useEffect(() => {
-    if (location.state?.editBlog) {
-      const blog = location.state.editBlog;
-      originalEditSnapshotRef.current = {
-        title: blog.title || "",
-        description: blog.description || "",
-        tags: blog.tags || "",
-        category: blog.category || "General",
-        mainImage: blog.mainImage || null,
-        content: parseBlogContent(blog.content),
-      };
-    } else {
-      originalEditSnapshotRef.current = null;
-    }
-  }, [location.state]);
+    formStateRef.current = { title, description, tags, category, mainImage };
+  }, [title, description, tags, category, mainImage]);
 
   const handleMainImageChange = React.useCallback((imageUrl) => {
     setMainImage(imageUrl);
   }, []);
+
+  const getLiveSnapshot = useCallback(() => {
+    const editorContent = editorRef.current?.getJSON() ?? EMPTY_EDITOR_CONTENT;
+    const { title: t, description: d, tags: tg, category: c, mainImage: img } = formStateRef.current;
+    return {
+      title: t.trim() || "Untitled Draft",
+      mainImage: img || null,
+      content: editorContent,
+      category: formatCategory(c),
+      tags: tg.trim(),
+      description: d.trim() || "No description",
+    };
+  }, []);
+
+  const handleEditorContentChange = useCallback(() => {
+    setEditorRevision((revision) => revision + 1);
+    if (autoSaveReadyRef.current) {
+      const snapshot = getLiveSnapshot();
+      latestSnapshotRef.current = snapshot;
+      persistDraftBackup(snapshot, editBlogIdRef.current);
+    }
+  }, [getLiveSnapshot]);
+
+  const buildDraftSnapshot = useCallback(() => getLiveSnapshot(), [getLiveSnapshot]);
+
+  const snapshotsMatch = useCallback((left, right) => {
+    if (!left || !right) return false;
+    return (
+      left.title === right.title &&
+      left.mainImage === right.mainImage &&
+      left.category === right.category &&
+      left.tags === right.tags &&
+      left.description === right.description &&
+      JSON.stringify(left.content) === JSON.stringify(right.content)
+    );
+  }, []);
+
+  const hasMeaningfulContent = useCallback(() => {
+    const editorContent = editorRef.current?.getJSON() ?? EMPTY_EDITOR_CONTENT;
+    return Boolean(title.trim() || description.trim() || !isEditorContentEmpty(editorContent));
+  }, [title, description, editorRevision]);
 
   const resetForm = () => {
     setTitle("");
@@ -150,54 +245,176 @@ const WriteBlog = () => {
     setMainImage(null);
     setIsEditMode(false);
     setEditBlogId(null);
+    editBlogIdRef.current = null;
     setOriginalStatus("draft");
     setAiMessage("");
+    setEditorInitialContent(EMPTY_EDITOR_CONTENT);
+    setEditorSessionKey("new");
+    setSaveStatus("idle");
+    lastSavedSnapshotRef.current = null;
+    autoSaveReadyRef.current = false;
+    latestSnapshotRef.current = null;
+    clearDraftBackup();
     
     if (editorRef.current) {
       editorRef.current.commands.clearContent();
     }
   };
 
-  const hasUnsavedChanges = () => {
-    if (!isEditMode) return false;
+  const hasUnsavedChanges = useCallback(() => {
+    const currentSnapshot = buildDraftSnapshot();
 
-    const originalBlog = location.state?.editBlog;
-    if (!originalBlog) return false;
-
-    let contentChanged = false;
-    if (editorRef.current) {
-      try {
-        const currentText = editorRef.current.getText().trim();
-        contentChanged = currentText !== originalEditTextRef.current;
-      } catch {
-        contentChanged = editorHasMeaningfulText(editorRef.current);
-      }
+    if (lastSavedSnapshotRef.current) {
+      return !snapshotsMatch(currentSnapshot, lastSavedSnapshotRef.current);
     }
 
-    return (
-      title !== originalBlog.title ||
-      category !== originalBlog.category ||
-      description !== originalBlog.description ||
-      tags !== originalBlog.tags ||
-      mainImage !== originalBlog.mainImage ||
-      contentChanged
-    );
+    return hasMeaningfulContent();
+  }, [buildDraftSnapshot, snapshotsMatch, hasMeaningfulContent]);
+
+  const performDraftSave = useCallback(async ({ silent = false, navigateAfter = false } = {}) => {
+    if (!hasMeaningfulContent()) {
+      if (!silent) {
+        toast.warning("Please add at least a title or description to save as draft");
+      }
+      return false;
+    }
+
+    const draftSnapshot = buildDraftSnapshot();
+    if (snapshotsMatch(draftSnapshot, lastSavedSnapshotRef.current)) {
+      if (!silent) {
+        toast.info("Draft is already up to date");
+      }
+      setSaveStatus("saved");
+      return true;
+    }
+
+    if (isSavingRef.current) {
+      return false;
+    }
+
+    const currentBlogId = editBlogIdRef.current;
+
+    isSavingRef.current = true;
+    setSaveStatus("saving");
+
+    const draftData = {
+      ...draftSnapshot,
+      status: "draft",
+      tags: draftSnapshot.tags || [],
+    };
+
+    try {
+      let response;
+
+      if (currentBlogId) {
+        response = await axiosInstance.put(
+          `/blog/updateblog/${currentBlogId}`,
+          draftData,
+          { withCredentials: true }
+        );
+        if (!silent) {
+          toast.success("Draft updated successfully!");
+        }
+      } else {
+        response = await axiosInstance.post(
+          `/blog/addblog`,
+          draftData,
+          { withCredentials: true }
+        );
+        const newBlogId = response.data?.post?._id;
+        if (newBlogId) {
+          editBlogIdRef.current = newBlogId;
+          setEditBlogId(newBlogId);
+          setIsEditMode(true);
+        }
+        if (!silent) {
+          toast.success("Draft saved successfully!");
+        }
+      }
+
+      lastSavedSnapshotRef.current = draftSnapshot;
+      const savedBlogId = editBlogIdRef.current ?? response.data?.post?._id;
+      persistDraftBackup(draftSnapshot, savedBlogId);
+      setSaveStatus("saved");
+
+      if (navigateAfter) {
+        navigate("/myblogs");
+      }
+
+      if (!silent) {
+        setDraftDialogOpen(false);
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Saving draft error:", error);
+      setSaveStatus("error");
+      if (!silent) {
+        toast.error(`Failed to save draft: ${error.response?.data?.message || error.message}`);
+      }
+      return false;
+    } finally {
+      isSavingRef.current = false;
+    }
+  }, [
+    buildDraftSnapshot,
+    snapshotsMatch,
+    hasMeaningfulContent,
+    editBlogId,
+    navigate,
+  ]);
+
+  const handleSaveDraft = async () => {
+    await performDraftSave({ silent: false, navigateAfter: Boolean(editBlogId) });
   };
 
+  const flushPendingSave = useCallback(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    performDraftSave({ silent: true });
+  }, [performDraftSave]);
+
+  const emergencyFlushSave = useCallback(() => {
+    if (!autoSaveReadyRef.current) return;
+
+    const snapshot = getLiveSnapshot();
+    if (!isMeaningfulSnapshot(snapshot)) return;
+
+    // Always write to localStorage synchronously so tab close never loses data
+    persistDraftBackup(snapshot, editBlogIdRef.current);
+    latestSnapshotRef.current = snapshot;
+
+    if (snapshotsMatch(snapshot, lastSavedSnapshotRef.current)) return;
+
+    const draftData = {
+      ...snapshot,
+      status: "draft",
+      tags: snapshot.tags || [],
+    };
+
+    if (!isSavingRef.current) {
+      saveDraftWithKeepalive(draftData, editBlogIdRef.current);
+    }
+  }, [getLiveSnapshot, snapshotsMatch]);
 
   const handleCancelEdit = () => {
     if (hasUnsavedChanges()) {
-      if (window.confirm("You have unsaved changes. Are you sure you want to cancel editing?")) {
+      if (window.confirm("You have unsaved changes. Save your draft first, or leave anyway?")) {
+        resetForm();
         navigate("/myblogs");
       }
     } else {
+      resetForm();
       navigate("/myblogs");
     }
   };
 
   const handleNavigateAway = () => {
-    if (isEditMode && hasUnsavedChanges()) {
-      if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+    if (hasUnsavedChanges()) {
+      if (window.confirm("You have unsaved changes. Save your draft first, or leave anyway?")) {
+        resetForm();
         navigate("/myblogs");
       }
     } else {
@@ -205,69 +422,178 @@ const WriteBlog = () => {
     }
   };
 
-  // Handle edit mode when component mounts
+  // Restore a local backup when reopening after an accidental close
   useEffect(() => {
-    if (location.state?.editBlog) {
-      const blog = location.state.editBlog;
-      setIsEditMode(true);
-      setEditBlogId(blog._id);
-      setTitle(blog.title || "");
-      setCategory(blog.category || "General");
-      setMainImage(blog.mainImage || null);
-      setDescription(blog.description || "");
-      setTags(blog.tags || "");
-      setOriginalStatus(blog.status || "draft");
-      
-      // Set editor content after a short delay to ensure editor is initialized
-      setTimeout(() => {
-        if (editorRef.current && blog.content) {
-          try {
-            // Handle both string and JSON content
-            const content = typeof blog.content === 'string' ? JSON.parse(blog.content) : blog.content;
-            editorRef.current.commands.setContent(content);
-            originalEditTextRef.current = editorRef.current.getText().trim();
-          } catch (error) {
-            console.error("Error setting editor content:", error);
-            // If parsing fails, set as plain text
-            if (typeof blog.content === 'string') {
-              editorRef.current.commands.setContent([{
-                type: 'paragraph',
-                content: [{ type: 'text', text: blog.content }]
-              }]);
-              originalEditTextRef.current = editorRef.current.getText().trim();
-            }
-          }
-        }
-      }, 100);
+    if (location.state?.editBlog) return;
+
+    const backupRaw = localStorage.getItem(DRAFT_BACKUP_KEY);
+    if (!backupRaw) {
+      autoSaveReadyRef.current = true;
+      return;
     }
 
-    // Cleanup function to reset form when component unmounts
-    return () => {
-      if (isEditMode) {
-        resetForm();
+    try {
+      const { snapshot, editBlogId: backupBlogId, savedAt } = JSON.parse(backupRaw);
+      if (!snapshot || Date.now() - savedAt > DRAFT_BACKUP_MAX_AGE_MS) {
+        clearDraftBackup();
+        autoSaveReadyRef.current = true;
+        return;
       }
-    };
-  }, [location.state, isEditMode]);
 
-  // Warn user before leaving if they have unsaved changes
+      setTitle(snapshot.title === "Untitled Draft" ? "" : snapshot.title);
+      setDescription(snapshot.description === "No description" ? "" : snapshot.description);
+      setTags(snapshot.tags || "");
+      setCategory(snapshot.category || "General");
+      setMainImage(snapshot.mainImage || null);
+      setEditorInitialContent(snapshot.content || EMPTY_EDITOR_CONTENT);
+      setEditorSessionKey(backupBlogId || "restored");
+
+      if (backupBlogId) {
+        editBlogIdRef.current = backupBlogId;
+        setEditBlogId(backupBlogId);
+        setIsEditMode(true);
+      }
+
+      latestSnapshotRef.current = snapshot;
+      lastSavedSnapshotRef.current = null;
+      autoSaveReadyRef.current = true;
+      setSaveStatus("saved");
+      toast.info("Restored your draft from the last session");
+    } catch (error) {
+      console.error("Failed to restore draft backup:", error);
+      clearDraftBackup();
+      autoSaveReadyRef.current = true;
+    }
+  }, [location.state?.editBlog?._id]);
+
+  // Handle edit mode when component mounts
   useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (isEditMode && hasUnsavedChanges()) {
-        e.preventDefault();
-        e.returnValue = '';
+    const editBlog = location.state?.editBlog;
+    if (!editBlog) {
+      return;
+    }
+
+    autoSaveReadyRef.current = false;
+    clearDraftBackup();
+    const parsedContent = parseBlogContent(editBlog.content);
+
+    setIsEditMode(true);
+    setEditBlogId(editBlog._id);
+    setTitle(editBlog.title || "");
+    setCategory(editBlog.category || "General");
+    setMainImage(editBlog.mainImage || null);
+    setDescription(editBlog.description || "");
+    setTags(normalizeTags(editBlog.tags));
+    setOriginalStatus(editBlog.status || "draft");
+    setEditorInitialContent(parsedContent);
+    setEditorSessionKey(editBlog._id);
+
+    const readyTimer = setTimeout(() => {
+      lastSavedSnapshotRef.current = {
+        title: editBlog.title?.trim() || "Untitled Draft",
+        mainImage: editBlog.mainImage || null,
+        content: parsedContent,
+        category: formatCategory(editBlog.category || "General"),
+        tags: normalizeTags(editBlog.tags),
+        description: editBlog.description?.trim() || "No description",
+      };
+      autoSaveReadyRef.current = true;
+      setSaveStatus("saved");
+    }, 150);
+
+    return () => clearTimeout(readyTimer);
+  }, [location.state?.editBlog?._id]);
+
+  // Keep local backup in sync on every change (instant, not debounced)
+  useEffect(() => {
+    if (!autoSaveReadyRef.current) return;
+
+    const snapshot = getLiveSnapshot();
+    latestSnapshotRef.current = snapshot;
+
+    if (isMeaningfulSnapshot(snapshot)) {
+      persistDraftBackup(snapshot, editBlogIdRef.current);
+    }
+  }, [title, description, tags, category, mainImage, editorRevision, getLiveSnapshot, editBlogId]);
+
+  // Debounced auto-save while writing (1s after typing stops)
+  useEffect(() => {
+    if (!autoSaveReadyRef.current || isPublishing) {
+      return;
+    }
+
+    if (!hasMeaningfulContent()) {
+      return;
+    }
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      performDraftSave({ silent: true });
+      autoSaveTimerRef.current = null;
+    }, AUTO_SAVE_DELAY_MS);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+    };
+  }, [
+    title,
+    description,
+    tags,
+    category,
+    mainImage,
+    editorRevision,
+    isPublishing,
+    hasMeaningfulContent,
+    performDraftSave,
+  ]);
+
+  // Save when the tab is hidden; warn before closing if changes are not saved
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flushPendingSave();
+        emergencyFlushSave();
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isEditMode, hasUnsavedChanges]);
+    const handlePageHide = () => {
+      emergencyFlushSave();
+    };
+
+    const handleBeforeUnload = (e) => {
+      emergencyFlushSave();
+
+      if (hasUnsavedChanges()) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes. Please save your draft before leaving.";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("pagehide", handlePageHide);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [flushPendingSave, emergencyFlushSave, hasUnsavedChanges]);
 
   // Handle browser back button
   useEffect(() => {
     const handlePopState = (e) => {
-      if (isEditMode && hasUnsavedChanges()) {
+      if (hasUnsavedChanges()) {
         e.preventDefault();
-        if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+        if (window.confirm("You have unsaved changes. Save your draft first, or leave anyway?")) {
+          resetForm();
           navigate("/myblogs");
         } else {
           // Push the current state back to prevent navigation
@@ -278,106 +604,7 @@ const WriteBlog = () => {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [isEditMode, hasUnsavedChanges, navigate]);
-
-  /** Tab close / refresh: keepalive save. */
-  useEffect(() => {
-    const onHide = () => keepaliveDraftSaveRef.current();
-    window.addEventListener("pagehide", onHide);
-    window.addEventListener("beforeunload", onHide);
-    return () => {
-      window.removeEventListener("pagehide", onHide);
-      window.removeEventListener("beforeunload", onHide);
-    };
-  }, []);
-
-  /**
-   * In-app navigation should NOT auto-save drafts.
-   * Auto-save is restricted to browser reload/close via beforeunload/pagehide.
-   */
-  useEffect(() => {
-    let rafId = 0;
-    spaLeaveSaveReadyRef.current = false;
-    rafId = requestAnimationFrame(() => {
-      spaLeaveSaveReadyRef.current = true;
-    });
-    return () => {
-      cancelAnimationFrame(rafId);
-      spaLeaveSaveReadyRef.current = false;
-    };
-  }, []);
-
-  keepaliveDraftSaveRef.current = () => {
-    if (suppressAutoSaveRef.current) return;
-    if (autoSaveOnExitSentRef.current) return;
-    if (!localStorage.getItem("token")) return;
-
-    const editor = editorRef.current;
-    if (!editor) return;
-
-    const s = formStateRef.current;
-    if (s.isEditMode && originalEditSnapshotRef.current) {
-      const o = originalEditSnapshotRef.current;
-      let contentChanged = true;
-      try {
-        const currentText = editor.getText().trim();
-        contentChanged = currentText !== originalEditTextRef.current;
-      } catch {
-        contentChanged = true;
-      }
-
-      const metaChanged =
-        s.title.trim() !== (o.title || "").trim() ||
-        (s.category || "") !== (o.category || "") ||
-        s.description.trim() !== (o.description || "").trim() ||
-        (s.tags || "") !== (o.tags || "") ||
-        s.mainImage !== o.mainImage;
-
-      if (!contentChanged && !metaChanged) return;
-    } else if (!s.isEditMode) {
-      if (!newBlogHasDraftableChanges(editor, s)) return;
-    }
-
-    autoSaveOnExitSentRef.current = true;
-
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    const draftTitle = s.title.trim() || makeDefaultDraftTitle();
-    const draftData = {
-      title: draftTitle,
-      mainImage: s.mainImage || null,
-      content: editor.getJSON(),
-      category:
-        (s.category || "General").charAt(0).toUpperCase() +
-        (s.category || "General").slice(1).toLowerCase(),
-      status: "draft",
-      tags: (s.tags || "").trim() || [],
-      description: (s.description || "").trim() || "No description",
-    };
-
-    const base = import.meta.env.VITE_API_BASE_URL;
-    const url =
-      s.isEditMode && s.editBlogId
-        ? `${base}/blog/updateblog/${s.editBlogId}`
-        : `${base}/blog/addblog`;
-    const method = s.isEditMode && s.editBlogId ? "PUT" : "POST";
-
-    try {
-      fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(draftData),
-        keepalive: true,
-        credentials: "include",
-      }).catch(() => {});
-    } catch {
-      autoSaveOnExitSentRef.current = false;
-    }
-  };
+  }, [hasUnsavedChanges, navigate]);
 
   const handlePublish = async (e) => {
     e.preventDefault();
@@ -416,7 +643,7 @@ const WriteBlog = () => {
         title: title.trim(),
         mainImage,
         content: editorContent,
-        category: category.charAt(0).toUpperCase() + category.slice(1).toLowerCase(),
+        category: formatCategory(category),
         status: "published",
         tags: tags.trim() || [],
         description: description.trim(),
@@ -424,33 +651,28 @@ const WriteBlog = () => {
 
       let response;
       
-      const token = localStorage.getItem("token");
-      const authRequestConfig = {
-        withCredentials: true,
-        ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
-      };
-
-      if (isEditMode) {
+      if (editBlogId) {
         response = await axiosInstance.put(
           `/blog/updateblog/${editBlogId}`,
           blogData,
-          authRequestConfig
+          { withCredentials: true }
         );
         toast.success("Blog updated successfully!");
       } else {
         response = await axiosInstance.post(
           `/blog/addblog`,
           blogData,
-          authRequestConfig
+          { withCredentials: true }
         );
         toast.success("Blog published successfully!");
       }
 
       if (response.data) {
+        clearDraftBackup();
         setDialogOpen(false);
         
         if (isEditMode) {
-          suppressAutoSaveRef.current = true;
+          // Navigate back to MyBlog page after successful edit
           navigate("/myblogs");
         } else {
           // Reset form for new blog
@@ -459,6 +681,8 @@ const WriteBlog = () => {
           setTags("");
           setCategory("General");
           setMainImage(null);
+          lastSavedSnapshotRef.current = null;
+          setSaveStatus("idle");
           
           // Clear editor content
           if (editorRef.current) {
@@ -468,15 +692,11 @@ const WriteBlog = () => {
       }
     } catch (error) {
       console.error("Publishing error:", error);
-
-      if (error.response?.status === 413) {
-        toast.error(
-          "Post is too large for the server. Try fewer or smaller images, shorten the article, or contact support."
-        );
-      } else if (error.response) {
-        const errorMessage =
-          error.response.data?.message || error.response.data?.error || "Server error occurred";
-        toast.error(`${isEditMode ? "Updating" : "Publishing"} failed: ${errorMessage}`);
+      
+      if (error.response) {
+        // Server responded with error
+        const errorMessage = error.response.data?.message || error.response.data?.error || "Server error occurred";
+        toast.error(`${isEditMode ? 'Updating' : 'Publishing'} failed: ${errorMessage}`);
       } else if (error.request) {
         // Network error
         toast.error("Network error: Please check your internet connection");
@@ -486,63 +706,6 @@ const WriteBlog = () => {
       }
     } finally {
       setIsPublishing(false);
-    }
-  };
-
-  const handleSaveDraft = async () => {
-    try {
-      const editorContent = editorRef.current ? editorRef.current.getJSON() : {};
-
-      const draftData = {
-        title: title.trim() || makeDefaultDraftTitle(),
-        mainImage: mainImage || null,
-        content: editorContent,
-        category: category.charAt(0).toUpperCase() + category.slice(1).toLowerCase(),
-        status: "draft",
-        tags: tags.trim() || [],
-        description: description.trim() || "No description",
-      };
-
-      const token = localStorage.getItem("token");
-      const authRequestConfig = {
-        withCredentials: true,
-        ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
-      };
-
-      let response;
-
-      if (isEditMode) {
-        response = await axiosInstance.put(
-          `/blog/updateblog/${editBlogId}`,
-          draftData,
-          authRequestConfig
-        );
-        toast.success("Draft updated successfully!");
-      } else {
-        response = await axiosInstance.post(
-          `/blog/addblog`,
-          draftData,
-          authRequestConfig
-        );
-        toast.success("Draft saved successfully!");
-      }
-
-      if (response.data && isEditMode) {
-        suppressAutoSaveRef.current = true;
-        navigate("/myblogs");
-      }
-      
-      // Close the draft dialog after successful save
-      setDraftDialogOpen(false);
-    } catch (error) {
-      console.error("Saving draft error:", error);
-      if (error.response?.status === 413) {
-        toast.error(
-          "Draft is too large to save. Try fewer or smaller images or shorten the content."
-        );
-      } else {
-        toast.error(`Failed to save draft: ${error.response?.data?.message || error.message}`);
-      }
     }
   };
 
@@ -559,366 +722,412 @@ const WriteBlog = () => {
     }
   };
 
+  const renderCategorySelect = () => (
+    <Select value={category} onValueChange={(value) => setCategory(value)}>
+      <SelectTrigger className="w-full bg-gray-50 border-gray-300">
+        <SelectValue placeholder="Select category" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="General">General</SelectItem>
+        <SelectItem value="Personal">Personal</SelectItem>
+        <SelectItem value="Business">Business</SelectItem>
+        <SelectItem value="Tech">Tech</SelectItem>
+        <SelectItem value="Health">Health</SelectItem>
+        <SelectItem value="Education">Education</SelectItem>
+        <SelectItem value="Entertainment">Entertainment</SelectItem>
+        <SelectItem value="Sports">Sports</SelectItem>
+        <SelectItem value="Other">Other</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+
+  const saveStatusConfig = {
+    saving: {
+      label: "Saving draft...",
+      className: "bg-amber-50 text-amber-700 border-amber-200",
+      icon: Loader2,
+    },
+    saved: {
+      label: "Draft saved",
+      className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      icon: CheckCircle2,
+    },
+    error: {
+      label: "Save failed",
+      className: "bg-red-50 text-red-700 border-red-200",
+      icon: AlertCircle,
+    },
+  };
+
+  const currentSaveStatus = saveStatusConfig[saveStatus];
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
-      
-      <div className="flex h-[calc(100vh-4rem)] mt-16">
-        {/* AI Assistant Sidebar */}
-        <div className="w-96 bg-card border-r border-border flex flex-col text-card-foreground">
-          {/* AI Header */}
-          <div className="p-8 border-b border-border">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl flex items-center justify-center shadow-lg">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-foreground">AI Assistant</h2>
-                <p className="text-muted-foreground">Your writing companion</p>
-              </div>
-            </div>
-          </div>
+    <div
+      className={
+        isFocusMode
+          ? "fixed inset-0 z-[60] flex flex-col bg-white"
+          : "min-h-screen bg-gray-50"
+      }
+    >
+      {!isFocusMode && <Navbar />}
 
-          {/* AI Content */}
-          <div className="flex-1 p-8 space-y-8">
-            {/* Writing Tips */}
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Writing Tips
-              </h3>
-              <div className="space-y-3">
-                {aiSuggestions.slice(0, 3).map((suggestion, index) => (
-                  <div
-                    key={index}
-                    className="p-4 bg-muted/50 border border-border rounded-lg hover:bg-muted cursor-pointer transition-colors"
-                    onClick={() => handleAiSuggestion(suggestion)}
-                  >
-                    <p className="text-sm text-foreground/90 leading-relaxed">{suggestion}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Separator className="bg-border" />
-
-            {/* AI Chat */}
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                Ask AI
-              </h3>
-              <div className="space-y-3">
-                <Textarea
-                  placeholder="Ask me anything about your blog..."
-                  value={aiMessage}
-                  onChange={(e) => setAiMessage(e.target.value)}
-                  className="min-h-[100px] text-sm bg-background border-border resize-none"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleAiMessageSend();
-                    }
-                  }}
-                />
-                <Button
-                  onClick={handleAiMessageSend}
-                  disabled={!aiMessage.trim()}
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  Send Message
-                </Button>
-              </div>
-            </div>
-
-            <Separator className="bg-border" />
-
-            {/* Quick Actions */}
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Quick Actions
-              </h3>
-              <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-border text-foreground hover:bg-accent"
-                  onClick={() => handleAiSuggestion("Generate a compelling title for my blog")}
-                >
-                  Generate Title
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-border text-foreground hover:bg-accent"
-                  onClick={() => handleAiSuggestion("Help me improve my blog's introduction")}
-                >
-                  Improve Introduction
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-border text-foreground hover:bg-accent"
-                  onClick={() => handleAiSuggestion("Suggest relevant tags for my blog")}
-                >
-                  Suggest Tags
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Editor Section */}
-        <div className="flex-1 bg-background flex flex-col">
-          {/* Editor Header */}
-          <div className="flex items-center justify-between px-10 py-8 border-b border-border">
-            <div className="flex items-center gap-6">
-              {isEditMode && (
-                <Button
-                  variant="ghost"
-                  onClick={handleNavigateAway}
-                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-accent"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  Back
-                </Button>
-              )}
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">
-                  {isEditMode ? "Edit Blog" : "Write New Blog"}
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  {isEditMode ? "Make your changes and publish" : "Create something amazing"}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <Dialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline"
-                    className="border-border text-foreground hover:bg-accent px-6"
-                  >
-                    Save Draft
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px]">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold">
-                      Save as Draft
-                    </DialogTitle>
-                    <DialogDescription>
-                      Optional details for your draft. You can publish later from My blogs.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-6">
-                    <div className="grid gap-3">
-                      <Label htmlFor="draft-title" className="text-sm font-medium">
-                        Blog Title
-                      </Label>
-                      <Input
-                        id="draft-title"
-                        name="draft-title"
-                        className="bg-muted/40 border-border"
-                        placeholder="Enter your blog title (optional)"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="grid gap-3">
-                      <Label htmlFor="draft-description" className="text-sm font-medium">
-                        Short Description
-                      </Label>
-                      <Input
-                        id="draft-description"
-                        name="draft-description"
-                        className="bg-muted/40 border-border"
-                        placeholder="Enter a brief description (optional)"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="grid gap-3">
-                      <Label htmlFor="draft-tags" className="text-sm font-medium">
-                        Tags (Optional)
-                      </Label>
-                      <Input
-                        id="draft-tags"
-                        name="draft-tags"
-                        className="bg-muted/40 border-border"
-                        placeholder="Enter tags separated by commas"
-                        value={tags}
-                        onChange={(e) => setTags(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="grid gap-3">
-                      <Label htmlFor="draft-category" className="text-sm font-medium">
-                        Category
-                      </Label>
-                      <Select
-                        value={category}
-                        onValueChange={(value) => setCategory(value)}
-                      >
-                        <SelectTrigger className="w-full bg-muted/40 border-border">
-                          <SelectValue placeholder="Select category"/>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="General">General</SelectItem>
-                          <SelectItem value="Personal">Personal</SelectItem>
-                          <SelectItem value="Business">Business</SelectItem>
-                          <SelectItem value="Tech">Tech</SelectItem>
-                          <SelectItem value="Health">Health</SelectItem>
-                          <SelectItem value="Education">Education</SelectItem>
-                          <SelectItem value="Entertainment">Entertainment</SelectItem>
-                          <SelectItem value="Sports">Sports</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <DialogFooter className="gap-3">
-                    <DialogClose asChild>
-                      <Button variant="outline" className="border-gray-300 text-gray-700">
-                        Cancel
-                      </Button>
-                    </DialogClose>
-                    <Button
-                      onClick={handleSaveDraft}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                      {isEditMode ? "Update Draft" : "Save Draft"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    disabled={isPublishing}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-6"
-                  >
-                    {isPublishing ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Blog" : "Publish")}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px]">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold">
-                      Complete Your Blog Details
-                    </DialogTitle>
-                    <DialogDescription>
-                      Add title, description, tags, and category before publishing.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-6">
-                    <div className="grid gap-3">
-                      <Label htmlFor="title" className="text-sm font-medium">
-                        Blog Title *
-                      </Label>
-                      <Input
-                        id="title"
-                        name="title"
-                        className="bg-muted/40 border-border"
-                        placeholder="Enter your blog title"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="grid gap-3">
-                      <Label htmlFor="description" className="text-sm font-medium">
-                        Short Description *
-                      </Label>
-                      <Input
-                        id="description"
-                        name="description"
-                        className="bg-muted/40 border-border"
-                        placeholder="Enter a brief description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div className="grid gap-3">
-                      <Label htmlFor="tags" className="text-sm font-medium">
-                        Tags (Optional)
-                      </Label>
-                      <Input
-                        id="tags"
-                        name="tags"
-                        className="bg-muted/40 border-border"
-                        placeholder="Enter tags separated by commas"
-                        value={tags}
-                        onChange={(e) => setTags(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="grid gap-3">
-                      <Label htmlFor="category" className="text-sm font-medium">
-                        Category *
-                      </Label>
-                      <Select
-                        value={category}
-                        onValueChange={(value) => setCategory(value)}
-                      >
-                        <SelectTrigger className="w-full bg-muted/40 border-border">
-                          <SelectValue placeholder="Select category"/>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="General">General</SelectItem>
-                          <SelectItem value="Personal">Personal</SelectItem>
-                          <SelectItem value="Business">Business</SelectItem>
-                          <SelectItem value="Tech">Tech</SelectItem>
-                          <SelectItem value="Health">Health</SelectItem>
-                          <SelectItem value="Education">Education</SelectItem>
-                          <SelectItem value="Entertainment">Entertainment</SelectItem>
-                          <SelectItem value="Sports">Sports</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <DialogFooter className="gap-3">
-                    <DialogClose asChild>
-                      <Button variant="outline" className="border-gray-300 text-gray-700">
-                        Cancel
-                      </Button>
-                    </DialogClose>
-                    <Button
-                      onClick={handlePublish}
-                      disabled={isPublishing || !title.trim() || !description.trim()}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                      {isPublishing ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Blog" : "Publish Blog")}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-
-          {/* Editor Content - Scrollable */}
-          <div className="flex-1 overflow-y-auto">
-            <SimpleEditor
-              getEditorInstance={(editor) => (editorRef.current = editor)}
-              onMainImageChange={handleMainImageChange}
+      <div
+        className={
+          isFocusMode
+            ? "flex min-h-0 flex-1 flex-col"
+            : "mx-auto max-w-[1600px] px-4 pb-6 pt-4 sm:px-6"
+        }
+      >
+        <div
+          className={
+            isFocusMode
+              ? "flex min-h-0 flex-1"
+              : "flex min-h-[calc(100vh-8.5rem)] gap-4 lg:gap-5"
+          }
+        >
+          {/* Mobile AI overlay */}
+          {!isFocusMode && aiPanelOpen && (
+            <button
+              type="button"
+              aria-label="Close AI panel"
+              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px] lg:hidden"
+              onClick={() => setAiPanelOpen(false)}
             />
-          </div>
+          )}
+
+          {/* AI Assistant Sidebar */}
+          {!isFocusMode && (
+          <aside
+            className={`
+              fixed inset-y-0 left-0 z-50 flex w-[min(100vw-2rem,20rem)] flex-col overflow-hidden
+              border border-gray-200 bg-white shadow-xl transition-transform duration-300
+              lg:relative lg:z-0 lg:w-72 lg:shrink-0 lg:rounded-2xl lg:shadow-sm
+              ${aiPanelOpen ? "translate-x-4" : "-translate-x-[110%] lg:translate-x-0"}
+              ${!aiPanelOpen ? "lg:hidden" : ""}
+              top-[5.5rem] bottom-4 rounded-2xl lg:top-auto lg:bottom-auto lg:h-auto
+            `}
+          >
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-900 shadow-sm">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">AI Assistant</h2>
+                  <p className="text-xs text-gray-500">Writing companion</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setAiPanelOpen(false)}
+                aria-label="Close panel"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex-1 space-y-6 overflow-y-auto p-5">
+              <div>
+                <h3 className="mb-3 text-sm font-semibold text-gray-900">Writing tips</h3>
+                <div className="space-y-2">
+                  {aiSuggestions.slice(0, 3).map((suggestion, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 p-3 text-left text-sm text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-100"
+                      onClick={() => handleAiSuggestion(suggestion)}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Separator className="bg-gray-200" />
+
+              <div>
+                <h3 className="mb-3 text-sm font-semibold text-gray-900">Ask AI</h3>
+                <div className="space-y-2">
+                  <Textarea
+                    placeholder="Ask about your blog..."
+                    value={aiMessage}
+                    onChange={(e) => setAiMessage(e.target.value)}
+                    className="min-h-[88px] resize-none border-gray-200 bg-white text-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleAiMessageSend();
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={handleAiMessageSend}
+                    disabled={!aiMessage.trim()}
+                    className="w-full bg-gray-900 text-white hover:bg-gray-800"
+                    size="sm"
+                  >
+                    Send
+                  </Button>
+                </div>
+              </div>
+
+              <Separator className="bg-gray-200" />
+
+              <div>
+                <h3 className="mb-3 text-sm font-semibold text-gray-900">Quick actions</h3>
+                <div className="space-y-2">
+                  {[
+                    ["Generate Title", "Generate a compelling title for my blog"],
+                    ["Improve Intro", "Help me improve my blog's introduction"],
+                    ["Suggest Tags", "Suggest relevant tags for my blog"],
+                  ].map(([label, prompt]) => (
+                    <Button
+                      key={label}
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start border-gray-200 text-gray-700"
+                      onClick={() => handleAiSuggestion(prompt)}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </aside>
+          )}
+
+          {/* Editor Section */}
+          <main
+            className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white ${
+              isFocusMode
+                ? "rounded-none border-0 shadow-none"
+                : "rounded-2xl border border-gray-200 shadow-sm"
+            }`}
+          >
+            {/* Sticky header */}
+            <header className="sticky top-0 z-20 shrink-0 border-b border-gray-100 bg-white/95 px-4 py-3 backdrop-blur-sm sm:px-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+                  {!isFocusMode && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 text-gray-600 hover:bg-gray-100"
+                      onClick={() => setAiPanelOpen((open) => !open)}
+                      aria-label={aiPanelOpen ? "Hide AI panel" : "Show AI panel"}
+                    >
+                      {aiPanelOpen ? (
+                        <PanelLeftClose className="h-4 w-4" />
+                      ) : (
+                        <PanelLeftOpen className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
+
+                  {!isFocusMode && (isEditMode || hasMeaningfulContent()) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={isEditMode ? handleNavigateAway : () => navigate("/myblogs")}
+                      className="shrink-0 gap-1.5 text-gray-600 hover:bg-gray-100"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      <span className="hidden sm:inline">Back</span>
+                    </Button>
+                  )}
+
+                  <div className="min-w-0">
+                    <h1 className="truncate text-lg font-semibold text-gray-900 sm:text-xl">
+                      {isEditMode ? "Edit Blog" : "Write New Blog"}
+                    </h1>
+                    <p className="hidden text-xs text-gray-500 sm:block">
+                      {isFocusMode
+                        ? "Fullscreen writing · Press Esc to exit"
+                        : isEditMode
+                          ? "Update and publish your post"
+                          : "Draft auto-saves as you type"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+                  {currentSaveStatus && (
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${currentSaveStatus.className}`}
+                    >
+                      <currentSaveStatus.icon
+                        className={`h-3.5 w-3.5 ${saveStatus === "saving" ? "animate-spin" : ""}`}
+                      />
+                      <span className="hidden sm:inline">{currentSaveStatus.label}</span>
+                    </span>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-200"
+                    onClick={handleToggleFocusMode}
+                    title={isFocusMode ? "Exit fullscreen (Esc)" : "Enter fullscreen writing mode"}
+                  >
+                    {isFocusMode ? (
+                      <Minimize2 className="h-4 w-4" />
+                    ) : (
+                      <Maximize2 className="h-4 w-4" />
+                    )}
+                    <span className="ml-1.5 hidden sm:inline">
+                      {isFocusMode ? "Exit focus" : "Focus"}
+                    </span>
+                  </Button>
+
+                  <Dialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="border-gray-200">
+                        Save Draft
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[560px]">
+                      <DialogHeader>
+                        <DialogTitle>Save as Draft</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="draft-title">Blog Title</Label>
+                          <Input
+                            id="draft-title"
+                            placeholder="Enter your blog title (optional)"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="draft-description">Short Description</Label>
+                          <Input
+                            id="draft-description"
+                            placeholder="Enter a brief description (optional)"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="draft-tags">Tags (Optional)</Label>
+                          <Input
+                            id="draft-tags"
+                            placeholder="Enter tags separated by commas"
+                            value={tags}
+                            onChange={(e) => setTags(e.target.value)}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="draft-category">Category</Label>
+                          {renderCategorySelect()}
+                        </div>
+                      </div>
+                      <DialogFooter className="gap-2">
+                        <DialogClose asChild>
+                          <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button onClick={handleSaveDraft} className="bg-gray-900 text-white hover:bg-gray-800">
+                          {isEditMode ? "Update Draft" : "Save Draft"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        disabled={isPublishing}
+                        size="sm"
+                        className="bg-gray-900 text-white hover:bg-gray-800"
+                      >
+                        {isPublishing
+                          ? isEditMode
+                            ? "Updating..."
+                            : "Publishing..."
+                          : isEditMode
+                            ? "Update"
+                            : "Publish"}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[560px]">
+                      <DialogHeader>
+                        <DialogTitle>Complete Your Blog Details</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="title">Blog Title *</Label>
+                          <Input
+                            id="title"
+                            placeholder="Enter your blog title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="description">Short Description *</Label>
+                          <Input
+                            id="description"
+                            placeholder="Enter a brief description"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="tags">Tags (Optional)</Label>
+                          <Input
+                            id="tags"
+                            placeholder="Enter tags separated by commas"
+                            value={tags}
+                            onChange={(e) => setTags(e.target.value)}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="category">Category *</Label>
+                          {renderCategorySelect()}
+                        </div>
+                      </div>
+                      <DialogFooter className="gap-2">
+                        <DialogClose asChild>
+                          <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button
+                          onClick={handlePublish}
+                          disabled={isPublishing || !title.trim() || !description.trim()}
+                          className="bg-gray-900 text-white hover:bg-gray-800"
+                        >
+                          {isPublishing
+                            ? isEditMode
+                              ? "Updating..."
+                              : "Publishing..."
+                            : isEditMode
+                              ? "Update Blog"
+                              : "Publish Blog"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+            </header>
+
+            {/* Editor */}
+            <div className="min-h-0 flex-1 overflow-hidden bg-white">
+              <SimpleEditor
+                key={editorSessionKey}
+                className="h-full"
+                wide={isFocusMode}
+                getEditorInstance={(editor) => (editorRef.current = editor)}
+                onMainImageChange={handleMainImageChange}
+                initialContent={editorInitialContent}
+                onContentChange={handleEditorContentChange}
+              />
+            </div>
+          </main>
         </div>
       </div>
     </div>
