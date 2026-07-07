@@ -1,0 +1,16 @@
+.writex-bookmark-pin,
+.writex-bookmark-pin-widget svg {
+  vertical-align: middle;
+}
+
+.writex-bookmark-pin-widget {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 0.15rem;
+  user-select: none;
+  pointer-events: none;
+}
+
+.ProseMirror .writex-bookmark-pin-widget {
+  margin-right: 0.25rem;
+}

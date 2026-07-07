@@ -2,9 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import Navbar from "../Components/Navbar";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getSafeImageUrl } from "../../lib/image-url";
+import {
+  blogMatchesCategory,
+  filterBlogsByCategory,
+  resolveCategoryFilter,
+} from "../../lib/blog-categories";
 import {
   Eye,
   Heart,
@@ -29,8 +34,14 @@ const Blog = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [activeCategory, setActiveCategory] = useState("All");
   const [showFilters, setShowFilters] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
   const hasFatched = useRef(false);
   const navigate = useNavigate();
+
+  const applyCategoryFilter = (category, sourceData = data) => {
+    setActiveCategory(category);
+    setFilteredData(filterBlogsByCategory(sourceData, category));
+  };
 
   const handleFetchAllBlogs = async () => {
     if (hasFatched.current) return;
@@ -38,8 +49,10 @@ const Blog = () => {
 
     try {
       const fetchData = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/public/posts/blogs/`);
-      setData(fetchData.data.allBlogs);
-      setFilteredData(fetchData.data.allBlogs);
+      const allBlogs = fetchData.data.allBlogs;
+      setData(allBlogs);
+      const category = resolveCategoryFilter(searchParams.get("category"));
+      applyCategoryFilter(category, allBlogs);
       toast.success("Blog Fetched")
     } catch (error) {
       toast.error("Error in handle fetch all blogs");
@@ -50,6 +63,12 @@ const Blog = () => {
     handleFetchAllBlogs();
   }, [])
 
+  useEffect(() => {
+    if (data.length === 0) return;
+    const category = resolveCategoryFilter(searchParams.get("category"));
+    applyCategoryFilter(category);
+  }, [searchParams, data]);
+
   const CATAGORY = [
     {
       type: "All",
@@ -59,47 +78,47 @@ const Blog = () => {
     {
       type: "General",
       icon: <Tag className="w-4 h-4" />,
-      count: data.filter(blog => blog.category === "General").length
+      count: data.filter(blog => blogMatchesCategory(blog, "General")).length
     },
     {
       type: "Personal",
       icon: <BookHeart className="w-4 h-4" />,
-      count: data.filter(blog => blog.category === "Personal").length
+      count: data.filter(blog => blogMatchesCategory(blog, "Personal")).length
     },
     {
       type: "Business",
       icon: <Handshake className="w-4 h-4" />,
-      count: data.filter(blog => blog.category === "Business").length
+      count: data.filter(blog => blogMatchesCategory(blog, "Business")).length
     },
     {
       type: "Tech",
       icon: <CircuitBoard className="w-4 h-4" />,
-      count: data.filter(blog => blog.category === "Tech").length
+      count: data.filter(blog => blogMatchesCategory(blog, "Tech")).length
     },
     {
       type: "Health",
       icon: <HeartPulse className="w-4 h-4" />,
-      count: data.filter(blog => blog.category === "Health").length
+      count: data.filter(blog => blogMatchesCategory(blog, "Health")).length
     },
     {
       type: "Education",
       icon: <BookA className="w-4 h-4" />,
-      count: data.filter(blog => blog.category === "Education").length
+      count: data.filter(blog => blogMatchesCategory(blog, "Education")).length
     },
     {
       type: "Entertainment",
       icon: <Tv className="w-4 h-4" />,
-      count: data.filter(blog => blog.category === "Entertainment").length
+      count: data.filter(blog => blogMatchesCategory(blog, "Entertainment")).length
     },
     {
       type: "Sports",
       icon: <Medal className="w-4 h-4" />,
-      count: data.filter(blog => blog.category === "Sports").length
+      count: data.filter(blog => blogMatchesCategory(blog, "Sports")).length
     },
     {
       type: "Other",
       icon: <ArrowBigUp className="w-4 h-4" />,
-      count: data.filter(blog => !blog.category || !["General", "Personal", "Business", "Tech", "Health", "Education", "Entertainment", "Sports"].includes(blog.category)).length
+      count: data.filter(blog => blogMatchesCategory(blog, "Other")).length
     },
   ];
 
@@ -120,15 +139,12 @@ const Blog = () => {
     });
   };
 
-  // Filter blogs by category
   const handleCategoryFilter = (category) => {
-    setActiveCategory(category);
     if (category === "All") {
-      setFilteredData(data);
-    } else {
-      const filtered = data.filter(blog => blog.category === category);
-      setFilteredData(filtered);
+      setSearchParams({});
+      return;
     }
+    setSearchParams({ category });
   };
 
   return (

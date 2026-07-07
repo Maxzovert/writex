@@ -27,6 +27,8 @@ import {
 import { Link } from "@/components/tiptap-extension/link-extension"
 import { Selection } from "@/components/tiptap-extension/selection-extension"
 import { TrailingNode } from "@/components/tiptap-extension/trailing-node-extension"
+import { BookmarkDecorations } from "@/components/tiptap-extension/bookmark-decoration-extension"
+import type { Bookmark, BookmarkColor } from "@/lib/bookmarks"
 
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button"
@@ -76,6 +78,8 @@ import { LinkIcon } from "@/components/tiptap-icons/link-icon"
 import { useMobile } from "@/hooks/use-mobile"
 import { useWindowSize } from "@/hooks/use-window-size"
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
+import { BookmarkSelectionToolbar } from "@/components/bookmarks/BookmarkSelectionToolbar"
+import "@/components/bookmarks/bookmarks.scss"
 
 // --- Components ---
 // import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
@@ -208,6 +212,8 @@ interface SimpleEditorProps {
   onContentChange?: () => void;
   className?: string;
   wide?: boolean;
+  bookmarks?: Bookmark[];
+  onBookmarkAdd?: (color: BookmarkColor) => void;
 }
 
 export function SimpleEditor({
@@ -217,6 +223,8 @@ export function SimpleEditor({
   onContentChange,
   className,
   wide = false,
+  bookmarks = [],
+  onBookmarkAdd,
 }: SimpleEditorProps) {
   const isMobile = useMobile()
   const windowSize = useWindowSize()
@@ -224,7 +232,13 @@ export function SimpleEditor({
     "main" | "highlighter" | "link"
   >("main")
   const toolbarRef = React.useRef<HTMLDivElement>(null)
+  const editorContentRef = React.useRef<HTMLDivElement>(null)
+  const bookmarksRef = React.useRef<Bookmark[]>(bookmarks)
   const [mainImage, setMainImage] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    bookmarksRef.current = bookmarks
+  }, [bookmarks])
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -264,6 +278,9 @@ export function SimpleEditor({
       Subscript,
 
       Selection,
+      BookmarkDecorations.configure({
+        getBookmarks: () => bookmarksRef.current,
+      }),
       ImageUploadNode.configure({
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
@@ -296,6 +313,11 @@ export function SimpleEditor({
     }
   }, [editor, getEditorInstance])
 
+  React.useEffect(() => {
+    if (!editor) return
+    editor.view.dispatch(editor.state.tr)
+  }, [bookmarks, editor])
+
   const bodyRect = useCursorVisibility({
     editor,
     overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
@@ -312,6 +334,7 @@ export function SimpleEditor({
       <div className={cn("simple-editor-root flex h-full min-h-0 flex-col", className)}>
       <Toolbar
         ref={toolbarRef}
+        className="shrink-0"
         style={
           isMobile
             ? {
@@ -334,13 +357,20 @@ export function SimpleEditor({
         )}
       </Toolbar>
 
-      <div className="content-wrapper">
+      <div className="content-wrapper" ref={editorContentRef}>
         <EditorContent
           editor={editor}
           role="presentation"
           className={cn("simple-editor-content", wide && "simple-editor-content--wide")}
         />
       </div>
+
+      {onBookmarkAdd && (
+        <BookmarkSelectionToolbar
+          containerRef={editorContentRef}
+          onAdd={onBookmarkAdd}
+        />
+      )}
       </div>
     </EditorContext.Provider>
   )

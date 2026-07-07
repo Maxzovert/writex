@@ -30,9 +30,22 @@ body,
   font-family: "DM Sans", sans-serif;
 }
 
+.simple-editor-root {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.simple-editor-root .tiptap-toolbar[data-variant="fixed"] {
+  position: relative;
+  top: auto;
+  flex-shrink: 0;
+}
+
 .content-wrapper {
   flex: 1;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
 
   &::-webkit-scrollbar {

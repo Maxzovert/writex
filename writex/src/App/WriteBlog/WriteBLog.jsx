@@ -21,6 +21,11 @@ import {
   Minimize2,
 } from "lucide-react";
 import { useFocusMode } from "@/hooks/use-focus-mode";
+import { useAuth } from "../../context/authContext";
+import { BookmarkSidebar } from "@/components/bookmarks/BookmarkSidebar";
+import { useBookmarks } from "@/hooks/use-bookmarks";
+import { getAnchorFromEditor, migrateBookmarks } from "@/lib/bookmarks";
+import "@/components/bookmarks/bookmarks.scss";
 import {
   Dialog,
   DialogContent,
@@ -128,6 +133,7 @@ const saveDraftWithKeepalive = (draftData, editBlogId) => {
 
 const WriteBlog = () => {
   const editorRef = useRef(null);
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("General");
   const [isPublishing, setIsPublishing] = useState(false);
@@ -145,6 +151,39 @@ const WriteBlog = () => {
   const [editorSessionKey, setEditorSessionKey] = useState("new");
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [aiMessage, setAiMessage] = useState("");
+  const bookmarkDocumentId = editBlogId ? `blog-${editBlogId}` : "write-new-draft";
+  const userId = user?._id || user?.id;
+  const {
+    bookmarks,
+    addBookmark,
+    removeBookmark,
+    goToBookmark,
+  } = useBookmarks(userId, bookmarkDocumentId);
+
+  useEffect(() => {
+    if (editBlogId && userId) {
+      migrateBookmarks(userId, "write-new-draft", `blog-${editBlogId}`);
+    }
+  }, [editBlogId, userId]);
+
+  const handleBookmarkAdd = (color) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const result = getAnchorFromEditor(editor);
+    if (!result) {
+      toast.warning("Select text to bookmark");
+      return;
+    }
+    addBookmark(result.anchor, color, result.label);
+  };
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [])
 
   useEffect(() => {
     if (window.innerWidth < 1024) {
@@ -765,8 +804,8 @@ const WriteBlog = () => {
     <div
       className={
         isFocusMode
-          ? "fixed inset-0 z-[60] flex flex-col bg-white"
-          : "min-h-screen bg-gray-50"
+          ? "fixed inset-0 z-[60] flex flex-col overflow-hidden bg-white"
+          : "flex h-screen flex-col overflow-hidden bg-gray-50"
       }
     >
       {!isFocusMode && <Navbar />}
@@ -774,15 +813,15 @@ const WriteBlog = () => {
       <div
         className={
           isFocusMode
-            ? "flex min-h-0 flex-1 flex-col"
-            : "mx-auto max-w-[1600px] px-4 pb-6 pt-4 sm:px-6"
+            ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+            : "mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 flex-col overflow-hidden px-4 pb-4 pt-4 sm:px-6"
         }
       >
         <div
           className={
             isFocusMode
-              ? "flex min-h-0 flex-1"
-              : "flex min-h-[calc(100vh-8.5rem)] gap-4 lg:gap-5"
+              ? "flex min-h-0 flex-1 overflow-hidden"
+              : "flex min-h-0 flex-1 gap-4 overflow-hidden lg:gap-5"
           }
         >
           {/* Mobile AI overlay */}
@@ -907,8 +946,8 @@ const WriteBlog = () => {
                 : "rounded-2xl border border-gray-200 shadow-sm"
             }`}
           >
-            {/* Sticky header */}
-            <header className="sticky top-0 z-20 shrink-0 border-b border-gray-100 bg-white/95 px-4 py-3 backdrop-blur-sm sm:px-5">
+            {/* Fixed header — writing area below scrolls independently */}
+            <header className="z-20 shrink-0 border-b border-gray-100 bg-white px-4 py-3 sm:px-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                   {!isFocusMode && (
@@ -1125,9 +1164,33 @@ const WriteBlog = () => {
                 onMainImageChange={handleMainImageChange}
                 initialContent={editorInitialContent}
                 onContentChange={handleEditorContentChange}
+                bookmarks={bookmarks}
+                onBookmarkAdd={handleBookmarkAdd}
               />
             </div>
           </main>
+
+          {!isFocusMode && (
+            <aside className="hidden w-72 shrink-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm xl:flex xl:flex-col">
+              <BookmarkSidebar
+                variant="panel"
+                bookmarks={bookmarks}
+                onSelect={goToBookmark}
+                onRemove={removeBookmark}
+              />
+            </aside>
+          )}
+
+          {isFocusMode && (
+            <aside className="hidden w-72 shrink-0 overflow-hidden border-l border-border bg-card lg:flex lg:flex-col">
+              <BookmarkSidebar
+                variant="panel"
+                bookmarks={bookmarks}
+                onSelect={goToBookmark}
+                onRemove={removeBookmark}
+              />
+            </aside>
+          )}
         </div>
       </div>
     </div>

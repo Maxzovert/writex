@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -26,6 +26,15 @@ import {
 } from 'lucide-react';
 import { useFocusMode } from '@/hooks/use-focus-mode';
 import { HighlightedCodeBlock } from '@/components/HighlightedCodeBlock';
+import { BookmarkSidebar } from '@/components/bookmarks/BookmarkSidebar';
+import { RelatedBlogsSection } from '@/components/blog/RelatedBlogsSection';
+import { CategoryBrowseSection } from '@/components/blog/CategoryBrowseSection';
+import { BlogSidebarColumn } from '@/components/blog/BlogSidebarColumn';
+import { BookmarkSelectionToolbar } from '@/components/bookmarks/BookmarkSelectionToolbar';
+import { renderBookmarkedText } from '@/components/bookmarks/render-bookmarked-text';
+import { useBookmarks } from '@/hooks/use-bookmarks';
+import { getAnchorFromDomSelection } from '@/lib/bookmarks';
+import '@/components/bookmarks/bookmarks.scss';
 
 /** Renders TipTap `text` nodes (with marks) for paragraphs, table cells, etc. */
 function renderTextRuns(nodes, keyPrefix = 't') {
@@ -180,6 +189,24 @@ const BlogPage = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const { isFocusMode, toggleFocusMode } = useFocusMode();
+  const contentRef = useRef(null);
+  const focusContentRef = useRef(null);
+  const documentId = id ? `blog-${id}` : 'blog-unknown';
+  const userId = user?._id || user?.id;
+  const {
+    bookmarks,
+    addBookmark,
+    removeBookmark,
+    goToBookmark,
+  } = useBookmarks(userId, documentId);
+
+  const handleAddBookmark = (color) => {
+    const container = focusContentRef.current ?? contentRef.current;
+    if (!container) return;
+    const result = getAnchorFromDomSelection(container);
+    if (!result) return;
+    addBookmark(result.anchor, color, result.label);
+  };
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -501,7 +528,10 @@ const BlogPage = () => {
   const safeMainImage = getSafeImageUrl(blog.mainImage);
 
   // Function to render TipTap content
-  const renderTipTapContent = (content) => {
+  const renderTipTapContent = (content, bookmarkList = bookmarks) => {
+    const renderBlockText = (nodeContent, blockIndex, keyPrefix) =>
+      renderBookmarkedText(nodeContent, blockIndex, bookmarkList, renderTextRuns);
+
     if (typeof content === "string") {
       return <div className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">{content}</div>;
     }
@@ -511,8 +541,8 @@ const BlogPage = () => {
         switch (node.type) {
           case 'paragraph':
             return (
-              <p key={index} className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
-                {renderTextRuns(node.content, `p-${index}`)}
+              <p key={index} data-block-index={index} className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+                {renderBlockText(node.content, index, `p-${index}`)}
               </p>
             );
           
@@ -529,15 +559,11 @@ const BlogPage = () => {
             
             return (
               <HeadingTag 
-                key={index} 
+                key={index}
+                data-block-index={index}
                 className={headingStyles[node.attrs?.level || 1]}
               >
-                {node.content && node.content.map((textNode, textIndex) => {
-                  if (textNode.type === 'text') {
-                    return textNode.text;
-                  }
-                  return null;
-                })}
+                {renderBlockText(node.content, index, `h-${index}`)}
               </HeadingTag>
             );
           
@@ -562,18 +588,16 @@ const BlogPage = () => {
           
           case 'blockquote':
             return (
-              <blockquote key={index} className="border-l-4 border-gray-300 dark:border-zinc-600 pl-4 my-4 italic text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800/60 py-2 rounded-r">
+              <blockquote key={index} data-block-index={index} className="border-l-4 border-gray-300 dark:border-zinc-600 pl-4 my-4 italic text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800/60 py-2 rounded-r">
                 {node.content && node.content.map((contentNode, contentIndex) => {
                   if (contentNode.type === 'text') {
                     return contentNode.text;
                   } else if (contentNode.type === 'paragraph') {
-                    // Handle nested paragraphs in blockquotes
-                    return contentNode.content && contentNode.content.map((textNode, textIndex) => {
-                      if (textNode.type === 'text') {
-                        return textNode.text;
-                      }
-                      return null;
-                    });
+                    return (
+                      <span key={contentIndex}>
+                        {renderBlockText(contentNode.content, index, `bq-${index}-${contentIndex}`)}
+                      </span>
+                    );
                   }
                   return null;
                 })}
@@ -582,20 +606,14 @@ const BlogPage = () => {
           
           case 'bulletList':
             return (
-              <ul key={index} className="list-disc list-inside mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+              <ul key={index} data-block-index={index} className="list-disc list-inside mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                 {node.content && node.content.map((listItem, listIndex) => (
                   <li key={listIndex} className="mb-1">
                     {listItem.content && listItem.content.map((contentNode, contentIndex) => {
                       if (contentNode.type === 'text') {
                         return contentNode.text;
                       } else if (contentNode.type === 'paragraph') {
-                        // Handle nested paragraphs in list items
-                        return contentNode.content && contentNode.content.map((textNode, textIndex) => {
-                          if (textNode.type === 'text') {
-                            return textNode.text;
-                          }
-                          return null;
-                        });
+                        return renderBlockText(contentNode.content, index, `bl-${index}-${listIndex}`);
                       }
                       return null;
                     })}
@@ -606,20 +624,14 @@ const BlogPage = () => {
           
           case 'orderedList':
             return (
-              <ol key={index} className="list-decimal list-inside mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+              <ol key={index} data-block-index={index} className="list-decimal list-inside mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                 {node.content && node.content.map((listItem, listIndex) => (
                   <li key={listIndex} className="mb-1">
                     {listItem.content && listItem.content.map((contentNode, contentIndex) => {
                       if (contentNode.type === 'text') {
                         return contentNode.text;
                       } else if (contentNode.type === 'paragraph') {
-                        // Handle nested paragraphs in list items
-                        return contentNode.content && contentNode.content.map((textNode, textIndex) => {
-                          if (textNode.type === 'text') {
-                            return textNode.text;
-                          }
-                          return null;
-                        });
+                        return renderBlockText(contentNode.content, index, `bl-${index}-${listIndex}`);
                       }
                       return null;
                     })}
@@ -630,7 +642,7 @@ const BlogPage = () => {
           
           case 'taskList':
             return (
-              <ul key={index} className="list-none mb-4 text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
+              <ul key={index} data-block-index={index} className="list-none mb-4 text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
                 {node.content && node.content.map((taskItem, taskIndex) => (
                   <li key={taskIndex} className="flex items-start gap-3">
                     <input
@@ -645,13 +657,7 @@ const BlogPage = () => {
                         if (contentNode.type === 'text') {
                           return contentNode.text;
                         } else if (contentNode.type === 'paragraph') {
-                          // If it's a paragraph, render its content
-                          return contentNode.content && contentNode.content.map((textNode, textIndex) => {
-                            if (textNode.type === 'text') {
-                              return textNode.text;
-                            }
-                            return null;
-                          });
+                          return renderBlockText(contentNode.content, index, `tl-${index}-${taskIndex}`);
                         }
                         return null;
                       })}
@@ -663,7 +669,7 @@ const BlogPage = () => {
           
           case 'taskItem':
             return (
-              <div key={index} className="flex items-start gap-3 mb-2">
+              <div key={index} data-block-index={index} className="flex items-start gap-3 mb-2">
                 <input
                   type="checkbox"
                   checked={node.attrs?.checked || false}
@@ -672,17 +678,10 @@ const BlogPage = () => {
                 />
                 <span className="flex-1">
                   {node.content && node.content.map((contentNode, contentIndex) => {
-                    // Handle different content types within task items
                     if (contentNode.type === 'text') {
                       return contentNode.text;
                     } else if (contentNode.type === 'paragraph') {
-                      // If it's a paragraph, render its content
-                      return contentNode.content && contentNode.content.map((textNode, textIndex) => {
-                        if (textNode.type === 'text') {
-                          return textNode.text;
-                        }
-                        return null;
-                      });
+                      return renderBlockText(contentNode.content, index, `ti-${index}-${contentIndex}`);
                     }
                     return null;
                   })}
@@ -696,11 +695,12 @@ const BlogPage = () => {
               .map((textNode) => textNode.text)
               .join('');
             return (
-              <HighlightedCodeBlock
-                key={index}
-                code={codeText}
-                language={node.attrs?.language}
-              />
+              <div key={index} data-block-index={index}>
+                <HighlightedCodeBlock
+                  code={codeText}
+                  language={node.attrs?.language}
+                />
+              </div>
             );
           }
 
@@ -818,7 +818,7 @@ const BlogPage = () => {
     <div className="min-h-screen bg-background text-foreground">
       {!isFocusMode && <Navbar />}
       {!isFocusMode && (
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 pt-8 pb-16 sm:px-6 sm:pb-20 lg:px-8 lg:pb-24">
         {/* Back button */}
         <div className="mb-8 flex items-center justify-between gap-4">
         <button
@@ -841,9 +841,9 @@ const BlogPage = () => {
         </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
           {/* Main Content */}
-          <div className="lg:col-span-2">
+          <div className="min-w-0 flex-1">
             {/* Blog header */}
             <div className="mb-8">
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-50 mb-6 leading-tight">
@@ -887,6 +887,18 @@ const BlogPage = () => {
 
                 {/* Interaction stats */}
                 <div className="flex items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
+                  <button
+                    type="button"
+                    onClick={handleLikePost}
+                    className={`flex items-center gap-1 transition-colors ${
+                      blog.isLiked
+                        ? "text-red-500"
+                        : "hover:text-red-500"
+                    }`}
+                  >
+                    <Heart className={`h-4 w-4 ${blog.isLiked ? "fill-current" : ""}`} />
+                    {blog.likes?.length || 0} likes
+                  </button>
                   <div className="flex items-center gap-1">
                     <Eye className="w-4 h-4" />
                     {blog.viewCount} views
@@ -912,28 +924,45 @@ const BlogPage = () => {
             </div>
 
             {/* Blog content */}
-            <div className="prose prose-lg max-w-none mb-8">
+            <div ref={contentRef} className="prose prose-lg max-w-none mb-8">
               {renderTipTapContent(blog.content)}
             </div>
 
-            {/* Like button */}
-            <div className="mb-12">
-              <Button
-                onClick={handleLikePost}
-                variant={blog.isLiked ? "default" : "outline"}
-                className={`flex items-center gap-2 ${
-                  blog.isLiked 
-                    ? "bg-red-500 hover:bg-red-600 text-white" 
-                    : "border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800"
-                }`}
-              >
-                <Heart className={`w-4 h-4 ${blog.isLiked ? "fill-current" : ""}`} />
-                {blog.isLiked ? "Liked" : "Like"} ({blog.likes?.length || 0})
-              </Button>
+            {/* About the author */}
+            <div className="mb-10 border-t border-gray-200 dark:border-zinc-700 pt-8">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-4">
+                About the Author
+              </h2>
+              <div className="flex items-center gap-4">
+                {safeAuthorImage ? (
+                  <img
+                    src={safeAuthorImage}
+                    alt={blog.author?.username || "Author"}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-zinc-600 flex items-center justify-center">
+                    <User className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                  </div>
+                )}
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-gray-50">
+                    {firstUpperCase(blog.author?.username)}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Published on{" "}
+                    {new Date(blog.createdAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Comments Section */}
-            <div className="border-t border-gray-200 dark:border-zinc-700 pt-8">
+            <div className="pt-2">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-6">Comments ({blog.comments?.length || 0})</h2>
               
               {/* Add comment form */}
@@ -1133,88 +1162,28 @@ const BlogPage = () => {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8 space-y-6">
-              {/* Blog stats */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Blog Stats</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Views</span>
-                    </div>
-                    <span className="font-semibold">{blog.viewCount}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Likes</span>
-                    </div>
-                    <span className="font-semibold">{blog.likes?.length || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MessageCircle className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Comments</span>
-                    </div>
-                    <span className="font-semibold">{blog.comments?.length || 0}</span>
-                  </div>
-                  {blog.uniqueViewCount && (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Unique Views</span>
-                      </div>
-                      <span className="font-semibold">{blog.uniqueViewCount}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Author info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">About the Author</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3 mb-4">
-                    {safeAuthorImage ? (
-                      <img
-                        src={safeAuthorImage}
-                        alt={blog.author.username}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-zinc-600 flex items-center justify-center">
-                        <User className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-gray-50">{blog.author?.username}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Blog Author</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Published on {new Date(blog.createdAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
-                </CardContent>
-              </Card>
+          <BlogSidebarColumn>
+            <div className="space-y-6">
+              <BookmarkSidebar
+                variant="blog"
+                bookmarks={bookmarks}
+                onSelect={goToBookmark}
+                onRemove={removeBookmark}
+              />
+              <RelatedBlogsSection
+                currentBlogId={id}
+                category={blog?.category}
+              />
+              <CategoryBrowseSection currentCategory={blog?.category} />
             </div>
-          </div>
+          </BlogSidebarColumn>
         </div>
       </div>
       )}
 
       {isFocusMode && blog && (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-background text-foreground">
+        <div className="fixed inset-0 z-[60] flex bg-background text-foreground">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm sm:px-8">
             <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Reading mode</p>
@@ -1261,6 +1230,24 @@ const BlogPage = () => {
                     {blog.readTime} min read
                   </div>
                 )}
+                <button
+                  type="button"
+                  onClick={handleLikePost}
+                  className={`flex items-center gap-1 transition-colors ${
+                    blog.isLiked ? "text-red-500" : "hover:text-red-500"
+                  }`}
+                >
+                  <Heart className={`h-4 w-4 ${blog.isLiked ? "fill-current" : ""}`} />
+                  {blog.likes?.length || 0} likes
+                </button>
+                <div className="flex items-center gap-1">
+                  <Eye className="h-4 w-4" />
+                  {blog.viewCount} views
+                </div>
+                <div className="flex items-center gap-1">
+                  <MessageCircle className="h-4 w-4" />
+                  {blog.comments?.length || 0} comments
+                </div>
               </div>
 
               {safeMainImage && (
@@ -1273,7 +1260,7 @@ const BlogPage = () => {
                 </div>
               )}
 
-              <div className="prose prose-lg max-w-none dark:prose-invert sm:prose-xl">
+              <div ref={focusContentRef} className="prose prose-lg max-w-none dark:prose-invert sm:prose-xl">
                 {renderTipTapContent(blog.content)}
               </div>
 
@@ -1282,8 +1269,23 @@ const BlogPage = () => {
               </p>
             </div>
           </article>
+          </div>
+
+          <aside className="hidden w-72 shrink-0 overflow-hidden border-l border-border bg-background lg:flex lg:flex-col">
+            <BookmarkSidebar
+              variant="panel"
+              bookmarks={bookmarks}
+              onSelect={goToBookmark}
+              onRemove={removeBookmark}
+            />
+          </aside>
         </div>
       )}
+
+      <BookmarkSelectionToolbar
+        containerRef={isFocusMode ? focusContentRef : contentRef}
+        onAdd={handleAddBookmark}
+      />
     </div>
   );
 };
