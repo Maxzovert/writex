@@ -20,7 +20,7 @@ const Home = () => {
   }
 
   const handleLearnMore = () => {
-    Navigate("/About")
+    Navigate("/about")
   }
 
   const features = [
@@ -443,7 +443,12 @@ const Home = () => {
             <div>
               <h3 className="font-semibold text-lg mb-6">Company</h3>
               <ul className="space-y-3 text-gray-700 dark:text-stone-300">
-                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">About</li>
+                <li
+                  onClick={() => Navigate("/about")}
+                  className="cursor-pointer transition-colors duration-300 hover:text-black dark:hover:text-white"
+                >
+                  About
+                </li>
                 <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Blog</li>
                 <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Careers</li>
                 <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Press</li>

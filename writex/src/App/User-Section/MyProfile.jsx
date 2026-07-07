@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  ArrowLeft, 
   Edit3, 
   Instagram, 
   Linkedin, 
@@ -21,6 +20,10 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import Navbar from '../Components/Navbar';
+import { SiteFooter } from '../../components/layout/SiteFooter';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
 import { useAuth } from '../../context/authContext';
 import { uploadImageToCloudinary } from '../../lib/cloudinary-storage';
 import { getSafeImageUrl } from '../../lib/image-url';
@@ -383,11 +386,6 @@ const MyProfile = () => {
     }
   };
 
-  const goBackToBlogs = () => {
-    navigate('/blogs');
-  };
-
-  // Helper function to ensure URL has proper protocol
   const formatSocialUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -399,227 +397,225 @@ const MyProfile = () => {
   const safeProfileImage = getSafeImageUrl(profile.profileImage);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Simple Header */}
-      <div className="border-b border-border">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <motion.button
-            onClick={goBackToBlogs}
-            className="text-gray-500 dark:text-gray-400 hover:text-foreground transition-colors lexend-txt text-sm"
-            whileHover={{ x: -2 }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            ← Back to Blogs
-          </motion.button>
-        </div>
-      </div>
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <Navbar />
 
       {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-2 border-border border-t-muted-foreground rounded-full animate-spin"></div>
+        <div className="flex flex-1 items-center justify-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-foreground" />
         </div>
       ) : (
-        <div className="max-w-4xl mx-auto px-6 py-16">
-          {/* Profile Section */}
-          <div className="text-center mb-16">
-            {/* Profile Image */}
-            <div className="relative inline-block mb-6">
-              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-border">
-                {uploadingImage ? (
-                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                    <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                  </div>
-                ) : safeProfileImage ? (
-                  <img
-                    src={safeProfileImage}
-                    alt={profile.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                
-                {/* Fallback avatar */}
-                <div className={`w-full h-full bg-gray-100 flex items-center justify-center ${safeProfileImage ? 'hidden' : ''}`}>
-                  <span className="text-2xl font-light text-gray-400 lexend-txt">
-                    {profile.name ? profile.name.charAt(0).toUpperCase() : "U"}
-                  </span>
-                </div>
-              </div>
-              {isEditing && (
-                <button 
-                  onClick={triggerImageUpload}
-                  disabled={uploadingImage}
-                  className="absolute -bottom-1 -right-1 w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center text-white text-sm hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Camera className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Name and Bio */}
-            {isEditing ? (
-              <div className="space-y-4 max-w-md mx-auto">
-                <input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="text-3xl font-light text-gray-900 dark:text-gray-50 bg-transparent border-b border-border focus:border-primary focus:outline-none text-center w-full transition-colors"
-                  placeholder="Enter your name"
-                />
-                <textarea
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
-                  className="text-gray-600 dark:text-gray-400 bg-transparent border-b border-border focus:border-primary focus:outline-none resize-none text-center w-full transition-colors"
-                  placeholder="Tell us about yourself"
-                  rows={3}
-                />
-              </div>
-            ) : (
-              <div>
-                <h1 className="text-3xl font-light text-gray-900 dark:text-gray-50 oxygen-bold mb-3">
-                  {profile.name || "User"}
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 lexend-txt max-w-md mx-auto leading-relaxed">
-                  {profile.bio}
-                </p>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="mt-8">
-              {isEditing ? (
-                <div className="flex gap-3 justify-center">
-                  <button
-                    onClick={handleSave}
-                    className="px-6 py-2 bg-gray-900 text-white text-sm rounded-full hover:bg-gray-800 transition-colors"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="px-6 py-2 text-gray-500 dark:text-gray-400 text-sm rounded-full hover:text-foreground transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={handleEdit}
-                  className="px-6 py-2 text-gray-500 dark:text-gray-400 text-sm rounded-full hover:text-foreground transition-colors border border-border hover:border-muted-foreground"
-                >
-                  Edit Profile
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Stats Section */}
-          <div className="grid grid-cols-2 gap-8 mb-16">
-            <div className="text-center">
-              <div className="text-4xl font-light text-gray-900 dark:text-gray-50 oxygen-bold mb-2">
-                {profile.totalLikes}
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400 lexend-txt">Total Likes</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-light text-gray-900 dark:text-gray-50 oxygen-bold mb-2">
-                {profile.totalPublishedBlogs}
-              </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400 lexend-txt">Published Blogs</div>
-            </div>
-          </div>
-
-          {/* Content Sections */}
-          <div className="space-y-12">
-            {/* Favorite Topics */}
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50 lexend-txt">Favorite Topics</h2>
-                {isEditing && (
-                  <button
-                    onClick={handleAddTopic}
-                    className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              
-              <div className="flex flex-wrap gap-2">
-                {(isEditing ? editForm.favoriteTopics : profile.favoriteTopics).map((topic, index) => (
-                  <div
-                    key={index}
-                    className="px-4 py-2 bg-muted/50 text-gray-700 dark:text-gray-200 text-sm rounded-full lexend-txt flex items-center gap-2"
-                  >
-                    {topic}
-                    {isEditing && (
-                      <button
-                        onClick={() => handleRemoveTopic(index)}
-                        className="text-gray-400 hover:text-gray-600 dark:text-gray-400 transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Social Media */}
-            <div>
-              <h2 className="text-lg font-medium text-gray-900 dark:text-gray-50 lexend-txt mb-6">Social Media</h2>
-              
-              <div className="space-y-3">
-                {socialPlatforms.map((platform) => {
-                  const Icon = platform.icon;
-                  const hasLink = profile.socialLinks[platform.name];
-                  
-                  return (
-                    <div key={platform.name} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-card rounded-lg flex items-center justify-center text-gray-600 dark:text-gray-400 border border-border">
-                          <Icon className="w-4 h-4" />
-                        </div>
-                        <span className="text-foreground lexend-txt">{platform.label}</span>
+        <main className="flex-1">
+          <section className="border-b border-border bg-gradient-to-br from-muted/50 via-background to-background px-4 py-12 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-5xl">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="flex flex-col items-center text-center"
+              >
+                <div className="relative mb-6">
+                  <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-background shadow-lg ring-2 ring-border sm:h-32 sm:w-32">
+                    {uploadingImage ? (
+                      <div className="flex h-full w-full items-center justify-center bg-muted">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-foreground" />
                       </div>
-                      
-                      {hasLink ? (
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={formatSocialUrl(hasLink)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 transition-colors"
-                          >
-                            Visit
-                          </a>
-                          <button
-                            onClick={() => handleSocialRemove(platform.name)}
-                            className="text-sm text-red-500 hover:text-red-600 transition-colors"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => openSocialModal(platform.name)}
-                          className="text-sm text-gray-500 dark:text-gray-400 hover:text-foreground transition-colors"
-                        >
-                          Connect
-                        </button>
-                      )}
+                    ) : safeProfileImage ? (
+                      <img
+                        src={safeProfileImage}
+                        alt={profile.name}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div className={`flex h-full w-full items-center justify-center bg-muted ${safeProfileImage ? 'hidden' : ''}`}>
+                      <span className="text-3xl font-semibold text-muted-foreground">
+                        {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                  {isEditing && (
+                    <button
+                      onClick={triggerImageUpload}
+                      disabled={uploadingImage}
+                      className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-background shadow-md transition-opacity hover:opacity-90 disabled:opacity-50"
+                    >
+                      <Camera className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
+                {isEditing ? (
+                  <div className="w-full max-w-md space-y-4">
+                    <input
+                      type="text"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full border-b border-border bg-transparent py-2 text-center text-3xl font-semibold text-foreground focus:border-foreground focus:outline-none"
+                      placeholder="Enter your name"
+                    />
+                    <textarea
+                      value={editForm.bio}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
+                      className="w-full resize-none border-b border-border bg-transparent py-2 text-center text-muted-foreground focus:border-foreground focus:outline-none"
+                      placeholder="Tell us about yourself"
+                      rows={3}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                      {profile.name || 'User'}
+                    </h1>
+                    <p className="mt-3 max-w-xl text-base leading-relaxed text-muted-foreground">
+                      {profile.bio}
+                    </p>
+                  </>
+                )}
+
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                  {isEditing ? (
+                    <>
+                      <Button onClick={handleSave}>Save changes</Button>
+                      <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button onClick={handleEdit} variant="outline">
+                        <Edit3 className="h-4 w-4" />
+                        Edit profile
+                      </Button>
+                      <Button variant="secondary" onClick={() => navigate('/myblogs')}>
+                        <FileText className="h-4 w-4" />
+                        My blogs
+                      </Button>
+                      <Button onClick={() => navigate('/write')}>
+                        <Plus className="h-4 w-4" />
+                        Write new
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </motion.div>
             </div>
-          </div>
-        </div>
+          </section>
+
+          <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+            <div className="mb-8 grid gap-4 sm:grid-cols-2">
+              <Card className="border-border/70 shadow-sm">
+                <CardContent className="flex items-center gap-4 p-6">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                    <Heart className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-semibold text-foreground">{profile.totalLikes}</p>
+                    <p className="text-sm text-muted-foreground">Total likes received</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-border/70 shadow-sm">
+                <CardContent className="flex items-center gap-4 p-6">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-semibold text-foreground">{profile.totalPublishedBlogs}</p>
+                    <p className="text-sm text-muted-foreground">Published blogs</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <CardTitle className="text-lg">Favorite topics</CardTitle>
+                  {isEditing && (
+                    <Button variant="ghost" size="icon" onClick={handleAddTopic}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {(isEditing ? editForm.favoriteTopics : profile.favoriteTopics).map((topic, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-foreground"
+                      >
+                        {topic}
+                        {isEditing && (
+                          <button
+                            onClick={() => handleRemoveTopic(index)}
+                            className="text-muted-foreground transition-colors hover:text-foreground"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/70 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Social profiles</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {socialPlatforms.map((platform) => {
+                    const Icon = platform.icon;
+                    const hasLink = profile.socialLinks[platform.name];
+
+                    return (
+                      <div
+                        key={platform.name}
+                        className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/20 px-4 py-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-background text-muted-foreground shadow-sm">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">{platform.label}</span>
+                        </div>
+
+                        {hasLink ? (
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={formatSocialUrl(hasLink)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              Visit
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                            <button
+                              onClick={() => handleSocialRemove(platform.name)}
+                              className="text-sm text-destructive transition-colors hover:opacity-80"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : (
+                          <Button variant="ghost" size="sm" onClick={() => openSocialModal(platform.name)}>
+                            Connect
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        </main>
       )}
+
+      <SiteFooter />
 
       {/* Social Media Modal */}
       {showSocialModal && (

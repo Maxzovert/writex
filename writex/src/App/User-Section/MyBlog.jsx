@@ -1,50 +1,280 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../Components/Navbar";
+import { SiteFooter } from "../../components/layout/SiteFooter";
+import { Card, CardContent } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
 import axiosInstance from "../../lib/axiosConfig";
 import { getSafeImageUrl } from "../../lib/image-url";
 import { toast } from "react-toastify";
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from "framer-motion";
 import Logo from "../../assets/logo.png";
 import {
-  Edit3, 
-  Trash2, 
-  Eye, 
-  EyeOff, 
-  Calendar, 
-  Tag, 
+  Edit3,
+  Trash2,
+  Eye,
+  EyeOff,
+  Calendar,
+  Tag,
   MoreVertical,
   PenTool,
   TrendingUp,
   Clock,
   ArrowRight,
-  Plus
-} from 'lucide-react';
+  Plus,
+  Search,
+  Sparkles,
+  FileText,
+  BarChart3,
+} from "lucide-react";
+
+const STATUS_STYLES = {
+  published: {
+    badge:
+      "bg-emerald-500/15 text-emerald-700 border-emerald-500/25 dark:text-emerald-300",
+    dot: "bg-emerald-500",
+  },
+  draft: {
+    badge: "bg-amber-500/15 text-amber-700 border-amber-500/25 dark:text-amber-300",
+    dot: "bg-amber-500",
+  },
+  archived: {
+    badge: "bg-muted text-muted-foreground border-border",
+    dot: "bg-muted-foreground",
+  },
+};
+
+function StatCard({ icon: Icon, label, value, accent }) {
+  return (
+    <Card className="overflow-hidden border-border/60 bg-card/80 shadow-sm backdrop-blur-sm">
+      <CardContent className="flex items-center gap-4 p-5">
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${accent}`}
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-2xl font-bold tracking-tight text-foreground">
+            {value}
+          </p>
+          <p className="text-sm text-muted-foreground">{label}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function BlogCard({
+  blog,
+  index,
+  isMenuOpen,
+  onToggleMenu,
+  onEdit,
+  onToggleStatus,
+  onDelete,
+  onRead,
+  operationLoading,
+  formatDate,
+  firstUpperCase,
+}) {
+  const safeMainImage = getSafeImageUrl(blog.mainImage);
+  const statusStyle =
+    STATUS_STYLES[blog.status] || STATUS_STYLES.archived;
+  const excerpt =
+    typeof blog.content === "string"
+      ? blog.content
+      : blog.description || "No description yet.";
+
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.05 }}
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-border hover:shadow-md"
+    >
+      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+        {safeMainImage ? (
+          <img
+            src={safeMainImage}
+            alt={blog.title || "Blog cover"}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+            <img src={Logo} alt="" className="h-14 w-14 opacity-40" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+        <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium backdrop-blur-md ${statusStyle.badge}`}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${statusStyle.dot}`} />
+            {firstUpperCase(blog.status)}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-black/30 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-md">
+            <Tag className="h-3 w-3" />
+            {firstUpperCase(blog.category || "general")}
+          </span>
+        </div>
+
+        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2">
+          <div className="flex items-center gap-3 text-xs text-white/90">
+            <span className="inline-flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {formatDate(blog.createdAt)}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Eye className="h-3 w-3" />
+              {blog.viewCount || 0}
+            </span>
+          </div>
+
+          <div className="relative">
+            <Button
+              type="button"
+              size="icon"
+              variant="secondary"
+              className="h-8 w-8 rounded-full bg-white/90 text-foreground shadow-sm hover:bg-white"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleMenu(blog._id);
+              }}
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+
+            <AnimatePresence>
+              {isMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute bottom-full right-0 z-20 mb-2 min-w-[168px] overflow-hidden rounded-xl border border-border bg-popover py-1 shadow-lg"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => onEdit(blog)}
+                    disabled={operationLoading}
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onToggleStatus(blog)}
+                    disabled={operationLoading}
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                  >
+                    {blog.status === "published" ? (
+                      <>
+                        <EyeOff className="h-4 w-4" />
+                        Unpublish
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-4 w-4" />
+                        Publish
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(blog._id)}
+                    disabled={operationLoading}
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="mb-2 line-clamp-2 text-lg font-semibold leading-snug text-foreground transition-colors group-hover:text-foreground/80">
+          {blog.title || "Untitled blog"}
+        </h3>
+        <p className="mb-5 line-clamp-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+          {excerpt}
+        </p>
+
+        <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/60 pt-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 px-0 text-foreground hover:bg-transparent hover:text-foreground/70"
+            onClick={() => onRead(blog._id)}
+          >
+            Open post
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Button>
+
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => onEdit(blog)}
+              disabled={operationLoading}
+              title="Edit"
+            >
+              <Edit3 className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => onToggleStatus(blog)}
+              disabled={operationLoading}
+              title={blog.status === "published" ? "Unpublish" : "Publish"}
+            >
+              {blog.status === "published" ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </motion.article>
+  );
+}
 
 const MyBlog = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showActions, setShowActions] = useState({});
+  const [openMenuId, setOpenMenuId] = useState(null);
   const [operationLoading, setOperationLoading] = useState({});
   const [deleteTargetBlogId, setDeleteTargetBlogId] = useState(null);
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const hasFetched = useRef(false);
   const navigate = useNavigate();
-  const actionsRef = useRef(null);
 
-  // Close actions menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (actionsRef.current && !actionsRef.current.contains(event.target)) {
-        setShowActions({});
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    const handleClickOutside = () => setOpenMenuId(null);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleFetchUserBlogs = async () => {
@@ -55,8 +285,7 @@ const MyBlog = () => {
       setLoading(true);
       const fetchData = await axiosInstance.get(`/blog/myblogs/`);
       setData(fetchData.data.blogs);
-      toast.success("Blogs fetched successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch blogs");
     } finally {
       setLoading(false);
@@ -74,562 +303,407 @@ const MyBlog = () => {
 
   const firstUpperCase = (str) => {
     if (!str) return "Unknown";
-    const capName = str.charAt(0).toUpperCase() + str.slice(1);
-    return capName;
+    return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
   const handleEditBlog = (blog) => {
+    setOpenMenuId(null);
     navigate(`/write`, { state: { editBlog: blog } });
   };
 
   const handleDeleteBlog = async (blogId) => {
     try {
-      setOperationLoading(prev => ({ ...prev, [blogId]: true }));
-      
-      const response = await axiosInstance.delete(`/blog/deleteblog/${blogId}`);
-      
+      setOperationLoading((prev) => ({ ...prev, [blogId]: true }));
+
+      const response = await axiosInstance.delete(
+        `/blog/deleteblog/${blogId}`
+      );
+
       if (response.status === 200) {
-        setData(prevData => {
-          const newData = prevData.filter(blog => blog._id !== blogId);
-          return newData;
-        });
+        setData((prevData) => prevData.filter((blog) => blog._id !== blogId));
         toast.success("Blog deleted successfully");
       } else {
         throw new Error(`Unexpected response status: ${response.status}`);
       }
     } catch (error) {
-      if (error.response) {
-        if (error.response.status === 401) {
-          toast.error("Authentication failed. Please log in again.");
-        } else if (error.response.status === 403) {
-          toast.error("You don't have permission to delete this blog.");
-        } else if (error.response.status === 404) {
-          toast.error("Blog not found. It may have already been deleted.");
-        } else {
-          toast.error(`Failed to delete blog: ${error.response.data?.message || error.response.statusText}`);
-        }
-      } else if (error.request) {
-        toast.error("Network error: Please check your internet connection");
+      if (error.response?.status === 401) {
+        toast.error("Authentication failed. Please log in again.");
+      } else if (error.response?.status === 403) {
+        toast.error("You don't have permission to delete this blog.");
+      } else if (error.response?.status === 404) {
+        toast.error("Blog not found. It may have already been deleted.");
       } else {
-        toast.error(`Failed to delete blog: ${error.message}`);
+        toast.error("Failed to delete blog");
       }
     } finally {
-      setOperationLoading(prev => ({ ...prev, [blogId]: false }));
+      setOperationLoading((prev) => ({ ...prev, [blogId]: false }));
       setDeleteTargetBlogId(null);
     }
   };
 
   const handleToggleStatus = async (blog) => {
     try {
-      setOperationLoading(prev => ({ ...prev, [blog._id]: true }));
-      const newStatus = blog.status === 'published' ? 'draft' : 'published';
-      
-      const response = await axiosInstance.put(`/blog/updateblog/${blog._id}`, {
-        title: blog.title,
-        content: blog.content,
-        category: blog.category,
-        status: newStatus,
-        mainImage: blog.mainImage,
-        description: blog.description
-      });
-      
+      setOperationLoading((prev) => ({ ...prev, [blog._id]: true }));
+      setOpenMenuId(null);
+      const newStatus = blog.status === "published" ? "draft" : "published";
+
+      const response = await axiosInstance.put(
+        `/blog/updateblog/${blog._id}`,
+        {
+          title: blog.title,
+          content: blog.content,
+          category: blog.category,
+          status: newStatus,
+          mainImage: blog.mainImage,
+          description: blog.description,
+        }
+      );
+
       if (response.data) {
-        setData(prevData => 
-          prevData.map(b => 
+        setData((prevData) =>
+          prevData.map((b) =>
             b._id === blog._id ? { ...b, status: newStatus } : b
           )
         );
-        
-        toast.success(`Blog ${newStatus === 'published' ? 'published' : 'unpublished'} successfully`);
+        toast.success(
+          `Blog ${newStatus === "published" ? "published" : "unpublished"} successfully`
+        );
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to update blog status");
     } finally {
-      setOperationLoading(prev => ({ ...prev, [blog._id]: false }));
-    }
-  };
-
-  const toggleActions = (blogId) => {
-    setShowActions(prev => ({
-      ...prev,
-      [blogId]: !prev[blogId]
-    }));
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'published':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'draft':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'archived':
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-600';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-zinc-800 dark:text-gray-200 dark:border-zinc-600';
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'published':
-        return <Eye className="w-4 h-4" />;
-      case 'draft':
-        return <EyeOff className="w-4 h-4" />;
-      case 'archived':
-        return <Clock className="w-4 h-4" />;
-      default:
-        return <Clock className="w-4 h-4" />;
+      setOperationLoading((prev) => ({ ...prev, [blog._id]: false }));
     }
   };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
-  const filteredBlogs = data.filter(blog => {
-    const matchesStatus = statusFilter === 'all' || blog.status === statusFilter;
-    const matchesSearch = searchQuery === '' || 
+  const filteredBlogs = data.filter((blog) => {
+    const matchesStatus =
+      statusFilter === "all" || blog.status === statusFilter;
+    const matchesSearch =
+      searchQuery === "" ||
       blog.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (typeof blog.content === "string" && blog.content.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+      blog.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (typeof blog.content === "string" &&
+        blog.content.toLowerCase().includes(searchQuery.toLowerCase()));
+
     return matchesStatus && matchesSearch;
   });
 
+  const publishedCount = data.filter((b) => b.status === "published").length;
+  const draftCount = data.filter((b) => b.status === "draft").length;
+  const totalViews = data.reduce(
+    (total, blog) => total + (blog.viewCount || 0),
+    0
+  );
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-foreground">
+      <div className="flex min-h-screen flex-col bg-background text-foreground">
         <Navbar />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-gray-100 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading your blogs...</p>
+        <div className="flex flex-1 items-center justify-center px-4">
+          <div className="w-full max-w-md space-y-4 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+              <PenTool className="h-6 w-6 animate-pulse text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground">Loading your blogs...</p>
+            <div className="grid grid-cols-3 gap-3">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-24 animate-pulse rounded-2xl bg-muted/70"
+                />
+              ))}
+            </div>
           </div>
         </div>
+        <SiteFooter />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-foreground">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
-      
-      {/* Hero Section */}
-      <section className="relative w-full pt-16 pb-20 px-4 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
-          >
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-gray-50 lexend-txt mb-6">
-              My <span className="text-gray-700 dark:text-gray-300">Blogs</span>
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto oxygen-regular">
-              Manage and organize your published content. Edit, unpublish, or delete your blogs as needed.
-            </p>
-          </motion.div>
 
-          {/* Stats Section */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16"
-          >
-            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-gray-200 dark:border-zinc-700 text-center">
-              <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <PenTool className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">{data.length}</div>
-              <div className="text-gray-600 dark:text-gray-400">Total Blogs</div>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-gray-200 dark:border-zinc-700 text-center">
-              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Eye className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">
-                {data.filter(blog => blog.status === 'published').length}
-              </div>
-              <div className="text-gray-600 dark:text-gray-400">Published</div>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-gray-200 dark:border-zinc-700 text-center">
-              <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <EyeOff className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">
-                {data.filter(blog => blog.status === 'draft').length}
-              </div>
-              <div className="text-gray-600 dark:text-gray-400">Drafts</div>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-gray-200 dark:border-zinc-700 text-center">
-              <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">
-                {data.reduce((total, blog) => total + (blog.viewCount || 0), 0)}
-              </div>
-              <div className="text-gray-600 dark:text-gray-400">Total Views</div>
-            </div>
-          </motion.div>
+      <main className="flex-1">
+        {/* Header */}
+        <section className="relative overflow-hidden border-b border-border">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
+          <div className="pointer-events-none absolute -left-24 top-8 h-48 w-48 rounded-full bg-muted/60 blur-3xl" />
 
-          {/* Action Buttons */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-16"
-          >
-            <button
-              onClick={() => navigate("/write")}
-              className="inline-flex items-center gap-3 bg-gray-900 dark:bg-primary text-white dark:text-primary-foreground px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-800 dark:hover:bg-primary/90 transition-all duration-300 hover:scale-105 shadow-lg"
-            >
-              <Plus className="w-5 h-5" />
-              Write New Blog
-            </button>
-            <button
-              onClick={refreshBlogs}
-              disabled={loading}
-              className="inline-flex items-center gap-3 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-50 px-6 py-4 rounded-full font-semibold text-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all duration-300 border-2 border-gray-200 dark:border-zinc-600 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              )}
-              Refresh
-            </button>
-          </motion.div>
-
-          {/* Filter Controls */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8"
-          >
-            {/* Search Input */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search blogs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-200 dark:border-zinc-600 rounded-full bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-300 focus:border-transparent w-64"
-              />
-              <svg className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-
-            {/* Status Filter */}
-            <div className="flex bg-white dark:bg-zinc-900 rounded-full border border-gray-200 dark:border-zinc-600 p-1 shadow-sm">
-              {['all', 'published', 'draft'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setStatusFilter(status)}
-                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                    statusFilter === status
-                      ? 'bg-gray-900 dark:bg-primary text-white dark:text-primary-foreground shadow-md'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {status === 'all' ? 'All Blogs' : firstUpperCase(status)}
-                  {status !== 'all' && (
-                    <span className="ml-2 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 px-2 py-0.5 rounded-full text-xs">
-                      {data.filter(blog => blog.status === status).length}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Blogs Section */}
-      <section className="py-20 px-4 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          {data.length === 0 ? (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center py-20"
-            >
-              <div className="w-24 h-24 bg-gray-200 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                <PenTool className="w-12 h-12 text-gray-400 dark:text-gray-500" />
-              </div>
-              <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-4">No blogs yet</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                Start your writing journey by creating your first blog post. Share your thoughts, experiences, and knowledge with the world.
-              </p>
-              <button
-                onClick={() => navigate("/write")}
-                className="inline-flex items-center gap-2 bg-gray-900 dark:bg-primary text-white dark:text-primary-foreground px-6 py-3 rounded-full font-medium hover:bg-gray-800 dark:hover:bg-primary/90 transition-colors"
+          <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
               >
-                <Plus className="w-4 h-4" />
-                Write Your First Blog
-              </button>
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-sm">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Writing dashboard
+                </div>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+                  My Blogs
+                </h1>
+                <p className="mt-3 max-w-xl text-base text-muted-foreground sm:text-lg">
+                  Draft, publish, and track every post from one place.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="flex flex-wrap gap-3"
+              >
+                <Button
+                  size="lg"
+                  className="rounded-full px-6 shadow-sm"
+                  onClick={() => navigate("/write")}
+                >
+                  <Plus className="h-4 w-4" />
+                  New blog
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="rounded-full px-6"
+                  onClick={refreshBlogs}
+                >
+                  Refresh
+                </Button>
+              </motion.div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+              className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            >
+              <StatCard
+                icon={FileText}
+                label="Total posts"
+                value={data.length}
+                accent="bg-foreground text-background"
+              />
+              <StatCard
+                icon={Eye}
+                label="Published"
+                value={publishedCount}
+                accent="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+              />
+              <StatCard
+                icon={Clock}
+                label="Drafts"
+                value={draftCount}
+                accent="bg-amber-500/15 text-amber-600 dark:text-amber-400"
+              />
+              <StatCard
+                icon={BarChart3}
+                label="Total views"
+                value={totalViews}
+                accent="bg-blue-500/15 text-blue-600 dark:text-blue-400"
+              />
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Content */}
+        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+          {data.length > 0 && (
+            <Card className="mb-8 border-border/70 bg-card/60 shadow-sm backdrop-blur-sm">
+              <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                <div className="relative w-full sm:max-w-sm">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search by title or description..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="rounded-full border-border/70 bg-background pl-10"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {[
+                    { key: "all", label: "All", count: data.length },
+                    { key: "published", label: "Published", count: publishedCount },
+                    { key: "draft", label: "Drafts", count: draftCount },
+                  ].map(({ key, label, count }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setStatusFilter(key)}
+                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                        statusFilter === key
+                          ? "bg-foreground text-background shadow-sm"
+                          : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      {label}
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-xs ${
+                          statusFilter === key
+                            ? "bg-background/20 text-background"
+                            : "bg-background text-muted-foreground"
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {data.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-auto max-w-lg rounded-3xl border border-dashed border-border bg-card/50 px-8 py-16 text-center"
+            >
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-muted">
+                <PenTool className="h-9 w-9 text-muted-foreground" />
+              </div>
+              <h3 className="text-2xl font-semibold text-foreground">
+                Your first post is waiting
+              </h3>
+              <p className="mt-3 text-muted-foreground">
+                Start writing and build your personal library of ideas, stories,
+                and guides.
+              </p>
+              <Button
+                size="lg"
+                className="mt-8 rounded-full px-8"
+                onClick={() => navigate("/write")}
+              >
+                <Plus className="h-4 w-4" />
+                Create your first blog
+              </Button>
             </motion.div>
           ) : filteredBlogs.length === 0 ? (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center py-20"
+              className="mx-auto max-w-lg rounded-3xl border border-border bg-card px-8 py-14 text-center"
             >
-              <div className="w-24 h-24 bg-gray-200 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                <EyeOff className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                <Search className="h-7 w-7 text-muted-foreground" />
               </div>
-              <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-4">No blogs found</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                {searchQuery ? 'No blogs match your search query.' : 'No blogs match your current filter.'} Try changing the filter or create a new blog post.
+              <h3 className="text-xl font-semibold text-foreground">
+                No matches found
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {searchQuery
+                  ? `Nothing matched "${searchQuery}".`
+                  : "Try a different filter or create something new."}
               </p>
-              <div className="flex gap-4 justify-center">
-                <button
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <Button
+                  variant="outline"
+                  className="rounded-full"
                   onClick={() => {
-                    setStatusFilter('all');
-                    setSearchQuery('');
+                    setStatusFilter("all");
+                    setSearchQuery("");
                   }}
-                  className="inline-flex items-center gap-2 bg-gray-900 dark:bg-primary text-white dark:text-primary-foreground px-6 py-3 rounded-full font-medium hover:bg-gray-800 dark:hover:bg-primary/90 transition-colors"
                 >
-                  Show All Blogs
-                </button>
-                <button
+                  Clear filters
+                </Button>
+                <Button
+                  className="rounded-full"
                   onClick={() => navigate("/write")}
-                  className="inline-flex items-center gap-2 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-50 px-6 py-3 rounded-full font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors border-2 border-gray-200 dark:border-zinc-600"
                 >
-                  <Plus className="w-4 h-4" />
-                  Write New Blog
-                </button>
+                  <Plus className="h-4 w-4" />
+                  New blog
+                </Button>
               </div>
             </motion.div>
           ) : (
             <>
-              {/* Results Counter */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-center mb-8"
-              >
-                <p className="text-gray-600 dark:text-gray-400">
-                  Showing {filteredBlogs.length} of {data.length} blogs
-                  {searchQuery && ` matching "${searchQuery}"`}
-                  {statusFilter !== 'all' && ` (${firstUpperCase(statusFilter)} only)`}
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Showing{" "}
+                  <span className="font-medium text-foreground">
+                    {filteredBlogs.length}
+                  </span>{" "}
+                  of {data.length} posts
                 </p>
-              </motion.div>
+                {publishedCount > 0 && (
+                  <p className="hidden items-center gap-1.5 text-sm text-muted-foreground sm:flex">
+                    <TrendingUp className="h-4 w-4 text-emerald-500" />
+                    {totalViews} total views across your library
+                  </p>
+                )}
+              </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-                {filteredBlogs.map((blog, index) => {
-                  const safeMainImage = getSafeImageUrl(blog.mainImage);
-                  return (
-                  <motion.div
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {filteredBlogs.map((blog, index) => (
+                  <BlogCard
                     key={blog._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                    className="bg-white dark:bg-zinc-900 rounded-3xl border border-gray-200 dark:border-zinc-700 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group"
-                  >
-                    {/* Image */}
-                    <div className="relative h-48 overflow-hidden">
-                      {safeMainImage ? (
-                        <img
-                          src={safeMainImage}
-                          alt={blog.title || "Blog Image"}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-700 flex items-center justify-center">
-                          <img src={Logo} alt="" />
-                        </div>
-                      )}
-                      
-                      {/* Status Badge */}
-                      <div className="absolute top-3 left-3">
-                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(blog.status)}`}>
-                          {getStatusIcon(blog.status)}
-                          {firstUpperCase(blog.status)}
-                        </span>
-                      </div>
-
-                      {/* Actions Menu */}
-                      <div className="absolute top-3 right-3">
-                        <div className="relative" ref={actionsRef}>
-                          <button
-                            onClick={() => toggleActions(blog._id)}
-                            className="p-2 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm rounded-full hover:bg-white dark:hover:bg-zinc-800 transition-colors"
-                          >
-                            <MoreVertical className="w-4 h-4 text-gray-700 dark:text-gray-300" />
-                          </button>
-                          
-                          {showActions[blog._id] && (
-                            <div className="absolute right-0 top-12 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-200 dark:border-zinc-700 py-2 min-w-[160px] z-10">
-                              <button
-                                onClick={() => handleEditBlog(blog)}
-                                disabled={operationLoading[blog._id]}
-                                className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-800 flex items-center gap-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                {operationLoading[blog._id] ? (
-                                  <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                                ) : (
-                                  <Edit3 className="w-4 h-4" />
-                                )}
-                                Edit Blog
-                              </button>
-                              <button
-                                onClick={() => handleToggleStatus(blog)}
-                                disabled={operationLoading[blog._id]}
-                                className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-800 flex items-center gap-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                {operationLoading[blog._id] ? (
-                                  <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                                ) : blog.status === 'published' ? (
-                                  <>
-                                    <EyeOff className="w-4 h-4" />
-                                    Unpublish
-                                  </>
-                                ) : (
-                                  <>
-                                    <Eye className="w-4 h-4" />
-                                    Publish
-                                  </>
-                                )}
-                              </button>
-                              <button
-                                onClick={() => setDeleteTargetBlogId(blog._id)}
-                                disabled={operationLoading[blog._id]}
-                                className="w-full px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 flex items-center gap-3 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                {operationLoading[blog._id] ? (
-                                  <div className="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin"></div>
-                                ) : (
-                                  <Trash2 className="w-4 h-4" />
-                                )}
-                                Delete Blog
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-6">
-                      {/* Meta Info */}
-                      <div className="flex items-center gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {formatDate(blog.createdAt)}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Tag className="w-3 h-3" />
-                          {firstUpperCase(blog.category || 'general')}
-                        </div>
-                        {blog.viewCount > 0 && (
-                          <div className="flex items-center gap-1">
-                            <Eye className="w-3 h-3" />
-                            {blog.viewCount}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Title */}
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-3 line-clamp-2 lexend-txt group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
-                        {blog.title}
-                      </h3>
-
-                      {/* Excerpt */}
-                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 oxygen-regular">
-                        {typeof blog.content === "string"
-                          ? blog.content
-                          : blog.description}
-                      </p>
-
-                      {/* Action Buttons */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-zinc-800">
-                        <button
-                          onClick={() => navigate(`/blog/${blog._id}`)}
-                          className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium text-sm transition-colors group-hover:gap-3"
-                        >
-                          Read Full Blog
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
-                        
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleEditBlog(blog)}
-                            disabled={operationLoading[blog._id]}
-                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Edit Blog"
-                          >
-                            {operationLoading[blog._id] ? (
-                              <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                            ) : (
-                              <Edit3 className="w-4 h-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => handleToggleStatus(blog)}
-                            disabled={operationLoading[blog._id]}
-                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={blog.status === 'published' ? 'Unpublish Blog' : 'Publish Blog'}
-                          >
-                            {operationLoading[blog._id] ? (
-                              <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-                            ) : blog.status === 'published' ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )})}
+                    blog={blog}
+                    index={index}
+                    isMenuOpen={openMenuId === blog._id}
+                    onToggleMenu={(id) =>
+                      setOpenMenuId((prev) => (prev === id ? null : id))
+                    }
+                    onEdit={handleEditBlog}
+                    onToggleStatus={handleToggleStatus}
+                    onDelete={setDeleteTargetBlogId}
+                    onRead={(id) => navigate(`/blog/${id}`)}
+                    operationLoading={operationLoading[blog._id]}
+                    formatDate={formatDate}
+                    firstUpperCase={firstUpperCase}
+                  />
+                ))}
               </div>
             </>
           )}
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {deleteTargetBlogId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-2">
-              Delete this blog?
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              This action cannot be undone. Your blog post will be permanently removed.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteTargetBlogId(null)}
-                disabled={operationLoading[deleteTargetBlogId]}
-                className="px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDeleteBlog(deleteTargetBlogId)}
-                disabled={operationLoading[deleteTargetBlogId]}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
-              >
-                {operationLoading[deleteTargetBlogId] ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        open={Boolean(deleteTargetBlogId)}
+        onOpenChange={(open) => !open && setDeleteTargetBlogId(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete this blog?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. The post will be permanently removed
+              from your library.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTargetBlogId(null)}
+              disabled={operationLoading[deleteTargetBlogId]}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => handleDeleteBlog(deleteTargetBlogId)}
+              disabled={operationLoading[deleteTargetBlogId]}
+            >
+              {operationLoading[deleteTargetBlogId] ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <SiteFooter />
     </div>
   );
 };

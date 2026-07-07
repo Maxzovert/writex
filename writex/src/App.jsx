@@ -109,11 +109,7 @@ const App = () => {
         />
         <Route
           path="/about"
-          element={
-            <PrivateRoute>
-              <About />
-            </PrivateRoute>
-          }
+          element={<About />}
         />
         <Route
           path="/community"

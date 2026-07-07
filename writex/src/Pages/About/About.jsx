@@ -15,6 +15,7 @@ import {
   CheckCircle
 } from 'lucide-react'
 import Navbar from "../../App/Components/Navbar"
+import { SiteFooter } from "../../components/layout/SiteFooter"
 import { useNavigate } from "react-router-dom"
 
 const About = () => {
@@ -89,9 +90,10 @@ const About = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
       
+      <main className="flex-1">
       {/* Hero Section */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -365,24 +367,9 @@ const About = () => {
           </motion.button>
         </div>
       </motion.section>
+      </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="p-3 bg-gray-600 rounded-full">
-              <PenTool className="w-8 h-8 text-white" />
-            </div>
-            <span className="text-3xl font-bold lexend-txt">Writex</span>
-          </div>
-          <p className="text-gray-300 mb-8 text-lg oxygen-regular">
-            Empowering writers to share their stories with the world.
-          </p>
-          <div className="text-sm text-gray-500 dark:text-gray-400 oxygen-regular">
-            © 2024 Writex. All rights reserved. Made with ❤️ for the writing community.
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }
