@@ -1,4 +1,4 @@
-@import "./code-highlight.scss";
+@use "./code-highlight.scss";
 
 .tiptap.ProseMirror {
   --tt-inline-code-bg-color: var(--tt-gray-light-a-100);
