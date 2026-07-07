@@ -5,6 +5,8 @@ import { toast } from "react-toastify";
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit"
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight"
+import { lowlight } from "@/lib/lowlight"
 import { Image } from "@tiptap/extension-image"
 import { TaskItem } from "@tiptap/extension-task-item"
 import { TaskList } from "@tiptap/extension-task-list"
@@ -49,6 +51,7 @@ import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
 import { TableDropdownMenu } from "@/components/tiptap-ui/table-dropdown-menu/table-dropdown-menu"
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
+import { CodeBlockLanguageSelect } from "@/components/tiptap-ui/code-block-language-select"
 import {
   ColorHighlightPopover,
   ColorHighlightPopoverContent,
@@ -116,6 +119,7 @@ const MainToolbarContent = ({
         <TableDropdownMenu />
         <BlockquoteButton />
         <CodeBlockButton />
+        <CodeBlockLanguageSelect />
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -233,7 +237,12 @@ export function SimpleEditor({
       },
     },
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        codeBlock: false,
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+      }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Underline,
       TaskList,

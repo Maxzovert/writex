@@ -25,6 +25,7 @@ import {
   Minimize2,
 } from 'lucide-react';
 import { useFocusMode } from '@/hooks/use-focus-mode';
+import { HighlightedCodeBlock } from '@/components/HighlightedCodeBlock';
 
 /** Renders TipTap `text` nodes (with marks) for paragraphs, table cells, etc. */
 function renderTextRuns(nodes, keyPrefix = 't') {
@@ -689,21 +690,19 @@ const BlogPage = () => {
               </div>
             );
           
-          case 'codeBlock':
+          case 'codeBlock': {
+            const codeText = (node.content || [])
+              .filter((textNode) => textNode.type === 'text')
+              .map((textNode) => textNode.text)
+              .join('');
             return (
-              <div key={index} className="my-4">
-                <pre className="bg-gray-100 dark:bg-zinc-900 p-4 rounded overflow-x-auto border border-zinc-200 dark:border-zinc-700">
-                  <code className="text-sm text-gray-800 dark:text-zinc-200 font-mono">
-                    {node.content && node.content.map((textNode, textIndex) => {
-                      if (textNode.type === 'text') {
-                        return textNode.text;
-                      }
-                      return null;
-                    })}
-                  </code>
-                </pre>
-              </div>
+              <HighlightedCodeBlock
+                key={index}
+                code={codeText}
+                language={node.attrs?.language}
+              />
             );
+          }
 
           case 'table': {
             const rows = node.content || [];

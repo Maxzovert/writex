@@ -1,0 +1,199 @@
+/* VS Code–inspired syntax highlighting for TipTap code blocks */
+
+.tiptap.ProseMirror pre code span[class*="hljs-"],
+.writex-code-block pre code span[class*="hljs-"] {
+  -webkit-text-fill-color: currentcolor;
+}
+
+.tiptap.ProseMirror pre code .hljs-comment,
+.tiptap.ProseMirror pre code .hljs-quote,
+.writex-code-block pre code .hljs-comment,
+.writex-code-block pre code .hljs-quote {
+  color: #6a9955 !important;
+  font-style: italic;
+}
+
+.tiptap.ProseMirror pre code .hljs-keyword,
+.tiptap.ProseMirror pre code .hljs-selector-tag,
+.tiptap.ProseMirror pre code .hljs-literal,
+.tiptap.ProseMirror pre code .hljs-section,
+.tiptap.ProseMirror pre code .hljs-link,
+.writex-code-block pre code .hljs-keyword,
+.writex-code-block pre code .hljs-selector-tag,
+.writex-code-block pre code .hljs-literal,
+.writex-code-block pre code .hljs-section,
+.writex-code-block pre code .hljs-link {
+  color: #0000ff !important;
+}
+
+.tiptap.ProseMirror pre code .hljs-string,
+.tiptap.ProseMirror pre code .hljs-title,
+.tiptap.ProseMirror pre code .hljs-name,
+.tiptap.ProseMirror pre code .hljs-type,
+.tiptap.ProseMirror pre code .hljs-attribute,
+.tiptap.ProseMirror pre code .hljs-symbol,
+.tiptap.ProseMirror pre code .hljs-bullet,
+.tiptap.ProseMirror pre code .hljs-addition,
+.tiptap.ProseMirror pre code .hljs-template-tag,
+.tiptap.ProseMirror pre code .hljs-template-variable,
+.writex-code-block pre code .hljs-string,
+.writex-code-block pre code .hljs-title,
+.writex-code-block pre code .hljs-name,
+.writex-code-block pre code .hljs-type,
+.writex-code-block pre code .hljs-attribute,
+.writex-code-block pre code .hljs-symbol,
+.writex-code-block pre code .hljs-bullet,
+.writex-code-block pre code .hljs-addition,
+.writex-code-block pre code .hljs-template-tag,
+.writex-code-block pre code .hljs-template-variable {
+  color: #a31515 !important;
+}
+
+.tiptap.ProseMirror pre code .hljs-number,
+.tiptap.ProseMirror pre code .hljs-regexp,
+.tiptap.ProseMirror pre code .hljs-meta,
+.writex-code-block pre code .hljs-number,
+.writex-code-block pre code .hljs-regexp,
+.writex-code-block pre code .hljs-meta {
+  color: #098658 !important;
+}
+
+.tiptap.ProseMirror pre code .hljs-built_in,
+.tiptap.ProseMirror pre code .hljs-class .hljs-title,
+.tiptap.ProseMirror pre code .hljs-title.class_,
+.writex-code-block pre code .hljs-built_in,
+.writex-code-block pre code .hljs-class .hljs-title,
+.writex-code-block pre code .hljs-title.class_ {
+  color: #267f99 !important;
+}
+
+.tiptap.ProseMirror pre code .hljs-function .hljs-title,
+.tiptap.ProseMirror pre code .hljs-title.function_,
+.writex-code-block pre code .hljs-function .hljs-title,
+.writex-code-block pre code .hljs-title.function_ {
+  color: #795e26 !important;
+}
+
+.tiptap.ProseMirror pre code .hljs-variable,
+.tiptap.ProseMirror pre code .hljs-params,
+.tiptap.ProseMirror pre code .hljs-attr,
+.writex-code-block pre code .hljs-variable,
+.writex-code-block pre code .hljs-params,
+.writex-code-block pre code .hljs-attr {
+  color: #001080 !important;
+}
+
+.tiptap.ProseMirror pre code .hljs-tag,
+.tiptap.ProseMirror pre code .hljs-selector-id,
+.tiptap.ProseMirror pre code .hljs-selector-class,
+.writex-code-block pre code .hljs-tag,
+.writex-code-block pre code .hljs-selector-id,
+.writex-code-block pre code .hljs-selector-class {
+  color: #800000 !important;
+}
+
+.tiptap.ProseMirror pre code .hljs-deletion,
+.writex-code-block pre code .hljs-deletion {
+  color: #a31515 !important;
+}
+
+.tiptap.ProseMirror pre code .hljs-property,
+.writex-code-block pre code .hljs-property {
+  color: #795e26 !important;
+}
+
+.dark .tiptap.ProseMirror pre code .hljs-comment,
+.dark .tiptap.ProseMirror pre code .hljs-quote,
+.dark .writex-code-block pre code .hljs-comment,
+.dark .writex-code-block pre code .hljs-quote {
+  color: #6a9955 !important;
+}
+
+.dark .tiptap.ProseMirror pre code .hljs-keyword,
+.dark .tiptap.ProseMirror pre code .hljs-selector-tag,
+.dark .tiptap.ProseMirror pre code .hljs-literal,
+.dark .tiptap.ProseMirror pre code .hljs-section,
+.dark .tiptap.ProseMirror pre code .hljs-link,
+.dark .writex-code-block pre code .hljs-keyword,
+.dark .writex-code-block pre code .hljs-selector-tag,
+.dark .writex-code-block pre code .hljs-literal,
+.dark .writex-code-block pre code .hljs-section,
+.dark .writex-code-block pre code .hljs-link {
+  color: #569cd6 !important;
+}
+
+.dark .tiptap.ProseMirror pre code .hljs-string,
+.dark .tiptap.ProseMirror pre code .hljs-addition,
+.dark .tiptap.ProseMirror pre code .hljs-template-tag,
+.dark .tiptap.ProseMirror pre code .hljs-template-variable,
+.dark .writex-code-block pre code .hljs-string,
+.dark .writex-code-block pre code .hljs-addition,
+.dark .writex-code-block pre code .hljs-template-tag,
+.dark .writex-code-block pre code .hljs-template-variable {
+  color: #ce9178 !important;
+}
+
+.dark .tiptap.ProseMirror pre code .hljs-number,
+.dark .tiptap.ProseMirror pre code .hljs-regexp,
+.dark .tiptap.ProseMirror pre code .hljs-meta,
+.dark .writex-code-block pre code .hljs-number,
+.dark .writex-code-block pre code .hljs-regexp,
+.dark .writex-code-block pre code .hljs-meta {
+  color: #b5cea8 !important;
+}
+
+.dark .tiptap.ProseMirror pre code .hljs-built_in,
+.dark .tiptap.ProseMirror pre code .hljs-class .hljs-title,
+.dark .tiptap.ProseMirror pre code .hljs-title.class_,
+.dark .writex-code-block pre code .hljs-built_in,
+.dark .writex-code-block pre code .hljs-class .hljs-title,
+.dark .writex-code-block pre code .hljs-title.class_ {
+  color: #4ec9b0 !important;
+}
+
+.dark .tiptap.ProseMirror pre code .hljs-function .hljs-title,
+.dark .tiptap.ProseMirror pre code .hljs-title.function_,
+.dark .writex-code-block pre code .hljs-function .hljs-title,
+.dark .writex-code-block pre code .hljs-title.function_ {
+  color: #dcdcaa !important;
+}
+
+.dark .tiptap.ProseMirror pre code .hljs-variable,
+.dark .tiptap.ProseMirror pre code .hljs-params,
+.dark .tiptap.ProseMirror pre code .hljs-attr,
+.dark .tiptap.ProseMirror pre code .hljs-title,
+.dark .tiptap.ProseMirror pre code .hljs-name,
+.dark .tiptap.ProseMirror pre code .hljs-type,
+.dark .tiptap.ProseMirror pre code .hljs-attribute,
+.dark .writex-code-block pre code .hljs-variable,
+.dark .writex-code-block pre code .hljs-params,
+.dark .writex-code-block pre code .hljs-attr,
+.dark .writex-code-block pre code .hljs-title,
+.dark .writex-code-block pre code .hljs-name,
+.dark .writex-code-block pre code .hljs-type,
+.dark .writex-code-block pre code .hljs-attribute {
+  color: #9cdcfe !important;
+}
+
+.dark .tiptap.ProseMirror pre code .hljs-tag,
+.dark .tiptap.ProseMirror pre code .hljs-selector-id,
+.dark .tiptap.ProseMirror pre code .hljs-selector-class,
+.dark .tiptap.ProseMirror pre code .hljs-symbol,
+.dark .tiptap.ProseMirror pre code .hljs-bullet,
+.dark .writex-code-block pre code .hljs-tag,
+.dark .writex-code-block pre code .hljs-selector-id,
+.dark .writex-code-block pre code .hljs-selector-class,
+.dark .writex-code-block pre code .hljs-symbol,
+.dark .writex-code-block pre code .hljs-bullet {
+  color: #4ec9b0 !important;
+}
+
+.dark .tiptap.ProseMirror pre code .hljs-deletion,
+.dark .writex-code-block pre code .hljs-deletion {
+  color: #ce9178 !important;
+}
+
+.dark .tiptap.ProseMirror pre code .hljs-property,
+.dark .writex-code-block pre code .hljs-property {
+  color: #9cdcfe !important;
+}
