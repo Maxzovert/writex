@@ -19,6 +19,7 @@ import {
   AlertCircle,
   Maximize2,
   Minimize2,
+  PenLine,
 } from "lucide-react";
 import { useFocusMode } from "@/hooks/use-focus-mode";
 import { useAuth } from "../../context/authContext";
@@ -46,6 +47,7 @@ import {
 const AUTO_SAVE_DELAY_MS = 1000;
 const DRAFT_BACKUP_KEY = "writex_draft_backup";
 const DRAFT_BACKUP_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const PRIVATE_BLOG_STATUSES = ["published", "personal"];
 
 const EMPTY_EDITOR_CONTENT = {
   type: "doc",
@@ -149,6 +151,7 @@ const WriteBlog = () => {
   const [saveStatus, setSaveStatus] = useState("idle");
   const [editorInitialContent, setEditorInitialContent] = useState(EMPTY_EDITOR_CONTENT);
   const [editorSessionKey, setEditorSessionKey] = useState("new");
+  const [publishStatus, setPublishStatus] = useState("published");
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [aiMessage, setAiMessage] = useState("");
   const bookmarkDocumentId = editBlogId ? `blog-${editBlogId}` : "write-new-draft";
@@ -286,6 +289,7 @@ const WriteBlog = () => {
     setEditBlogId(null);
     editBlogIdRef.current = null;
     setOriginalStatus("draft");
+    setPublishStatus("published");
     setAiMessage("");
     setEditorInitialContent(EMPTY_EDITOR_CONTENT);
     setEditorSessionKey("new");
@@ -461,6 +465,21 @@ const WriteBlog = () => {
     }
   };
 
+  const handleNewBlog = () => {
+    if (hasUnsavedChanges()) {
+      if (
+        !window.confirm(
+          "Start a new blog? Save your draft first, or continue to discard unsaved changes."
+        )
+      ) {
+        return;
+      }
+    }
+    resetForm();
+    autoSaveReadyRef.current = true;
+    navigate("/write", { replace: true, state: {} });
+  };
+
   // Restore a local backup when reopening after an accidental close
   useEffect(() => {
     if (location.state?.editBlog) return;
@@ -524,6 +543,9 @@ const WriteBlog = () => {
     setDescription(editBlog.description || "");
     setTags(normalizeTags(editBlog.tags));
     setOriginalStatus(editBlog.status || "draft");
+    setPublishStatus(
+      PRIVATE_BLOG_STATUSES.includes(editBlog.status) ? editBlog.status : "published"
+    );
     setEditorInitialContent(parsedContent);
     setEditorSessionKey(editBlog._id);
 
@@ -683,7 +705,7 @@ const WriteBlog = () => {
         mainImage,
         content: editorContent,
         category: formatCategory(category),
-        status: "published",
+        status: publishStatus,
         tags: tags.trim() || [],
         description: description.trim(),
       };
@@ -696,14 +718,22 @@ const WriteBlog = () => {
           blogData,
           { withCredentials: true }
         );
-        toast.success("Blog updated successfully!");
+        toast.success(
+          publishStatus === "personal"
+            ? "Personal blog updated successfully!"
+            : "Blog updated successfully!"
+        );
       } else {
         response = await axiosInstance.post(
           `/blog/addblog`,
           blogData,
           { withCredentials: true }
         );
-        toast.success("Blog published successfully!");
+        toast.success(
+          publishStatus === "personal"
+            ? "Personal blog saved successfully!"
+            : "Blog published successfully!"
+        );
       }
 
       if (response.data) {
@@ -947,14 +977,14 @@ const WriteBlog = () => {
             }`}
           >
             {/* Fixed header — writing area below scrolls independently */}
-            <header className="z-20 shrink-0 border-b border-gray-100 bg-white px-4 py-3 sm:px-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+            <header className="z-20 shrink-0 border-b border-gray-100 bg-white px-3 py-2 sm:px-4 sm:py-3">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-3">
+                <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                   {!isFocusMode && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="shrink-0 text-gray-600 hover:bg-gray-100"
+                      className="h-8 w-8 shrink-0 text-gray-600 hover:bg-gray-100"
                       onClick={() => setAiPanelOpen((open) => !open)}
                       aria-label={aiPanelOpen ? "Hide AI panel" : "Show AI panel"}
                     >
@@ -969,20 +999,21 @@ const WriteBlog = () => {
                   {!isFocusMode && (isEditMode || hasMeaningfulContent()) && (
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
                       onClick={isEditMode ? handleNavigateAway : () => navigate("/myblogs")}
-                      className="shrink-0 gap-1.5 text-gray-600 hover:bg-gray-100"
+                      className="h-8 w-8 shrink-0 text-gray-600 hover:bg-gray-100"
+                      aria-label="Back"
+                      title="Back"
                     >
                       <ArrowLeft className="h-4 w-4" />
-                      <span className="hidden sm:inline">Back</span>
                     </Button>
                   )}
 
-                  <div className="min-w-0">
-                    <h1 className="truncate text-lg font-semibold text-gray-900 sm:text-xl">
+                  <div className="min-w-0 flex-1 md:flex-none">
+                    <h1 className="truncate text-base font-semibold text-gray-900 sm:text-lg">
                       {isEditMode ? "Edit Blog" : "Write New Blog"}
                     </h1>
-                    <p className="hidden text-xs text-gray-500 sm:block">
+                    <p className="hidden text-xs text-gray-500 lg:block">
                       {isFocusMode
                         ? "Fullscreen writing · Press Esc to exit"
                         : isEditMode
@@ -992,39 +1023,54 @@ const WriteBlog = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+                <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-1.5">
                   {currentSaveStatus && (
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${currentSaveStatus.className}`}
+                      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${currentSaveStatus.className}`}
+                      title={currentSaveStatus.label}
+                      aria-label={currentSaveStatus.label}
                     >
                       <currentSaveStatus.icon
-                        className={`h-3.5 w-3.5 ${saveStatus === "saving" ? "animate-spin" : ""}`}
+                        className={`h-4 w-4 ${saveStatus === "saving" ? "animate-spin" : ""}`}
                       />
-                      <span className="hidden sm:inline">{currentSaveStatus.label}</span>
                     </span>
                   )}
 
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="border-gray-200"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 border-gray-200"
+                    onClick={handleNewBlog}
+                    title="New blog"
+                    aria-label="New blog"
+                  >
+                    <PenLine className="h-4 w-4" />
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 border-gray-200"
                     onClick={handleToggleFocusMode}
                     title={isFocusMode ? "Exit fullscreen (Esc)" : "Enter fullscreen writing mode"}
+                    aria-label={isFocusMode ? "Exit focus mode" : "Focus mode"}
                   >
                     {isFocusMode ? (
                       <Minimize2 className="h-4 w-4" />
                     ) : (
                       <Maximize2 className="h-4 w-4" />
                     )}
-                    <span className="ml-1.5 hidden sm:inline">
-                      {isFocusMode ? "Exit focus" : "Focus"}
-                    </span>
                   </Button>
 
                   <Dialog open={draftDialogOpen} onOpenChange={setDraftDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="border-gray-200">
-                        Save Draft
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 shrink-0 border-gray-200 px-2.5 text-xs sm:px-3 sm:text-sm"
+                      >
+                        <span className="sm:hidden">Draft</span>
+                        <span className="hidden sm:inline">Save Draft</span>
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[560px]">
@@ -1080,7 +1126,7 @@ const WriteBlog = () => {
                       <Button
                         disabled={isPublishing}
                         size="sm"
-                        className="bg-gray-900 text-white hover:bg-gray-800"
+                        className="h-8 shrink-0 bg-gray-900 px-3 text-xs text-white hover:bg-gray-800 sm:text-sm"
                       >
                         {isPublishing
                           ? isEditMode
@@ -1129,6 +1175,18 @@ const WriteBlog = () => {
                           <Label htmlFor="category">Category *</Label>
                           {renderCategorySelect()}
                         </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="visibility">Visibility</Label>
+                          <Select value={publishStatus} onValueChange={setPublishStatus}>
+                            <SelectTrigger className="w-full bg-gray-50 border-gray-300">
+                              <SelectValue placeholder="Select visibility" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="published">Published</SelectItem>
+                              <SelectItem value="personal">Personal (private)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <DialogFooter className="gap-2">
                         <DialogClose asChild>
@@ -1144,8 +1202,12 @@ const WriteBlog = () => {
                               ? "Updating..."
                               : "Publishing..."
                             : isEditMode
-                              ? "Update Blog"
-                              : "Publish Blog"}
+                              ? publishStatus === "personal"
+                                ? "Update Personal"
+                                : "Update Blog"
+                              : publishStatus === "personal"
+                                ? "Save Personal"
+                                : "Publish Blog"}
                         </Button>
                       </DialogFooter>
                     </DialogContent>

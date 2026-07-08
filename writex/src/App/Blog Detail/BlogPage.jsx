@@ -29,6 +29,7 @@ import { HighlightedCodeBlock } from '@/components/HighlightedCodeBlock';
 import { BookmarkSidebar } from '@/components/bookmarks/BookmarkSidebar';
 import { RelatedBlogsSection } from '@/components/blog/RelatedBlogsSection';
 import { CategoryBrowseSection } from '@/components/blog/CategoryBrowseSection';
+import { SaveToFolderButton } from '@/components/folders/SaveToFolderDialog';
 import { BlogSidebarColumn } from '@/components/blog/BlogSidebarColumn';
 import { BookmarkSelectionToolbar } from '@/components/bookmarks/BookmarkSelectionToolbar';
 import { renderBookmarkedText } from '@/components/bookmarks/render-bookmarked-text';
@@ -886,7 +887,7 @@ const BlogPage = () => {
                 </div>
 
                 {/* Interaction stats */}
-                <div className="flex items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                   <button
                     type="button"
                     onClick={handleLikePost}
@@ -907,6 +908,9 @@ const BlogPage = () => {
                     <MessageCircle className="w-4 h-4" />
                     {blog.comments?.length || 0} comments
                   </div>
+                  {user && blog.status === "published" && (
+                    <SaveToFolderButton blogId={id} blogTitle={blog.title} />
+                  )}
                 </div>
               </div>
 

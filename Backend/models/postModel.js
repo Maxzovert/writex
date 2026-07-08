@@ -20,7 +20,7 @@ const blogSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['draft', 'published', 'archived'],
+        enum: ['draft', 'personal', 'published', 'archived'],
         default: 'draft'
     },
     category: {
