@@ -68,7 +68,6 @@ import { MarkButton } from "@/components/tiptap-ui/mark-button"
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
 import { ClearContentButton } from "@/components/tiptap-ui/clear-content-button/clear-content-button"
-import { InsertHtmlButton } from "@/components/tiptap-ui/insert-html-button/insert-html-button"
 
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon"
@@ -163,7 +162,6 @@ const MainToolbarContent = ({
 
       <ToolbarGroup>
         <ImageUploadButton text="Add" />
-        <InsertHtmlButton text="HTML" />
       </ToolbarGroup>
 
       <Spacer />
@@ -323,6 +321,7 @@ export function SimpleEditor({
   const bodyRect = useCursorVisibility({
     editor,
     overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
+    elementRef: editorContentRef,
   })
 
   React.useEffect(() => {
@@ -333,7 +332,7 @@ export function SimpleEditor({
 
   return (
     <EditorContext.Provider value={{ editor }}>
-      <div className={cn("simple-editor-root flex h-full min-h-0 flex-col", className)}>
+      <div className={cn("simple-editor-root flex min-h-0 flex-1 flex-col overflow-hidden", className)}>
       <Toolbar
         ref={toolbarRef}
         className="shrink-0"

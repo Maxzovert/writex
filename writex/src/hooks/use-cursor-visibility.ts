@@ -83,34 +83,49 @@ export function useCursorVisibility({
 
       if (!view.hasFocus()) return
 
-      // Get current cursor position coordinates
       const { from } = state.selection
       const cursorCoords = view.coordsAtPos(from)
+      if (!cursorCoords) return
+
+      const scrollContainer = elementRef?.current
+      if (scrollContainer) {
+        const containerRect = scrollContainer.getBoundingClientRect()
+        const padding = 24
+
+        if (cursorCoords.bottom > containerRect.bottom - padding) {
+          scrollContainer.scrollTop +=
+            cursorCoords.bottom - containerRect.bottom + padding
+        } else if (cursorCoords.top < containerRect.top + padding) {
+          scrollContainer.scrollTop -=
+            containerRect.top - cursorCoords.top + padding
+        }
+        return
+      }
 
       if (windowHeight < rect.height) {
-        if (cursorCoords) {
-          // Check if there's enough space between cursor and bottom of window
-          const availableSpace =
-            windowHeight - cursorCoords.top - overlayHeight > 0
+        const availableSpace =
+          windowHeight - cursorCoords.top - overlayHeight > 0
 
-          // If not enough space, scroll to position cursor in the middle of viewport
-          if (!availableSpace) {
-            const targetScrollY =
-              // TODO: Needed?
-              //   window.scrollY + (cursorCoords.top - windowHeight / 2)
-              cursorCoords.top - windowHeight / 2
+        if (!availableSpace) {
+          const targetScrollY = cursorCoords.top - windowHeight / 2
 
-            window.scrollTo({
-              top: targetScrollY,
-              behavior: "smooth",
-            })
-          }
+          window.scrollTo({
+            top: targetScrollY,
+            behavior: "smooth",
+          })
         }
       }
     }
 
     ensureCursorVisibility()
-  }, [editor, overlayHeight, windowHeight, rect.height])
+    editor?.on("selectionUpdate", ensureCursorVisibility)
+    editor?.on("update", ensureCursorVisibility)
+
+    return () => {
+      editor?.off("selectionUpdate", ensureCursorVisibility)
+      editor?.off("update", ensureCursorVisibility)
+    }
+  }, [editor, elementRef, overlayHeight, windowHeight, rect.height])
 
   return rect
 }
