@@ -135,6 +135,10 @@ const MyProfile = () => {
         bio: userData.bio || "Add Bio"
       }));
 
+      if (setUser) {
+        setUser(userData);
+      }
+
     } catch (error) {
       console.error('Error fetching user profile:', error);
       toast.error(error.response?.data?.message || 'Failed to fetch profile data');
@@ -199,10 +203,11 @@ const MyProfile = () => {
       }));
 
       // Update user context
-      if (setUser && user) {
-        setUser(prev => ({
-          ...prev,
-          profileImage: uploadResult.url
+      if (setUser) {
+        setUser((prev) => ({
+          ...(prev || {}),
+          ...response.data.user,
+          profileImage: uploadResult.url,
         }));
       }
 

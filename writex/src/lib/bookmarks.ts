@@ -269,6 +269,42 @@ export function getChildTextOffsetBase(
   return offset
 }
 
+type TableLikeNode = {
+  content?: Array<{
+    content?: Array<{
+      content?: Array<{ type?: string; content?: unknown[] }>
+    }>
+  }>
+}
+
+/** Character offset of a table cell paragraph within the table's flattened text. */
+export function getTableCellTextOffsetBase(
+  tableNode: TableLikeNode,
+  rowIndex: number,
+  cellIndex: number,
+  blockIndexInCell = 0
+): number {
+  const rows = tableNode.content || []
+  let offset = 0
+
+  for (let ri = 0; ri < rows.length; ri += 1) {
+    const cells = rows[ri].content || []
+    for (let ci = 0; ci < cells.length; ci += 1) {
+      if (ri === rowIndex && ci === cellIndex) {
+        return offset + getChildTextOffsetBase(cells[ci].content, blockIndexInCell)
+      }
+
+      for (const block of cells[ci].content || []) {
+        if (block.type === "paragraph") {
+          offset += flattenTextNodes(block.content as Parameters<typeof flattenTextNodes>[0])
+        }
+      }
+    }
+  }
+
+  return offset
+}
+
 export function findPosFromBlockOffset(
   doc: {
     content: {

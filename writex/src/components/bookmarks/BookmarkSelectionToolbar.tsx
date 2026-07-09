@@ -41,8 +41,8 @@ export function BookmarkSelectionToolbar({
       }
 
       setPosition({
-        top: rect.top + window.scrollY - 44,
-        left: rect.left + window.scrollX + rect.width / 2,
+        top: Math.max(8, rect.top - 44),
+        left: rect.left + rect.width / 2,
       })
     }
 

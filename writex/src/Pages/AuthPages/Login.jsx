@@ -9,7 +9,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa'
 
 const Login = () => {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { refreshUser } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -41,12 +41,11 @@ const Login = () => {
       }
       // , { withCredentials: true}
       );
-      setUser(response.data);
+      localStorage.setItem("token", response.data.token);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
+      await refreshUser();
       toast.success("Login Successfully");
       navigate("/dashboard");
-      localStorage.setItem('token',response.data.token);
-      // Set this once after login/signup
-      axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
     } catch (error) {
       toast.error(error.response?.data?.message || "Login Failed");
     }

@@ -315,7 +315,10 @@ export function SimpleEditor({
 
   React.useEffect(() => {
     if (!editor) return
-    editor.view.dispatch(editor.state.tr)
+    const frame = requestAnimationFrame(() => {
+      editor.view.dispatch(editor.state.tr)
+    })
+    return () => cancelAnimationFrame(frame)
   }, [bookmarks, editor])
 
   const bodyRect = useCursorVisibility({

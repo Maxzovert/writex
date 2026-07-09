@@ -22,18 +22,23 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const refreshUser = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setUser(null);
+      return null;
+    }
+
+    const response = await axios.get("/users/profile-stats");
+    setUser(response.data.user);
+    return response.data.user;
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          // Fetch user profile data including profile image
-          const response = await axios.get('/users/profile-stats');
-          setUser(response.data.user);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
+        await refreshUser();
+      } catch {
         setUser(null);
       } finally {
         setLoading(false);
@@ -43,7 +48,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, setLoading }}>
+    <AuthContext.Provider value={{ user, setUser, setLoading, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

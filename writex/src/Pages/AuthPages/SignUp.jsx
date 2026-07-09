@@ -9,7 +9,7 @@ import { useAuth } from '../../context/authContext';
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { refreshUser } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -50,9 +50,10 @@ const SignUp = () => {
         password: formData.password,
         rememberMe: formData.rememberMe
       });
-      setUser(response.data);
+      localStorage.setItem("token", response.data.token);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
+      await refreshUser();
       toast.success("Account Created Successfully");
-      localStorage.setItem('token', response.data.token);
       navigate("/dashboard");
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");

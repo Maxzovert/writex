@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import {
@@ -7,12 +7,39 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useAuth } from "../../context/authContext";
+import { getSafeImageUrl } from "../../lib/image-url";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { FaUser, FaSignOutAlt } from "react-icons/fa";
 import { TbArticleFilled } from "react-icons/tb";
 import { HiMenu, HiX } from "react-icons/hi";
 import { NotificationPanel } from "../../components/notifications/NotificationPanel";
+
+const ProfileAvatar = ({ user, className = "h-10 w-10 lg:h-12 lg:w-12" }) => {
+  const [imageError, setImageError] = useState(false);
+  const imageUrl = getSafeImageUrl(user?.profileImage);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [imageUrl]);
+
+  return (
+    <div
+      className={`${className} rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-600 dark:to-zinc-700 flex items-center justify-center text-foreground font-semibold shadow-sm`}
+    >
+      {imageUrl && !imageError ? (
+        <img
+          src={imageUrl}
+          alt={user?.username || "User"}
+          className="h-full w-full object-cover"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <span>{user?.username?.[0]?.toUpperCase() || "U"}</span>
+      )}
+    </div>
+  );
+};
 
 
 const Navbar = () => {
@@ -110,42 +137,14 @@ const Navbar = () => {
             {user && <NotificationPanel />}
             <Popover>
               <PopoverTrigger>
-                <div className="h-10 w-10 lg:h-12 lg:w-12 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-600 dark:to-zinc-700 flex items-center justify-center text-foreground font-semibold shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                  {user?.profileImage ? (
-                    <img
-                      src={user.profileImage}
-                      alt={user.username}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <span className={`${user?.profileImage ? 'hidden' : ''}`}>
-                    {user?.username?.[0]?.toUpperCase() || "U"}
-                  </span>
+                <div className="hover:shadow-md transition-shadow cursor-pointer">
+                  <ProfileAvatar user={user} />
                 </div>
               </PopoverTrigger>
               <PopoverContent>
                 <div>
                   <div className="flex flex-row">
-                    <div className="h-12 w-12 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-600 dark:to-zinc-700 flex items-center justify-center text-foreground font-semibold shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                      {user?.profileImage ? (
-                        <img
-                          src={user.profileImage}
-                          alt={user.username}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <span className={`${user?.profileImage ? 'hidden' : ''}`}>
-                        {user?.username?.[0]?.toUpperCase() || "U"}
-                      </span>
-                    </div>
+                    <ProfileAvatar user={user} className="h-12 w-12" />
                     <h2 className="font-semibold text-muted-foreground mt-2 ml-4 text-2xl">
                       {user?.username?.[0]?.toUpperCase() + user?.username.slice(1)}
                     </h2>
@@ -208,22 +207,7 @@ const Navbar = () => {
               {/* Mobile User Section */}
               <div className="pt-4 border-t border-border">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-600 dark:to-zinc-700 flex items-center justify-center text-foreground font-semibold shadow-sm">
-                    {user?.profileImage ? (
-                      <img
-                        src={user.profileImage}
-                        alt={user.username}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    <span className={`${user?.profileImage ? 'hidden' : ''}`}>
-                      {user?.username?.[0]?.toUpperCase() || "U"}
-                    </span>
-                  </div>
+                  <ProfileAvatar user={user} className="h-10 w-10" />
                   <div>
                     <h2 className="font-semibold text-foreground text-lg">
                       {user?.username?.[0]?.toUpperCase() + user?.username.slice(1)}

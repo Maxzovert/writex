@@ -35,7 +35,7 @@ import { BlogSidebarColumn } from '@/components/blog/BlogSidebarColumn';
 import { BookmarkSelectionToolbar } from '@/components/bookmarks/BookmarkSelectionToolbar';
 import { renderBookmarkedText } from '@/components/bookmarks/render-bookmarked-text';
 import { useBookmarks } from '@/hooks/use-bookmarks';
-import { getAnchorFromDomSelection, getChildTextOffsetBase } from '@/lib/bookmarks';
+import { getAnchorFromDomSelection, getChildTextOffsetBase, getTableCellTextOffsetBase } from '@/lib/bookmarks';
 import { shareBlogWithFollowers } from '../../lib/follow-api';
 import '@/components/bookmarks/bookmarks.scss';
 
@@ -208,8 +208,12 @@ const BlogPage = () => {
     const container = focusContentRef.current ?? contentRef.current;
     if (!container) return;
     const result = getAnchorFromDomSelection(container);
-    if (!result) return;
+    if (!result) {
+      toast.warning('Select text to bookmark');
+      return;
+    }
     addBookmark(result.anchor, color, result.label);
+    toast.success('Bookmark added');
   };
 
   useEffect(() => {
@@ -570,8 +574,28 @@ const BlogPage = () => {
     const renderBlockText = (nodeContent, blockIndex, keyPrefix, textOffsetBase = 0) =>
       renderBookmarkedText(nodeContent, blockIndex, bookmarkList, renderTextRuns, textOffsetBase);
 
+    if (content?.format === "html" && typeof content.html === "string") {
+      return (
+        <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg">
+          This post was created with a removed HTML editor and can no longer be displayed here.
+        </p>
+      );
+    }
+
     if (typeof content === "string") {
-      return <div className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">{content}</div>;
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed?.format === "html") {
+          return (
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg">
+              This post was created with a removed HTML editor and can no longer be displayed here.
+            </p>
+          );
+        }
+        return renderTipTapContent(parsed, bookmarkList);
+      } catch {
+        return <div className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">{content}</div>;
+      }
     }
 
     if (content && content.content && Array.isArray(content.content)) {
@@ -777,14 +801,17 @@ const BlogPage = () => {
                     >
                       {cell.content?.map((block, bi) => {
                         if (block.type === 'paragraph') {
+                          const textOffsetBase = getTableCellTextOffsetBase(node, ri, ci, bi);
                           return (
                             <p
                               key={bi}
                               className="mb-1 last:mb-0 leading-relaxed text-inherit"
                             >
-                              {renderTextRuns(
+                              {renderBlockText(
                                 block.content,
-                                `${keyPrefix}-${ri}-${ci}-${bi}`
+                                index,
+                                `${keyPrefix}-${ri}-${ci}-${bi}`,
+                                textOffsetBase
                               )}
                             </p>
                           );
@@ -798,14 +825,14 @@ const BlogPage = () => {
             );
 
             return (
-              <div key={index} className="my-6 w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-zinc-600 bg-white dark:bg-zinc-950">
+              <div key={index} data-block-index={index} className="my-6 w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-zinc-600 bg-white dark:bg-zinc-950">
                 <table className="w-full min-w-[280px] border-collapse text-left text-foreground">
                   {useThead && firstRow ? (
                     <thead>{renderRow(firstRow, 0, `tbl-${index}`)}</thead>
                   ) : null}
                   <tbody>
                     {bodyRows.map((row, ri) =>
-                      renderRow(row, ri, `tbl-${index}-b`)
+                      renderRow(row, useThead ? ri + 1 : ri, `tbl-${index}-b`)
                     )}
                   </tbody>
                 </table>
@@ -817,7 +844,7 @@ const BlogPage = () => {
             // Fallback: Try to render any content we can find
             if (node.content && Array.isArray(node.content)) {
               return (
-                <div key={index} className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-950/40 border border-yellow-200 dark:border-yellow-800 rounded">
+                <div key={index} data-block-index={index} className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-950/40 border border-yellow-200 dark:border-yellow-800 rounded">
                   <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">
                     <strong>Content Type:</strong> {node.type}
                   </p>

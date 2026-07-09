@@ -20,12 +20,8 @@ import {
   Maximize2,
   Minimize2,
   PenLine,
-  Code2,
-  Type,
 } from "lucide-react";
 import { useFocusMode } from "@/hooks/use-focus-mode";
-import { HtmlCanvasEditor } from "@/components/write/HtmlCanvasEditor";
-import { applyHtmlToEditor, getHtmlFromEditor } from "@/lib/sync-editor-html";
 import { useAuth } from "../../context/authContext";
 import { BookmarkSidebar } from "@/components/bookmarks/BookmarkSidebar";
 import { useBookmarks } from "@/hooks/use-bookmarks";
@@ -60,8 +56,17 @@ const EMPTY_EDITOR_CONTENT = {
 
 const parseBlogContent = (content) => {
   if (!content) return EMPTY_EDITOR_CONTENT;
+
+  if (typeof content === "object" && content?.format === "html") {
+    return EMPTY_EDITOR_CONTENT;
+  }
+
   try {
-    return typeof content === "string" ? JSON.parse(content) : content;
+    const parsed = typeof content === "string" ? JSON.parse(content) : content;
+    if (typeof parsed === "object" && parsed?.format === "html") {
+      return EMPTY_EDITOR_CONTENT;
+    }
+    return parsed;
   } catch {
     if (typeof content === "string") {
       return {
@@ -158,9 +163,6 @@ const WriteBlog = () => {
   const [publishStatus, setPublishStatus] = useState("published");
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [aiMessage, setAiMessage] = useState("");
-  const [canvasMode, setCanvasMode] = useState("normal");
-  const [htmlSource, setHtmlSource] = useState("");
-  const htmlSourceRef = useRef("");
   const bookmarkDocumentId = editBlogId ? `blog-${editBlogId}` : "write-new-draft";
   const userId = user?._id || user?.id;
   const {
@@ -185,6 +187,10 @@ const WriteBlog = () => {
       return;
     }
     addBookmark(result.anchor, color, result.label);
+    requestAnimationFrame(() => {
+      editor.view.dispatch(editor.state.tr);
+    });
+    toast.success("Bookmark added");
   };
 
   useEffect(() => {
@@ -241,24 +247,12 @@ const WriteBlog = () => {
     formStateRef.current = { title, description, tags, category, mainImage };
   }, [title, description, tags, category, mainImage]);
 
-  useEffect(() => {
-    htmlSourceRef.current = htmlSource;
-  }, [htmlSource]);
-
-  const resolveEditorContent = useCallback(() => {
-    const editor = editorRef.current;
-    if (canvasMode === "html" && editor) {
-      applyHtmlToEditor(editor, htmlSourceRef.current, { emitUpdate: false });
-    }
-    return editor?.getJSON() ?? EMPTY_EDITOR_CONTENT;
-  }, [canvasMode]);
-
   const handleMainImageChange = React.useCallback((imageUrl) => {
     setMainImage(imageUrl);
   }, []);
 
   const getLiveSnapshot = useCallback(() => {
-    const editorContent = resolveEditorContent();
+    const editorContent = editorRef.current?.getJSON() ?? EMPTY_EDITOR_CONTENT;
     const { title: t, description: d, tags: tg, category: c, mainImage: img } = formStateRef.current;
     return {
       title: t.trim() || "Untitled Draft",
@@ -268,7 +262,7 @@ const WriteBlog = () => {
       tags: tg.trim(),
       description: d.trim() || "No description",
     };
-  }, [resolveEditorContent]);
+  }, []);
 
   const handleEditorContentChange = useCallback(() => {
     setEditorRevision((revision) => revision + 1);
@@ -294,52 +288,9 @@ const WriteBlog = () => {
   }, []);
 
   const hasMeaningfulContent = useCallback(() => {
-    if (canvasMode === "html") {
-      return Boolean(title.trim() || description.trim() || htmlSourceRef.current.trim());
-    }
     const editorContent = editorRef.current?.getJSON() ?? EMPTY_EDITOR_CONTENT;
     return Boolean(title.trim() || description.trim() || !isEditorContentEmpty(editorContent));
-  }, [title, description, editorRevision, canvasMode, htmlSource]);
-
-  const handleHtmlSourceChange = useCallback((value) => {
-    setHtmlSource(value);
-    htmlSourceRef.current = value;
-    setEditorRevision((revision) => revision + 1);
-    if (autoSaveReadyRef.current) {
-      const editor = editorRef.current;
-      if (editor) {
-        applyHtmlToEditor(editor, value, { emitUpdate: false });
-      }
-      const snapshot = getLiveSnapshot();
-      latestSnapshotRef.current = snapshot;
-      persistDraftBackup(snapshot, editBlogIdRef.current);
-    }
-  }, [getLiveSnapshot]);
-
-  const handleCanvasModeChange = useCallback((nextMode) => {
-    if (nextMode === canvasMode) return;
-
-    if (nextMode === "html") {
-      const exportedHtml = getHtmlFromEditor(editorRef.current);
-      setHtmlSource(exportedHtml);
-      htmlSourceRef.current = exportedHtml;
-      setCanvasMode("html");
-      return;
-    }
-
-    const result = applyHtmlToEditor(editorRef.current, htmlSourceRef.current, {
-      emitUpdate: true,
-    });
-
-    if (!result.ok && htmlSourceRef.current.trim()) {
-      toast.error("Could not parse HTML. Fix the markup before switching to Normal.");
-      return;
-    }
-
-    setCanvasMode("normal");
-    setEditorRevision((revision) => revision + 1);
-    handleEditorContentChange();
-  }, [canvasMode, handleEditorContentChange]);
+  }, [title, description, editorRevision]);
 
   const resetForm = () => {
     setTitle("");
@@ -360,10 +311,7 @@ const WriteBlog = () => {
     autoSaveReadyRef.current = false;
     latestSnapshotRef.current = null;
     clearDraftBackup();
-    setCanvasMode("normal");
-    setHtmlSource("");
-    htmlSourceRef.current = "";
-    
+
     if (editorRef.current) {
       editorRef.current.commands.clearContent();
     }
@@ -736,10 +684,6 @@ const WriteBlog = () => {
     e.preventDefault();
     
     // Validation checks
-    if (!mainImage) {
-      toast.warning("Please upload at least one image");
-      return;
-    }
     if (!description.trim()) {
       toast.warning("Please enter a short description");
       return;
@@ -756,10 +700,10 @@ const WriteBlog = () => {
     setIsPublishing(true);
 
     try {
-      const editorContent = resolveEditorContent();
+      const editorContent = editorRef.current.getJSON();
       
       // Additional validation
-      if (!editorContent || Object.keys(editorContent).length === 0) {
+      if (isEditorContentEmpty(editorContent)) {
         toast.warning("Please add some content to your blog before publishing");
         setIsPublishing(false);
         return;
@@ -767,7 +711,7 @@ const WriteBlog = () => {
 
       const blogData = {
         title: title.trim(),
-        mainImage,
+        mainImage: mainImage || "",
         content: editorContent,
         category: formatCategory(category),
         status: publishStatus,
@@ -1089,35 +1033,6 @@ const WriteBlog = () => {
                 </div>
 
                 <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-1.5">
-                  <div className="mr-1 flex items-center rounded-lg border border-gray-200 p-0.5">
-                    <button
-                      type="button"
-                      onClick={() => handleCanvasModeChange("normal")}
-                      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-                        canvasMode === "normal"
-                          ? "bg-gray-900 text-white"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                      title="Visual editor"
-                    >
-                      <Type className="h-3.5 w-3.5" />
-                      Normal
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleCanvasModeChange("html")}
-                      className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-                        canvasMode === "html"
-                          ? "bg-gray-900 text-white"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                      title="Full HTML source editor"
-                    >
-                      <Code2 className="h-3.5 w-3.5" />
-                      HTML
-                    </button>
-                  </div>
-
                   {currentSaveStatus && (
                     <span
                       className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${currentSaveStatus.className}`}
@@ -1312,39 +1227,21 @@ const WriteBlog = () => {
 
             {/* Editor */}
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
-              <div
-                className={
-                  canvasMode === "html"
-                    ? "hidden"
-                    : "flex min-h-0 flex-1 flex-col overflow-hidden"
-                }
-                aria-hidden={canvasMode === "html"}
-              >
-                <SimpleEditor
-                  key={editorSessionKey}
-                  className="min-h-0 flex-1"
-                  wide={isFocusMode}
-                  getEditorInstance={(editor) => (editorRef.current = editor)}
-                  onMainImageChange={handleMainImageChange}
-                  initialContent={editorInitialContent}
-                  onContentChange={handleEditorContentChange}
-                  bookmarks={bookmarks}
-                  onBookmarkAdd={handleBookmarkAdd}
-                />
-              </div>
-
-              {canvasMode === "html" && (
-                <HtmlCanvasEditor
-                  value={htmlSource}
-                  onChange={handleHtmlSourceChange}
-                  wide={isFocusMode}
-                  className="min-h-0 flex-1"
-                />
-              )}
+              <SimpleEditor
+                key={editorSessionKey}
+                className="min-h-0 flex-1"
+                wide={isFocusMode}
+                getEditorInstance={(editor) => (editorRef.current = editor)}
+                onMainImageChange={handleMainImageChange}
+                initialContent={editorInitialContent}
+                onContentChange={handleEditorContentChange}
+                bookmarks={bookmarks}
+                onBookmarkAdd={handleBookmarkAdd}
+              />
             </div>
           </main>
 
-          {!isFocusMode && canvasMode === "normal" && (
+          {!isFocusMode && (
             <aside className="hidden w-72 shrink-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm xl:flex xl:flex-col">
               <BookmarkSidebar
                 variant="panel"
@@ -1355,7 +1252,7 @@ const WriteBlog = () => {
             </aside>
           )}
 
-          {isFocusMode && canvasMode === "normal" && (
+          {isFocusMode && (
             <aside className="hidden w-72 shrink-0 overflow-hidden border-l border-border bg-card lg:flex lg:flex-col">
               <BookmarkSidebar
                 variant="panel"

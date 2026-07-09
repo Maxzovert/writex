@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { BookmarkPin } from "@/components/bookmarks/BookmarkPin"
 import {
+  BOOKMARK_COLOR_STYLES,
   type Bookmark,
   displayBookmarkLabel,
   flattenTextNodes,
@@ -132,11 +133,18 @@ export function renderBookmarkedText(
     const key = `seg-${blockIndex}-${index}`
 
     if (segment.bookmark) {
+      const colorStyle = BOOKMARK_COLOR_STYLES[segment.bookmark.color]
       return (
         <span
           key={key}
           id={`writex-bookmark-${segment.bookmark.id}`}
-          className="writex-bookmark-anchor inline"
+          className="writex-bookmark-anchor inline rounded-sm"
+          style={{
+            backgroundColor: colorStyle.bg,
+            borderBottom: `2px solid ${colorStyle.border}`,
+            boxDecorationBreak: "clone",
+            WebkitBoxDecorationBreak: "clone",
+          }}
         >
           <BookmarkPin color={segment.bookmark.color} className="mr-1" />
           {renderStyledTextSlice(
