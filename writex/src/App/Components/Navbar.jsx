@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
-import { Button } from "../../components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -10,9 +9,10 @@ import {
 import { useAuth } from "../../context/authContext";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { FaUser } from "react-icons/fa";
+import { FaUser, FaSignOutAlt } from "react-icons/fa";
 import { TbArticleFilled } from "react-icons/tb";
 import { HiMenu, HiX } from "react-icons/hi";
+import { NotificationPanel } from "../../components/notifications/NotificationPanel";
 
 
 const Navbar = () => {
@@ -107,16 +107,7 @@ const Navbar = () => {
 
           {/* Desktop Right Section */}
           <div className="hidden md:flex items-center gap-3 lg:gap-4">
-            <div className="border-border w-16 lg:w-18 border-2 p-1.5 rounded-sm text-muted-foreground text-[14px] lg:text-[16px] text-center font-semibold">
-              Ctrl+k
-            </div>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              Logout
-            </Button>
+            {user && <NotificationPanel />}
             <Popover>
               <PopoverTrigger>
                 <div className="h-10 w-10 lg:h-12 lg:w-12 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-600 dark:to-zinc-700 flex items-center justify-center text-foreground font-semibold shadow-sm hover:shadow-md transition-shadow cursor-pointer">
@@ -166,6 +157,13 @@ const Navbar = () => {
                         <h1 className="ml-2">{item.title}</h1>
                       </Link>
                     ))}
+                    <button
+                      onClick={handleLogout}
+                      className="flex flex-row hover:bg-accent p-2 hover:rounded-md w-full text-left"
+                    >
+                      <div className="mt-1"><FaSignOutAlt /></div>
+                      <span className="ml-2">Logout</span>
+                    </button>
                   </div>
                 </div>
               </PopoverContent>
@@ -247,21 +245,22 @@ const Navbar = () => {
                       <span className="ml-3 font-medium">{item.title}</span>
                     </Link>
                   ))}
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center w-full px-4 py-3 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
+                  >
+                    <FaSignOutAlt className="text-muted-foreground" />
+                    <span className="ml-3 font-medium">Logout</span>
+                  </button>
                 </div>
 
                 {/* Mobile Controls */}
-                <div className="space-y-3">
-                  {/* <div className="border-border w-full border-2 p-3 rounded-lg text-muted-foreground text-center font-semibold bg-muted/50">
-                    Ctrl+k
-                  </div> */}
-                  <Button
-                    onClick={handleLogout}
-                    variant="outline"
-                    className="w-full border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                  >
-                    Logout
-                  </Button>
-                </div>
+                {user && (
+                  <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+                    <span className="text-sm font-medium text-foreground">Notifications</span>
+                    <NotificationPanel />
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import Navbar from "../Components/Navbar";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getSafeImageUrl } from "../../lib/image-url";
+import { useAuth } from "../../context/authContext";
+import { fetchFollowingFeed } from "../../lib/follow-api";
 import {
   blogMatchesCategory,
   filterBlogsByCategory,
@@ -26,7 +28,8 @@ import {
   Tv,
   Medal,
   ArrowBigUp,
-  MessageCircle
+  MessageCircle,
+  Users,
 } from 'lucide-react';
 
 const Blog = () => {
@@ -34,9 +37,12 @@ const Blog = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [activeCategory, setActiveCategory] = useState("All");
   const [showFilters, setShowFilters] = useState(true);
+  const [feedMode, setFeedMode] = useState("all");
+  const [feedLoading, setFeedLoading] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const hasFatched = useRef(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const applyCategoryFilter = (category, sourceData = data) => {
     setActiveCategory(category);
@@ -58,6 +64,52 @@ const Blog = () => {
       toast.error("Error in handle fetch all blogs");
     }
   }
+
+  const handleFetchFollowingFeed = async () => {
+    if (!user) {
+      toast.info("Log in to see blogs from people you follow");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      setFeedLoading(true);
+      const { allBlogs, sharedBlogs } = await fetchFollowingFeed();
+      const seen = new Set();
+      const merged = [];
+
+      [...sharedBlogs, ...allBlogs].forEach((blog) => {
+        if (!blog?._id || seen.has(blog._id)) return;
+        seen.add(blog._id);
+        merged.push(blog);
+      });
+
+      setData(merged);
+      const category = resolveCategoryFilter(searchParams.get("category"));
+      applyCategoryFilter(category, merged);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to load following feed");
+    } finally {
+      setFeedLoading(false);
+    }
+  };
+
+  const handleFeedModeChange = async (mode) => {
+    setFeedMode(mode);
+    if (mode === "all") {
+      try {
+        const fetchData = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/public/posts/blogs/`);
+        const allBlogs = fetchData.data.allBlogs;
+        setData(allBlogs);
+        const category = resolveCategoryFilter(searchParams.get("category"));
+        applyCategoryFilter(category, allBlogs);
+      } catch {
+        toast.error("Error loading blogs");
+      }
+    } else {
+      await handleFetchFollowingFeed();
+    }
+  };
 
   useEffect(() => {
     handleFetchAllBlogs();
@@ -154,20 +206,39 @@ const Blog = () => {
       {/* Enhanced Category Navigation */}
       <section className="py-16 px-4 lg:px-8 bg-gradient-to-br from-gray-50 to-white dark:from-zinc-900 dark:to-zinc-950">
         <div className="max-w-7xl mx-auto">
-          {/* Section Header */}
-          {/* <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-12"
-          >
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6">
-              Discover Amazing Blogs
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-              Explore stories, insights, and perspectives from our community of writers
-            </p>
-          </motion.div> */}
+          <div className="mb-8 flex justify-center">
+            <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900">
+              <button
+                type="button"
+                onClick={() => handleFeedModeChange("all")}
+                className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${
+                  feedMode === "all"
+                    ? "bg-gray-900 text-white dark:bg-blue-600"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-300"
+                }`}
+              >
+                All blogs
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFeedModeChange("following")}
+                className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
+                  feedMode === "following"
+                    ? "bg-gray-900 text-white dark:bg-blue-600"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-300"
+                }`}
+              >
+                <Users className="h-4 w-4" />
+                Following
+              </button>
+            </div>
+          </div>
+
+          {feedLoading && (
+            <div className="mb-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              Loading following feed...
+            </div>
+          )}
 
           {/* Category Filter Header */}
           <motion.div
@@ -308,20 +379,25 @@ const Blog = () => {
                     {/* Author Info */}
                     <div className="flex items-center gap-3 mb-4">
                       {safeAuthorImage ? (
-                        <img
-                          src={safeAuthorImage}
-                          alt={blog.author?.username || "Author"}
-                          className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-600 shadow-sm"
-                        />
+                        <Link to={blog.author?.username ? `/author/${blog.author.username}` : "#"}>
+                          <img
+                            src={safeAuthorImage}
+                            alt={blog.author?.username || "Author"}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-600 shadow-sm"
+                          />
+                        </Link>
                       ) : (
                         <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center text-white font-bold text-lg">
                           {firstUpperCase(blog.author?.username || "A").charAt(0)}
                         </div>
                       )}
                       <div>
-                        <div className="font-semibold text-gray-900 dark:text-gray-50 text-sm">
+                        <Link
+                          to={blog.author?.username ? `/author/${blog.author.username}` : "#"}
+                          className="font-semibold text-gray-900 dark:text-gray-50 text-sm hover:underline"
+                        >
                           {firstUpperCase(blog.author?.username) || "Unknown"}
-                        </div>
+                        </Link>
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <Calendar className="w-3 h-3" />
                           {formatDate(blog.createdAt)}
@@ -333,6 +409,11 @@ const Blog = () => {
                     <h3 className="text-lg font-bold text-gray-900 dark:text-gray-50 mb-3 line-clamp-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
                       {blog.title || "Untitled Blog"}
                     </h3>
+                    {blog.sharedBy && (
+                      <p className="mb-2 text-xs text-blue-600 dark:text-blue-400">
+                        Shared by {firstUpperCase(blog.sharedBy.username)}
+                      </p>
+                    )}
 
                     {/* Excerpt */}
                     <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4">

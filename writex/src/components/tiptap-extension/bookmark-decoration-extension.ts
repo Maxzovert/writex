@@ -3,7 +3,7 @@ import { Plugin, PluginKey } from "@tiptap/pm/state"
 import { Decoration, DecorationSet } from "@tiptap/pm/view"
 import { createBookmarkPinElement } from "@/components/bookmarks/BookmarkPin"
 import type { Bookmark } from "@/lib/bookmarks"
-import { resolveAnchorToRange } from "@/lib/bookmarks"
+import { resolveBookmarkToRange } from "@/lib/bookmarks"
 
 export interface BookmarkDecorationsOptions {
   getBookmarks: () => Bookmark[]
@@ -32,7 +32,7 @@ export const BookmarkDecorations = Extension.create<BookmarkDecorationsOptions>(
             const decorations: Decoration[] = []
 
             for (const bookmark of bookmarks) {
-              const range = resolveAnchorToRange(state.doc, bookmark.anchor)
+              const range = resolveBookmarkToRange(state.doc, bookmark)
               if (!range) continue
 
               decorations.push(

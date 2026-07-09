@@ -14,6 +14,7 @@ interactionRouter.post("/blog/:blogId/comment/:commentId/reply", protectRoute, i
 interactionRouter.post("/blog/:blogId/like", protectRoute, interactionController.toggleLike);
 interactionRouter.post("/blog/:blogId/comment/:commentId/like", protectRoute, interactionController.toggleCommentLike);
 interactionRouter.post("/blog/:blogId/comment/:commentId/reply/:replyId/like", protectRoute, interactionController.toggleReplyLike);
+interactionRouter.post("/blog/:blogId/share", protectRoute, interactionController.shareBlog);
 interactionRouter.delete("/blog/:blogId/comment/:commentId", protectRoute, interactionController.deleteComment);
 interactionRouter.delete("/blog/:blogId/comment/:commentId/reply/:replyId", protectRoute, interactionController.deleteReply);
 

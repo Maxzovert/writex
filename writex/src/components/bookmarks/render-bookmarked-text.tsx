@@ -1,6 +1,10 @@
 import type { ReactNode } from "react"
 import { BookmarkPin } from "@/components/bookmarks/BookmarkPin"
-import { type Bookmark, flattenTextNodes } from "@/lib/bookmarks"
+import {
+  type Bookmark,
+  displayBookmarkLabel,
+  flattenTextNodes,
+} from "@/lib/bookmarks"
 
 type TextNode = {
   type?: string
@@ -15,10 +19,69 @@ type Segment = {
   bookmark?: Bookmark
 }
 
+type ResolvedBookmarkSlice = {
+  bookmark: Bookmark
+  start: number
+  end: number
+}
+
+function resolveLocalBookmarkRange(
+  plainText: string,
+  bookmark: Bookmark,
+  textOffsetBase: number
+): ResolvedBookmarkSlice | null {
+  const label = displayBookmarkLabel(bookmark.label)
+  let localStart = bookmark.anchor.startOffset - textOffsetBase
+  let localEnd = bookmark.anchor.endOffset - textOffsetBase
+
+  if (localEnd <= 0 || localStart >= plainText.length) {
+    if (!label || label === "Bookmark") return null
+    const idx = plainText.indexOf(label)
+    if (idx === -1) return null
+    return {
+      bookmark,
+      start: idx,
+      end: Math.min(plainText.length, idx + label.length),
+    }
+  }
+
+  const storedSlice = plainText.slice(
+    Math.max(0, localStart),
+    Math.min(plainText.length, localEnd)
+  )
+  const normalizedStored = storedSlice.replace(/\s+/g, " ").trim()
+  const normalizedLabel = label.replace(/\s+/g, " ").trim()
+
+  if (
+    normalizedLabel &&
+    normalizedLabel !== "Bookmark" &&
+  (normalizedStored.includes(normalizedLabel) ||
+    normalizedLabel.includes(normalizedStored))
+  ) {
+    return {
+      bookmark,
+      start: Math.max(0, localStart),
+      end: Math.min(plainText.length, localEnd),
+    }
+  }
+
+  if (!label || label === "Bookmark") return null
+
+  const idx = plainText.indexOf(label)
+  if (idx === -1) return null
+
+  return {
+    bookmark,
+    start: idx,
+    end: Math.min(plainText.length, idx + label.length),
+  }
+}
+
 function buildSegments(
   plainText: string,
   blockIndex: number,
-  bookmarks: Bookmark[]
+  bookmarks: Bookmark[],
+  textOffsetBase = 0
 ): Segment[] {
   const blockBookmarks = bookmarks
     .filter(
@@ -26,7 +89,9 @@ function buildSegments(
         bookmark.anchor.blockIndex === blockIndex &&
         bookmark.anchor.endOffset > bookmark.anchor.startOffset
     )
-    .sort((a, b) => a.anchor.startOffset - b.anchor.startOffset)
+    .map((bookmark) => resolveLocalBookmarkRange(plainText, bookmark, textOffsetBase))
+    .filter((entry): entry is ResolvedBookmarkSlice => entry !== null)
+    .sort((a, b) => a.start - b.start)
 
   if (blockBookmarks.length === 0) {
     return [{ start: 0, end: plainText.length }]
@@ -35,9 +100,7 @@ function buildSegments(
   const segments: Segment[] = []
   let cursor = 0
 
-  for (const bookmark of blockBookmarks) {
-    const start = Math.max(0, Math.min(bookmark.anchor.startOffset, plainText.length))
-    const end = Math.max(start, Math.min(bookmark.anchor.endOffset, plainText.length))
+  for (const { bookmark, start, end } of blockBookmarks) {
     if (start > cursor) segments.push({ start: cursor, end: start })
     if (end > start) segments.push({ start, end, bookmark })
     cursor = Math.max(cursor, end)
@@ -54,10 +117,11 @@ export function renderBookmarkedText(
   nodes: TextNode[] | null | undefined,
   blockIndex: number,
   bookmarks: Bookmark[],
-  renderTextRuns: (nodes: TextNode[], keyPrefix: string) => ReactNode
+  renderTextRuns: (nodes: TextNode[], keyPrefix: string) => ReactNode,
+  textOffsetBase = 0
 ): ReactNode {
   const plainText = flattenTextNodes(nodes)
-  const segments = buildSegments(plainText, blockIndex, bookmarks)
+  const segments = buildSegments(plainText, blockIndex, bookmarks, textOffsetBase)
   const hasBookmarks = segments.some((segment) => segment.bookmark)
 
   if (!hasBookmarks) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import Navbar from '../Components/Navbar';
@@ -23,6 +23,7 @@ import {
   Clock,
   Maximize2,
   Minimize2,
+  Share2,
 } from 'lucide-react';
 import { useFocusMode } from '@/hooks/use-focus-mode';
 import { HighlightedCodeBlock } from '@/components/HighlightedCodeBlock';
@@ -34,7 +35,8 @@ import { BlogSidebarColumn } from '@/components/blog/BlogSidebarColumn';
 import { BookmarkSelectionToolbar } from '@/components/bookmarks/BookmarkSelectionToolbar';
 import { renderBookmarkedText } from '@/components/bookmarks/render-bookmarked-text';
 import { useBookmarks } from '@/hooks/use-bookmarks';
-import { getAnchorFromDomSelection } from '@/lib/bookmarks';
+import { getAnchorFromDomSelection, getChildTextOffsetBase } from '@/lib/bookmarks';
+import { shareBlogWithFollowers } from '../../lib/follow-api';
 import '@/components/bookmarks/bookmarks.scss';
 
 /** Renders TipTap `text` nodes (with marks) for paragraphs, table cells, etc. */
@@ -189,6 +191,7 @@ const BlogPage = () => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
   const { isFocusMode, toggleFocusMode } = useFocusMode();
   const contentRef = useRef(null);
   const focusContentRef = useRef(null);
@@ -486,6 +489,40 @@ const BlogPage = () => {
     }
   };
 
+  const handleShareBlog = async () => {
+    const shareUrl = window.location.href;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: blog.title,
+          text: blog.description || blog.title,
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard");
+      }
+    } catch {
+      // User cancelled native share sheet
+    }
+
+    if (!user) return;
+    if (blog.status !== "published") return;
+
+    try {
+      setShareLoading(true);
+      await shareBlogWithFollowers(id);
+      toast.success("Shared with your followers");
+    } catch (error) {
+      if (error.response?.status !== 200) {
+        toast.error(error.response?.data?.message || "Could not share with followers");
+      }
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
   // Format time ago
   const formatTimeAgo = (date) => {
     const now = new Date();
@@ -530,8 +567,8 @@ const BlogPage = () => {
 
   // Function to render TipTap content
   const renderTipTapContent = (content, bookmarkList = bookmarks) => {
-    const renderBlockText = (nodeContent, blockIndex, keyPrefix) =>
-      renderBookmarkedText(nodeContent, blockIndex, bookmarkList, renderTextRuns);
+    const renderBlockText = (nodeContent, blockIndex, keyPrefix, textOffsetBase = 0) =>
+      renderBookmarkedText(nodeContent, blockIndex, bookmarkList, renderTextRuns, textOffsetBase);
 
     if (typeof content === "string") {
       return <div className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">{content}</div>;
@@ -594,9 +631,10 @@ const BlogPage = () => {
                   if (contentNode.type === 'text') {
                     return contentNode.text;
                   } else if (contentNode.type === 'paragraph') {
+                    const textOffsetBase = getChildTextOffsetBase(node.content, contentIndex);
                     return (
                       <span key={contentIndex}>
-                        {renderBlockText(contentNode.content, index, `bq-${index}-${contentIndex}`)}
+                        {renderBlockText(contentNode.content, index, `bq-${index}-${contentIndex}`, textOffsetBase)}
                       </span>
                     );
                   }
@@ -614,7 +652,8 @@ const BlogPage = () => {
                       if (contentNode.type === 'text') {
                         return contentNode.text;
                       } else if (contentNode.type === 'paragraph') {
-                        return renderBlockText(contentNode.content, index, `bl-${index}-${listIndex}`);
+                        const textOffsetBase = getChildTextOffsetBase(node.content, listIndex);
+                        return renderBlockText(contentNode.content, index, `bl-${index}-${listIndex}`, textOffsetBase);
                       }
                       return null;
                     })}
@@ -632,7 +671,8 @@ const BlogPage = () => {
                       if (contentNode.type === 'text') {
                         return contentNode.text;
                       } else if (contentNode.type === 'paragraph') {
-                        return renderBlockText(contentNode.content, index, `bl-${index}-${listIndex}`);
+                        const textOffsetBase = getChildTextOffsetBase(node.content, listIndex);
+                        return renderBlockText(contentNode.content, index, `bl-${index}-${listIndex}`, textOffsetBase);
                       }
                       return null;
                     })}
@@ -658,7 +698,8 @@ const BlogPage = () => {
                         if (contentNode.type === 'text') {
                           return contentNode.text;
                         } else if (contentNode.type === 'paragraph') {
-                          return renderBlockText(contentNode.content, index, `tl-${index}-${taskIndex}`);
+                          const textOffsetBase = getChildTextOffsetBase(node.content, taskIndex);
+                          return renderBlockText(contentNode.content, index, `tl-${index}-${taskIndex}`, textOffsetBase);
                         }
                         return null;
                       })}
@@ -682,7 +723,8 @@ const BlogPage = () => {
                     if (contentNode.type === 'text') {
                       return contentNode.text;
                     } else if (contentNode.type === 'paragraph') {
-                      return renderBlockText(contentNode.content, index, `ti-${index}-${contentIndex}`);
+                      const textOffsetBase = getChildTextOffsetBase(node.content, contentIndex);
+                      return renderBlockText(contentNode.content, index, `ti-${index}-${contentIndex}`, textOffsetBase);
                     }
                     return null;
                   })}
@@ -853,7 +895,10 @@ const BlogPage = () => {
               
               {/* Author info and stats */}
               <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
+                <Link
+                  to={blog.author?.username ? `/author/${blog.author.username}` : "#"}
+                  className="flex items-center gap-4 hover:opacity-80 transition-opacity"
+                >
                   {safeAuthorImage ? (
                     <img
                       src={safeAuthorImage}
@@ -884,7 +929,7 @@ const BlogPage = () => {
                       )}
                     </div>
                   </div>
-                </div>
+                </Link>
 
                 {/* Interaction stats */}
                 <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
@@ -910,6 +955,18 @@ const BlogPage = () => {
                   </div>
                   {user && blog.status === "published" && (
                     <SaveToFolderButton blogId={id} blogTitle={blog.title} />
+                  )}
+                  {blog.status === "published" && (
+                    <button
+                      type="button"
+                      onClick={handleShareBlog}
+                      disabled={shareLoading}
+                      className="flex items-center gap-1 transition-colors hover:text-foreground"
+                      title="Share blog"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      {shareLoading ? "Sharing..." : "Share"}
+                    </button>
                   )}
                 </div>
               </div>
@@ -937,31 +994,45 @@ const BlogPage = () => {
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-4">
                 About the Author
               </h2>
-              <div className="flex items-center gap-4">
-                {safeAuthorImage ? (
-                  <img
-                    src={safeAuthorImage}
-                    alt={blog.author?.username || "Author"}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-zinc-600 flex items-center justify-center">
-                    <User className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <Link
+                  to={blog.author?.username ? `/author/${blog.author.username}` : "#"}
+                  className="flex items-center gap-4 hover:opacity-80 transition-opacity"
+                >
+                  {safeAuthorImage ? (
+                    <img
+                      src={safeAuthorImage}
+                      alt={blog.author?.username || "Author"}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-zinc-600 flex items-center justify-center">
+                      <User className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-50">
+                      {firstUpperCase(blog.author?.username)}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Published on{" "}
+                      {new Date(blog.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
                   </div>
+                </Link>
+                {blog.author?.username && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/author/${blog.author.username}`)}
+                  >
+                    View profile
+                  </Button>
                 )}
-                <div>
-                  <p className="font-semibold text-gray-900 dark:text-gray-50">
-                    {firstUpperCase(blog.author?.username)}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Published on{" "}
-                    {new Date(blog.createdAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </p>
-                </div>
               </div>
             </div>
 
@@ -1206,7 +1277,10 @@ const BlogPage = () => {
               </h1>
 
               <div className="mb-8 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
+                <Link
+                  to={blog.author?.username ? `/author/${blog.author.username}` : "#"}
+                  className="flex items-center gap-2 hover:opacity-80"
+                >
                   {safeAuthorImage ? (
                     <img
                       src={safeAuthorImage}
@@ -1219,7 +1293,7 @@ const BlogPage = () => {
                     </div>
                   )}
                   <span className="font-medium text-foreground">{firstUpperCase(blog.author?.username)}</span>
-                </div>
+                </Link>
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   {new Date(blog.createdAt).toLocaleDateString('en-US', {

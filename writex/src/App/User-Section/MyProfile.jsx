@@ -11,7 +11,8 @@ import {
   X,
   Plus,
   ExternalLink,
-  Camera
+  Camera,
+  Users,
 } from 'lucide-react';
 import { 
   FaInstagram, 
@@ -47,6 +48,8 @@ const MyProfile = () => {
     favoriteTopics: ["Technology", "Travel", "Food", "Lifestyle", "Business"],
     totalLikes: 0,
     totalPublishedBlogs: 0,
+    followerCount: 0,
+    followingCount: 0,
     socialLinks: {
       instagram: "",
       linkedin: "",
@@ -121,7 +124,9 @@ const MyProfile = () => {
           twitter: ""
         },
         totalLikes: stats.totalLikes || 0,
-        totalPublishedBlogs: stats.publishedBlogs || 0
+        totalPublishedBlogs: stats.publishedBlogs || 0,
+        followerCount: userData.followerCount || 0,
+        followingCount: userData.followingCount || 0,
       }));
 
       setEditForm(prev => ({
@@ -492,6 +497,13 @@ const MyProfile = () => {
                         <FileText className="h-4 w-4" />
                         My blogs
                       </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => navigate(`/author/${profile.name}`)}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Public profile
+                      </Button>
                       <Button onClick={() => navigate('/write')}>
                         <Plus className="h-4 w-4" />
                         Write new
@@ -504,7 +516,29 @@ const MyProfile = () => {
           </section>
 
           <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-            <div className="mb-8 grid gap-4 sm:grid-cols-2">
+            <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Card className="border-border/70 shadow-sm">
+                <CardContent className="flex items-center gap-4 p-6">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-semibold text-foreground">{profile.followerCount}</p>
+                    <p className="text-sm text-muted-foreground">Followers</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-border/70 shadow-sm">
+                <CardContent className="flex items-center gap-4 p-6">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-semibold text-foreground">{profile.followingCount}</p>
+                    <p className="text-sm text-muted-foreground">Following</p>
+                  </div>
+                </CardContent>
+              </Card>
               <Card className="border-border/70 shadow-sm">
                 <CardContent className="flex items-center gap-4 p-6">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">

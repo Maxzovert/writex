@@ -11,6 +11,7 @@ import WriteBlog from "./App/WriteBlog/WriteBLog";
 import Blog from "./App/Blogs/Blog";
 import MyBlog from "./App/User-Section/MyBlog";
 import MyProfile from "./App/User-Section/MyProfile";
+import AuthorProfile from "./App/User-Section/AuthorProfile";
 import BlogPage from "./App/Blog Detail/BlogPage";
 import About from "./Pages/About/About";
 import CommDash from "./App/Community/CommDash";
@@ -106,6 +107,10 @@ const App = () => {
               <MyProfile />
             </PrivateRoute>
           }
+        />
+        <Route
+          path="/author/:username"
+          element={<AuthorProfile />}
         />
         <Route
           path="/about"

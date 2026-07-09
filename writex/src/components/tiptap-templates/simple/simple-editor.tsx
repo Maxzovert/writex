@@ -68,6 +68,7 @@ import { MarkButton } from "@/components/tiptap-ui/mark-button"
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
 import { ClearContentButton } from "@/components/tiptap-ui/clear-content-button/clear-content-button"
+import { InsertHtmlButton } from "@/components/tiptap-ui/insert-html-button/insert-html-button"
 
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon"
@@ -162,6 +163,7 @@ const MainToolbarContent = ({
 
       <ToolbarGroup>
         <ImageUploadButton text="Add" />
+        <InsertHtmlButton text="HTML" />
       </ToolbarGroup>
 
       <Spacer />

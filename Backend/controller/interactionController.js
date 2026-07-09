@@ -1,5 +1,7 @@
 import Blog from "../models/postModel.js";
 import User from "../models/userModel.js";
+import BlogShare from "../models/blogShareModel.js";
+import { createNotification, createNotificationsForUsers } from "../utils/createNotification.js";
 
 // Add a comment to a blog post
 const addComment = async (req, res) => {
@@ -28,6 +30,16 @@ const addComment = async (req, res) => {
 
         blog.comments.push(newComment);
         await blog.save();
+
+        if (blog.author.toString() !== userId.toString()) {
+            await createNotification({
+                recipientId: blog.author,
+                senderId: userId,
+                type: "comment",
+                blogId: blog._id,
+                message: content.trim().slice(0, 120)
+            });
+        }
 
         // Populate the comment with user details
         await blog.populate({
@@ -115,6 +127,15 @@ const toggleLike = async (req, res) => {
         } else {
             // Like the post
             blog.likes.push(userId);
+
+            if (blog.author.toString() !== userId.toString()) {
+                await createNotification({
+                    recipientId: blog.author,
+                    senderId: userId,
+                    type: "like",
+                    blogId: blog._id
+                });
+            }
         }
 
         await blog.save();
@@ -389,6 +410,53 @@ const deleteReply = async (req, res) => {
     }
 };
 
+const shareBlog = async (req, res) => {
+    try {
+        const { blogId } = req.params;
+        const userId = req.user._id;
+
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).json({ message: "Blog not found" });
+        }
+
+        if (blog.status !== "published") {
+            return res.status(400).json({ message: "Only published blogs can be shared" });
+        }
+
+        const existingShare = await BlogShare.findOne({ user: userId, blog: blogId });
+        if (existingShare) {
+            return res.status(200).json({
+                message: "Blog already shared with your followers",
+                shareCount: await BlogShare.countDocuments({ blog: blogId })
+            });
+        }
+
+        await BlogShare.create({ user: userId, blog: blogId });
+
+        const sharer = await User.findById(userId).select("followers");
+        if (sharer?.followers?.length) {
+            await createNotificationsForUsers({
+                recipientIds: sharer.followers,
+                senderId: userId,
+                type: "share",
+                blogId: blog._id,
+                message: blog.title || ""
+            });
+        }
+
+        const shareCount = await BlogShare.countDocuments({ blog: blogId });
+
+        res.status(201).json({
+            message: "Blog shared with your followers",
+            shareCount
+        });
+    } catch (error) {
+        console.error("Error in shareBlog:", error);
+        res.status(500).json({ message: "Error sharing blog", error: error.message });
+    }
+};
+
 export default {
     addComment,
     addReply,
@@ -398,5 +466,6 @@ export default {
     trackView,
     getBlogWithInteractions,
     deleteComment,
-    deleteReply
+    deleteReply,
+    shareBlog
 };

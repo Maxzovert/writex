@@ -7,6 +7,7 @@ import cors from "cors";
 import postRouter from "./routes/PostUserRoute.js";
 import publicRouter from "./routes/PostPublicRoute.js";
 import interactionRouter from "./routes/interactionRoute.js";
+import notificationRouter from "./routes/notificationRoute.js";
 
 dotenv.config();
 const app = express();
@@ -56,6 +57,7 @@ app.use("/users", router);
 app.use("/blog/",postRouter);
 app.use("/public/posts/",publicRouter);
 app.use("/api/interactions/",interactionRouter);
+app.use("/api/notifications", notificationRouter);
 
 const PORT = process.env.PORT || 5000;
 

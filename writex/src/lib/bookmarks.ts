@@ -181,6 +181,94 @@ export function getAnchorFromDomSelection(
   }
 }
 
+type BlockDoc = Parameters<typeof findPosFromBlockOffset>[0]
+
+type BlockNode = {
+  nodeSize: number
+  descendants: (
+    f: (
+      node: { isText?: boolean; text?: string | null },
+      pos: number
+    ) => boolean | void
+  ) => void
+}
+
+function getBlockNodeAtIndex(
+  doc: BlockDoc,
+  blockIndex: number
+): { blockOffset: number; blockNode: BlockNode } | null {
+  let blockOffset = 0
+  let blockNode: BlockNode | null = null
+
+  doc.content.forEach((_node, offset, index) => {
+    if (index === blockIndex) {
+      blockOffset = offset
+      blockNode = _node as BlockNode
+    }
+  })
+
+  if (!blockNode) return null
+  return { blockOffset, blockNode }
+}
+
+/** Plain-text character offset inside a top-level block (no block separators). */
+export function getCharOffsetAtPosInBlock(
+  doc: BlockDoc,
+  blockIndex: number,
+  pos: number
+): number | null {
+  const block = getBlockNodeAtIndex(doc, blockIndex)
+  if (!block) return null
+
+  const { blockOffset, blockNode } = block
+  const blockStart = blockOffset + 1
+  const blockEnd = blockOffset + blockNode.nodeSize - 1
+
+  if (pos < blockStart || pos > blockEnd) return null
+
+  let walked = 0
+  let resolved = false
+  let result = 0
+
+  blockNode.descendants((node, relativePos) => {
+    if (resolved) return false
+    if (!node.isText || !node.text) return
+
+    const nodeStart = blockStart + relativePos
+    const nodeEnd = nodeStart + node.text.length
+
+    if (pos <= nodeStart) {
+      result = walked
+      resolved = true
+      return false
+    }
+
+    if (pos < nodeEnd) {
+      result = walked + (pos - nodeStart)
+      resolved = true
+      return false
+    }
+
+    walked += node.text.length
+  })
+
+  return resolved ? result : walked
+}
+
+/** Sum plain text length of preceding siblings inside a block (lists, blockquotes, etc.). */
+export function getChildTextOffsetBase(
+  children: Array<{ content?: unknown[] }> | null | undefined,
+  childIndex: number
+): number {
+  if (!children || childIndex <= 0) return 0
+
+  let offset = 0
+  for (let i = 0; i < childIndex; i += 1) {
+    offset += flattenTextNodes(children[i].content as Parameters<typeof flattenTextNodes>[0])
+  }
+  return offset
+}
+
 export function findPosFromBlockOffset(
   doc: {
     content: {
@@ -192,17 +280,10 @@ export function findPosFromBlockOffset(
   blockIndex: number,
   charOffset: number
 ): number | null {
-  let blockOffset = 0
-  let blockNode: { nodeSize: number; descendants: (f: (node: { isText?: boolean; text?: string | null }, pos: number) => boolean | void) => void } | null = null
+  const block = getBlockNodeAtIndex(doc, blockIndex)
+  if (!block) return null
 
-  doc.content.forEach((_node, offset, index) => {
-    if (index === blockIndex) {
-      blockOffset = offset
-      blockNode = _node as typeof blockNode
-    }
-  })
-
-  if (!blockNode) return null
+  const { blockOffset, blockNode } = block
 
   let targetPos: number | null = null
   let walked = 0
@@ -237,26 +318,75 @@ export function getAnchorFromEditor(editor: {
 
   const doc = editor.state.doc
   let blockIndex = -1
-  let blockOffset = 0
 
   doc.forEach((_node, offset, index) => {
     const node = _node as { nodeSize: number }
     if (from >= offset && from < offset + node.nodeSize) {
       blockIndex = index
-      blockOffset = offset
     }
   })
 
   if (blockIndex < 0) return null
 
-  const startOffset = doc.textBetween(blockOffset + 1, from).length
-  const endOffset = doc.textBetween(blockOffset + 1, to).length
+  const startOffset = getCharOffsetAtPosInBlock(doc, blockIndex, from)
+  const endOffset = getCharOffsetAtPosInBlock(doc, blockIndex, to)
+  if (startOffset === null || endOffset === null || endOffset <= startOffset) {
+    return null
+  }
+
   const label = truncateLabel(doc.textBetween(from, to, " "))
 
   return {
     anchor: { blockIndex, startOffset, endOffset },
     label,
   }
+}
+
+function getBlockPlainTextFromDoc(doc: BlockDoc, blockIndex: number): string {
+  const block = getBlockNodeAtIndex(doc, blockIndex)
+  if (!block) return ""
+
+  let text = ""
+  block.blockNode.descendants((node) => {
+    if (node.isText && node.text) text += node.text
+  })
+  return text
+}
+
+function resolveAnchorByLabelInBlock(
+  doc: BlockDoc,
+  bookmark: Bookmark
+): { from: number; to: number } | null {
+  const plainText = getBlockPlainTextFromDoc(doc, bookmark.anchor.blockIndex)
+  const label = displayBookmarkLabel(bookmark.label)
+  if (!label || label === "Bookmark") return null
+
+  let bestIdx = -1
+  let bestDistance = Infinity
+  let searchFrom = 0
+
+  while (searchFrom < plainText.length) {
+    const idx = plainText.indexOf(label, searchFrom)
+    if (idx === -1) break
+
+    const distance = Math.abs(idx - bookmark.anchor.startOffset)
+    if (distance < bestDistance) {
+      bestDistance = distance
+      bestIdx = idx
+    }
+    searchFrom = idx + 1
+  }
+
+  if (bestIdx === -1) return null
+
+  const from = findPosFromBlockOffset(doc, bookmark.anchor.blockIndex, bestIdx)
+  const to = findPosFromBlockOffset(
+    doc,
+    bookmark.anchor.blockIndex,
+    bestIdx + label.length
+  )
+  if (from === null || to === null || to <= from) return null
+  return { from, to }
 }
 
 export function resolveAnchorToRange(
@@ -267,4 +397,20 @@ export function resolveAnchorToRange(
   const to = findPosFromBlockOffset(doc, anchor.blockIndex, anchor.endOffset)
   if (from === null || to === null || to <= from) return null
   return { from, to }
+}
+
+export function resolveBookmarkToRange(
+  doc: BlockDoc,
+  bookmark: Bookmark
+): { from: number; to: number } | null {
+  const direct = resolveAnchorToRange(doc, bookmark.anchor)
+  if (direct) {
+    const selected = doc.textBetween(direct.from, direct.to, " ").replace(/\s+/g, " ").trim()
+    const label = displayBookmarkLabel(bookmark.label).replace(/\s+/g, " ").trim()
+    if (!label || label === "Bookmark" || selected.includes(label) || label.includes(selected)) {
+      return direct
+    }
+  }
+
+  return resolveAnchorByLabelInBlock(doc, bookmark)
 }
