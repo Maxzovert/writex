@@ -24,173 +24,24 @@ import {
   Maximize2,
   Minimize2,
   Share2,
+  Download,
 } from 'lucide-react';
 import { useFocusMode } from '@/hooks/use-focus-mode';
-import { HighlightedCodeBlock } from '@/components/HighlightedCodeBlock';
 import { BookmarkSidebar } from '@/components/bookmarks/BookmarkSidebar';
 import { RelatedBlogsSection } from '@/components/blog/RelatedBlogsSection';
 import { CategoryBrowseSection } from '@/components/blog/CategoryBrowseSection';
+import { TipTapContent } from '@/components/blog/TipTapContent';
+import { PdfExportProgressDialog } from '@/components/blog/PdfExportProgressDialog';
 import { SaveToFolderButton } from '@/components/folders/SaveToFolderDialog';
 import { BlogSidebarColumn } from '@/components/blog/BlogSidebarColumn';
 import { BookmarkSelectionToolbar } from '@/components/bookmarks/BookmarkSelectionToolbar';
-import { renderBookmarkedText } from '@/components/bookmarks/render-bookmarked-text';
 import { useBookmarks } from '@/hooks/use-bookmarks';
-import { getAnchorFromDomSelection, getChildTextOffsetBase, getTableCellTextOffsetBase } from '@/lib/bookmarks';
+import { getAnchorFromDomSelection } from '@/lib/bookmarks';
+import { exportBlogPdf } from '@/lib/export-blog-pdf';
 import { shareBlogWithFollowers } from '../../lib/follow-api';
 import '@/components/bookmarks/bookmarks.scss';
 
 const EMPTY_BOOKMARKS = [];
-
-/** Renders TipTap `text` nodes (with marks) for paragraphs, table cells, etc. */
-function renderTextRuns(nodes, keyPrefix = 't') {
-  if (!nodes || !Array.isArray(nodes)) return null;
-  return nodes.map((textNode, textIndex) => {
-    if (textNode.type !== 'text') return null;
-
-    let text = textNode.text;
-    let className = '';
-    let customHighlightColor = null;
-    let linkHref = null;
-    let linkTarget = null;
-    const textStyle = {};
-
-    if (textNode.marks) {
-      textNode.marks.forEach((mark) => {
-        switch (mark.type) {
-          case 'bold':
-            className += ' font-bold';
-            break;
-          case 'italic':
-            className += ' italic';
-            break;
-          case 'underline':
-            className += ' underline';
-            break;
-          case 'strike':
-            className += ' line-through';
-            break;
-          case 'highlight':
-            if (mark.attrs && mark.attrs.color) {
-              const color = mark.attrs.color;
-              if (color.startsWith('var(--') || color.startsWith('#')) {
-                className +=
-                  ' px-1 rounded text-gray-900 dark:text-gray-100 ring-1 ring-black/10 dark:ring-white/20';
-                customHighlightColor = color;
-              } else {
-                switch (color) {
-                  case 'yellow':
-                    className +=
-                      ' bg-yellow-200 dark:bg-yellow-950/80 text-gray-900 dark:text-yellow-50 px-1 rounded';
-                    break;
-                  case 'green':
-                    className +=
-                      ' bg-green-200 dark:bg-green-950/80 text-gray-900 dark:text-green-50 px-1 rounded';
-                    break;
-                  case 'blue':
-                    className +=
-                      ' bg-blue-200 dark:bg-blue-950/80 text-gray-900 dark:text-blue-50 px-1 rounded';
-                    break;
-                  case 'red':
-                    className +=
-                      ' bg-red-200 dark:bg-red-950/80 text-gray-900 dark:text-red-50 px-1 rounded';
-                    break;
-                  case 'purple':
-                    className +=
-                      ' bg-purple-200 dark:bg-purple-950/80 text-gray-900 dark:text-purple-50 px-1 rounded';
-                    break;
-                  case 'pink':
-                    className +=
-                      ' bg-pink-200 dark:bg-pink-950/80 text-gray-900 dark:text-pink-50 px-1 rounded';
-                    break;
-                  case 'orange':
-                    className +=
-                      ' bg-orange-200 dark:bg-orange-950/80 text-gray-900 dark:text-orange-50 px-1 rounded';
-                    break;
-                  case 'teal':
-                    className +=
-                      ' bg-teal-200 dark:bg-teal-950/80 text-gray-900 dark:text-teal-50 px-1 rounded';
-                    break;
-                  case 'indigo':
-                    className +=
-                      ' bg-indigo-200 dark:bg-indigo-950/80 text-gray-900 dark:text-indigo-50 px-1 rounded';
-                    break;
-                  case 'gray':
-                    className +=
-                      ' bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-zinc-100 px-1 rounded';
-                    break;
-                  default:
-                    className +=
-                      ' bg-yellow-200 dark:bg-yellow-950/80 text-gray-900 dark:text-yellow-50 px-1 rounded';
-                    break;
-                }
-              }
-            } else {
-              className +=
-                ' bg-yellow-200 dark:bg-yellow-950/80 text-gray-900 dark:text-yellow-50 px-1 rounded';
-            }
-            break;
-          case 'code':
-            className +=
-              ' bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 px-2 py-1 rounded font-mono text-sm border border-zinc-200 dark:border-zinc-600';
-            break;
-          case 'link':
-            linkHref = mark.attrs?.href;
-            linkTarget = mark.attrs?.target;
-            className += ' text-blue-600 dark:text-blue-400 underline';
-            break;
-          case 'textStyle': {
-            const fontSize = Number(mark.attrs?.fontSize);
-            if (Number.isFinite(fontSize) && fontSize >= 8 && fontSize <= 96) {
-              textStyle.fontSize = `${fontSize}px`;
-            }
-            break;
-          }
-          default:
-            break;
-        }
-      });
-    }
-
-    const key = `${keyPrefix}-${textIndex}`;
-
-    if (linkHref) {
-      return (
-        <a
-          key={key}
-          href={linkHref}
-          target={linkTarget ?? undefined}
-          rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
-          className={className}
-          style={textStyle}
-        >
-          {text}
-        </a>
-      );
-    }
-
-    if (customHighlightColor) {
-      return (
-        <span
-          key={key}
-          className={className}
-          style={{
-            ...textStyle,
-            backgroundColor: customHighlightColor,
-            display: 'inline-block',
-          }}
-        >
-          {text}
-        </span>
-      );
-    }
-
-    return (
-      <span key={key} className={className} style={textStyle}>
-        {text}
-      </span>
-    );
-  });
-}
 
 const BlogPage = () => {
   const { id } = useParams();
@@ -204,6 +55,14 @@ const BlogPage = () => {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState({
+    status: 'exporting',
+    percent: 0,
+    message: 'Preparing…',
+    errorMessage: '',
+  });
   const { isFocusMode, toggleFocusMode } = useFocusMode();
   const contentRef = useRef(null);
   const focusContentRef = useRef(null);
@@ -534,6 +393,65 @@ const BlogPage = () => {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!blog || pdfLoading) return;
+    try {
+      setPdfLoading(true);
+      setPdfProgress({
+        status: 'exporting',
+        percent: 0,
+        message: 'Preparing…',
+        errorMessage: '',
+      });
+      setPdfDialogOpen(true);
+
+      const rawName = blog.author?.username;
+      const authorName = rawName
+        ? rawName.charAt(0).toUpperCase() + rawName.slice(1)
+        : undefined;
+      const dateLabel = blog.createdAt
+        ? new Date(blog.createdAt).toLocaleDateString()
+        : undefined;
+
+      await exportBlogPdf({
+        title: blog.title,
+        content: blog.content,
+        authorName,
+        dateLabel,
+        onProgress: ({ percent, message }) => {
+          setPdfProgress((prev) => ({
+            ...prev,
+            status: 'exporting',
+            percent,
+            message,
+          }));
+        },
+      });
+
+      setPdfProgress({
+        status: 'done',
+        percent: 100,
+        message: 'PDF downloaded',
+        errorMessage: '',
+      });
+      toast.success('PDF downloaded');
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      const errorMessage =
+        error?.message || 'Could not create PDF. Download was not started.';
+      setPdfProgress({
+        status: 'error',
+        percent: 100,
+        message: 'Export failed',
+        errorMessage,
+      });
+      setPdfDialogOpen(true);
+      toast.error('Could not download PDF');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   // Format time ago
   const formatTimeAgo = (date) => {
     const now = new Date();
@@ -575,355 +493,6 @@ const BlogPage = () => {
 
   const safeAuthorImage = getSafeImageUrl(blog.author?.profileImage);
   const safeMainImage = getSafeImageUrl(blog.mainImage);
-
-  // Function to render TipTap content
-  const renderTipTapContent = (content, bookmarkList = bookmarks) => {
-    const renderBlockText = (nodeContent, blockIndex, keyPrefix, textOffsetBase = 0) =>
-      renderBookmarkedText(nodeContent, blockIndex, bookmarkList, renderTextRuns, textOffsetBase);
-
-    if (content?.format === "html" && typeof content.html === "string") {
-      return (
-        <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg">
-          This post was created with a removed HTML editor and can no longer be displayed here.
-        </p>
-      );
-    }
-
-    if (typeof content === "string") {
-      try {
-        const parsed = JSON.parse(content);
-        if (parsed?.format === "html") {
-          return (
-            <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg">
-              This post was created with a removed HTML editor and can no longer be displayed here.
-            </p>
-          );
-        }
-        return renderTipTapContent(parsed, bookmarkList);
-      } catch {
-        return <div className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">{content}</div>;
-      }
-    }
-
-    if (content && content.content && Array.isArray(content.content)) {
-      return content.content.map((node, index) => {
-        switch (node.type) {
-          case 'paragraph':
-            return (
-              <p
-                key={index}
-                data-block-index={index}
-                className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed text-lg"
-                style={{
-                  textAlign: node.attrs?.textAlign || 'left',
-                  ...(Number.isFinite(Number(node.attrs?.lineHeight)) &&
-                  Number(node.attrs.lineHeight) >= 1.15
-                    ? { lineHeight: Number(node.attrs.lineHeight) }
-                    : {}),
-                  ...(Number.isFinite(Number(node.attrs?.letterSpacing))
-                    ? { letterSpacing: `${Number(node.attrs.letterSpacing)}px` }
-                    : {}),
-                }}
-              >
-                {renderBlockText(node.content, index, `p-${index}`)}
-              </p>
-            );
-          
-          case 'heading': {
-            const HeadingTag = `h${node.attrs?.level || 1}`;
-            const headingStyles = {
-              1: 'text-3xl font-bold leading-snug text-gray-900 dark:text-gray-50 mt-6 mb-3 first:mt-0',
-              2: 'text-2xl font-bold leading-snug text-gray-800 dark:text-gray-200 mt-5 mb-2',
-              3: 'text-xl font-semibold leading-snug text-gray-800 dark:text-gray-200 mt-4 mb-2',
-              4: 'text-lg font-semibold leading-snug text-gray-700 dark:text-gray-300 mt-4 mb-2',
-              5: 'text-base font-semibold leading-snug text-gray-700 dark:text-gray-300 mt-3 mb-1',
-              6: 'text-sm font-semibold leading-snug text-gray-700 dark:text-gray-300 mt-3 mb-1'
-            };
-            
-            return (
-              <HeadingTag 
-                key={index}
-                data-block-index={index}
-                className={headingStyles[node.attrs?.level || 1]}
-                style={{
-                  textAlign: node.attrs?.textAlign || 'left',
-                  ...(Number.isFinite(Number(node.attrs?.lineHeight)) &&
-                  Number(node.attrs.lineHeight) >= 1.15
-                    ? { lineHeight: Number(node.attrs.lineHeight) }
-                    : {}),
-                  ...(Number.isFinite(Number(node.attrs?.letterSpacing))
-                    ? { letterSpacing: `${Number(node.attrs.letterSpacing)}px` }
-                    : {}),
-                }}
-              >
-                {renderBlockText(node.content, index, `h-${index}`)}
-              </HeadingTag>
-            );
-          }
-
-          case 'horizontalRule':
-            return (
-              <hr
-                key={index}
-                data-block-index={index}
-                className="my-6 border-0 border-t border-gray-300 dark:border-zinc-600"
-              />
-            );
-          
-          case 'image': {
-            const safeNodeImage = getSafeImageUrl(node.attrs?.src);
-            if (!safeNodeImage) return null;
-            return (
-              <div key={index} className="my-4 text-center">
-                <img
-                  src={safeNodeImage}
-                  alt={node.attrs?.alt || 'Blog image'}
-                  title={node.attrs?.title}
-                  className="max-w-full h-auto rounded"
-                  style={{ maxHeight: '500px' }}
-                />
-                {node.attrs?.alt && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">{node.attrs.alt}</p>
-                )}
-              </div>
-            );
-          }
-          
-          case 'blockquote':
-            return (
-              <blockquote key={index} data-block-index={index} className="border-l-4 border-gray-300 dark:border-zinc-600 pl-4 my-4 italic text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800/60 py-2 rounded-r">
-                {node.content && node.content.map((contentNode, contentIndex) => {
-                  if (contentNode.type === 'text') {
-                    return contentNode.text;
-                  } else if (contentNode.type === 'paragraph') {
-                    const textOffsetBase = getChildTextOffsetBase(node.content, contentIndex);
-                    return (
-                      <span key={contentIndex}>
-                        {renderBlockText(contentNode.content, index, `bq-${index}-${contentIndex}`, textOffsetBase)}
-                      </span>
-                    );
-                  }
-                  return null;
-                })}
-              </blockquote>
-            );
-          
-          case 'bulletList':
-            return (
-              <ul key={index} data-block-index={index} className="list-disc list-inside mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
-                {node.content && node.content.map((listItem, listIndex) => (
-                  <li key={listIndex} className="mb-1">
-                    {listItem.content && listItem.content.map((contentNode, contentIndex) => {
-                      if (contentNode.type === 'text') {
-                        return contentNode.text;
-                      } else if (contentNode.type === 'paragraph') {
-                        const textOffsetBase = getChildTextOffsetBase(node.content, listIndex);
-                        return renderBlockText(contentNode.content, index, `bl-${index}-${listIndex}`, textOffsetBase);
-                      }
-                      return null;
-                    })}
-                  </li>
-                ))}
-              </ul>
-            );
-          
-          case 'orderedList':
-            return (
-              <ol key={index} data-block-index={index} className="list-decimal list-inside mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">
-                {node.content && node.content.map((listItem, listIndex) => (
-                  <li key={listIndex} className="mb-1">
-                    {listItem.content && listItem.content.map((contentNode, contentIndex) => {
-                      if (contentNode.type === 'text') {
-                        return contentNode.text;
-                      } else if (contentNode.type === 'paragraph') {
-                        const textOffsetBase = getChildTextOffsetBase(node.content, listIndex);
-                        return renderBlockText(contentNode.content, index, `bl-${index}-${listIndex}`, textOffsetBase);
-                      }
-                      return null;
-                    })}
-                  </li>
-                ))}
-              </ol>
-            );
-          
-          case 'taskList':
-            return (
-              <ul key={index} data-block-index={index} className="list-none mb-4 text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
-                {node.content && node.content.map((taskItem, taskIndex) => (
-                  <li key={taskIndex} className="flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={taskItem.attrs?.checked || false}
-                      readOnly
-                      className="mt-1 w-4 h-4 text-blue-600 dark:text-blue-400 bg-gray-100 dark:bg-zinc-800 border-gray-300 dark:border-zinc-600 rounded focus:ring-blue-500"
-                    />
-                    <span className="flex-1">
-                      {taskItem.content && taskItem.content.map((contentNode, contentIndex) => {
-                        // Handle different content types within task items
-                        if (contentNode.type === 'text') {
-                          return contentNode.text;
-                        } else if (contentNode.type === 'paragraph') {
-                          const textOffsetBase = getChildTextOffsetBase(node.content, taskIndex);
-                          return renderBlockText(contentNode.content, index, `tl-${index}-${taskIndex}`, textOffsetBase);
-                        }
-                        return null;
-                      })}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            );
-          
-          case 'taskItem':
-            return (
-              <div key={index} data-block-index={index} className="flex items-start gap-3 mb-2">
-                <input
-                  type="checkbox"
-                  checked={node.attrs?.checked || false}
-                  readOnly
-                  className="mt-1 w-4 h-4 text-blue-600 dark:text-blue-400 bg-gray-100 dark:bg-zinc-800 border-gray-300 dark:border-zinc-600 rounded focus:ring-blue-500"
-                />
-                <span className="flex-1">
-                  {node.content && node.content.map((contentNode, contentIndex) => {
-                    if (contentNode.type === 'text') {
-                      return contentNode.text;
-                    } else if (contentNode.type === 'paragraph') {
-                      const textOffsetBase = getChildTextOffsetBase(node.content, contentIndex);
-                      return renderBlockText(contentNode.content, index, `ti-${index}-${contentIndex}`, textOffsetBase);
-                    }
-                    return null;
-                  })}
-                </span>
-              </div>
-            );
-          
-          case 'codeBlock': {
-            const codeText = (node.content || [])
-              .filter((textNode) => textNode.type === 'text')
-              .map((textNode) => textNode.text)
-              .join('');
-            return (
-              <div key={index} data-block-index={index}>
-                <HighlightedCodeBlock
-                  code={codeText}
-                  language={node.attrs?.language}
-                />
-              </div>
-            );
-          }
-
-          case 'table': {
-            const rows = node.content || [];
-            const firstRow = rows[0];
-            const useThead =
-              firstRow?.content?.length > 0 &&
-              firstRow.content.every((c) => c.type === 'tableHeader');
-            const bodyRows = useThead ? rows.slice(1) : rows;
-
-            const renderRow = (row, ri, keyPrefix) => (
-              <tr key={`${keyPrefix}-${ri}`} className="border-b border-gray-200 dark:border-zinc-700">
-                {row.content?.map((cell, ci) => {
-                  const CellTag = cell.type === 'tableHeader' ? 'th' : 'td';
-                  return (
-                    <CellTag
-                      key={ci}
-                      colSpan={cell.attrs?.colspan ?? 1}
-                      rowSpan={cell.attrs?.rowspan ?? 1}
-                      className={
-                        cell.type === 'tableHeader'
-                          ? 'border border-gray-300 dark:border-zinc-600 bg-gray-100 dark:bg-zinc-700 px-3 py-2 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100'
-                          : 'border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 px-3 py-2 align-top text-sm text-gray-800 dark:text-zinc-200'
-                      }
-                      style={
-                        cell.attrs?.minHeight != null && cell.attrs.minHeight > 0
-                          ? { minHeight: `${cell.attrs.minHeight}px` }
-                          : undefined
-                      }
-                    >
-                      {cell.content?.map((block, bi) => {
-                        if (block.type === 'paragraph') {
-                          const textOffsetBase = getTableCellTextOffsetBase(node, ri, ci, bi);
-                          return (
-                            <p
-                              key={bi}
-                              className="mb-1 last:mb-0 leading-relaxed text-inherit"
-                            >
-                              {renderBlockText(
-                                block.content,
-                                index,
-                                `${keyPrefix}-${ri}-${ci}-${bi}`,
-                                textOffsetBase
-                              )}
-                            </p>
-                          );
-                        }
-                        return null;
-                      })}
-                    </CellTag>
-                  );
-                })}
-              </tr>
-            );
-
-            return (
-              <div key={index} data-block-index={index} className="my-6 w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-zinc-600 bg-white dark:bg-zinc-950">
-                <table className="w-full min-w-[280px] border-collapse text-left text-foreground">
-                  {useThead && firstRow ? (
-                    <thead>{renderRow(firstRow, 0, `tbl-${index}`)}</thead>
-                  ) : null}
-                  <tbody>
-                    {bodyRows.map((row, ri) =>
-                      renderRow(row, useThead ? ri + 1 : ri, `tbl-${index}-b`)
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            );
-          }
-          
-          default:
-            // Fallback: Try to render any content we can find
-            if (node.content && Array.isArray(node.content)) {
-              return (
-                <div key={index} data-block-index={index} className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-950/40 border border-yellow-200 dark:border-yellow-800 rounded">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">
-                    <strong>Content Type:</strong> {node.type}
-                  </p>
-                  <div className="text-gray-700 dark:text-gray-300">
-                    {node.content.map((contentNode, contentIndex) => {
-                      if (contentNode.type === 'text') {
-                        return <span key={contentIndex}>{contentNode.text}</span>;
-                      } else if (contentNode.type === 'paragraph') {
-                        return (
-                          <p key={contentIndex} className="mb-2">
-                            {contentNode.content && contentNode.content.map((textNode, textIndex) => {
-                              if (textNode.type === 'text') {
-                                return textNode.text;
-                              }
-                              return null;
-                            })}
-                          </p>
-                        );
-                      }
-                      return null;
-                    })}
-                  </div>
-                </div>
-              );
-            }
-            
-            return null;
-        }
-      });
-    }
-    
-    // Fallback for other content types
-    return (
-      <div className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
-        <pre className="whitespace-pre-wrap bg-gray-100 dark:bg-zinc-800 p-4 rounded border border-border">{JSON.stringify(content, null, 2)}</pre>
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -1024,6 +593,16 @@ const BlogPage = () => {
                   {user && blog.status === "published" && (
                     <SaveToFolderButton blogId={id} blogTitle={blog.title} />
                   )}
+                  <button
+                    type="button"
+                    onClick={handleDownloadPdf}
+                    disabled={pdfLoading}
+                    className="flex items-center gap-1 transition-colors hover:text-foreground"
+                    title="Download PDF"
+                  >
+                    <Download className="h-4 w-4" />
+                    {pdfLoading ? "Converting…" : "Download PDF"}
+                  </button>
                   {blog.status === "published" && (
                     <button
                       type="button"
@@ -1054,7 +633,7 @@ const BlogPage = () => {
 
             {/* Blog content */}
             <div ref={contentRef} className="prose prose-lg max-w-none mb-8">
-              {renderTipTapContent(blog.content)}
+              <TipTapContent content={blog.content} bookmarks={bookmarks} />
             </div>
 
             {/* About the author */}
@@ -1407,7 +986,7 @@ const BlogPage = () => {
               )}
 
               <div ref={focusContentRef} className="prose prose-lg max-w-none dark:prose-invert sm:prose-xl">
-                {renderTipTapContent(blog.content)}
+                <TipTapContent content={blog.content} bookmarks={bookmarks} />
               </div>
 
               <p className="mt-12 text-center text-xs text-muted-foreground">
@@ -1431,6 +1010,15 @@ const BlogPage = () => {
       <BookmarkSelectionToolbar
         containerRef={isFocusMode ? focusContentRef : contentRef}
         onAdd={handleAddBookmark}
+      />
+
+      <PdfExportProgressDialog
+        open={pdfDialogOpen}
+        status={pdfProgress.status}
+        percent={pdfProgress.percent}
+        message={pdfProgress.message}
+        errorMessage={pdfProgress.errorMessage}
+        onClose={() => setPdfDialogOpen(false)}
       />
     </div>
   );
