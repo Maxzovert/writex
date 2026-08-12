@@ -1,34 +1,36 @@
-import React, { useEffect } from "react";
+import React, { lazy, Suspense } from "react";
 import Home from "./Pages/Home";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import Dashboard from "./App/Dashboard/Dashboard";
+import { Navigate, Route, Routes } from "react-router-dom";
 import SignUp from "./Pages/AuthPages/SignUp";
 import Login from "./Pages/AuthPages/Login";
 import { useAuth } from "./context/authContext";
 import { useTheme } from "./context/themeContext";
 import { SyncLoader } from "react-spinners";
-import WriteBlog from "./App/WriteBlog/WriteBLog";
-import Blog from "./App/Blogs/Blog";
-import MyBlog from "./App/User-Section/MyBlog";
-import MyProfile from "./App/User-Section/MyProfile";
-import AuthorProfile from "./App/User-Section/AuthorProfile";
-import BlogPage from "./App/Blog Detail/BlogPage";
 import About from "./Pages/About/About";
-import CommDash from "./App/Community/CommDash";
 import { ThemeToggle } from "./components/ThemeToggle";
+
+const Dashboard = lazy(() => import("./App/Dashboard/Dashboard"));
+const WriteBlog = lazy(() => import("./App/WriteBlog/WriteBLog"));
+const Blog = lazy(() => import("./App/Blogs/Blog"));
+const MyBlog = lazy(() => import("./App/User-Section/MyBlog"));
+const MyProfile = lazy(() => import("./App/User-Section/MyProfile"));
+const AuthorProfile = lazy(() => import("./App/User-Section/AuthorProfile"));
+const BlogPage = lazy(() => import("./App/Blog Detail/BlogPage"));
+const CommDash = lazy(() => import("./App/Community/CommDash"));
+
+const RouteFallback = ({ theme }) => (
+  <div className="flex h-screen w-screen items-center justify-center bg-background">
+    <SyncLoader color={theme === "dark" ? "#fafafa" : "#171717"} />
+  </div>
+);
 
 const App = () => {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
-  const navigate = useNavigate();
-  
+
   const PublicRoute = ({ children }) => {
     if (loading) {
-      return (
-        <div className="h-screen w-screen flex items-center justify-center bg-background">
-          <SyncLoader color={theme === "dark" ? "#fafafa" : "#171717"} />
-        </div>
-      );
+      return <RouteFallback theme={theme} />;
     }
     if (user) {
       return <Navigate to="/dashboard" replace />;
@@ -37,7 +39,7 @@ const App = () => {
   };
 
   const PrivateRoute = ({ children }) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     return token ? children : <Navigate to="/login" />;
   };
 
@@ -46,85 +48,71 @@ const App = () => {
       <div className="fixed right-4 top-4 z-[500] md:right-6 md:top-6">
         <ThemeToggle />
       </div>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route
-          path="/signup"
-          element={
-            <PublicRoute>
-              <SignUp />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/write"
-          element={
-            <PrivateRoute>
-              <WriteBlog />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/blogs"
-          element={
-              <Blog />
-          }
-        />
-        <Route
-          path="/blog/:id"
-          element={
-              <BlogPage/>
-          }
-        />
-        <Route
-          path="/myblogs"
-          element={
-            <PrivateRoute>
-              <MyBlog />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <MyProfile />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/author/:username"
-          element={<AuthorProfile />}
-        />
-        <Route
-          path="/about"
-          element={<About />}
-        />
-        <Route
-          path="/community"
-          element={
-            <PrivateRoute>
-              <CommDash />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
+      <Suspense fallback={<RouteFallback theme={theme} />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/signup"
+            element={
+              <PublicRoute>
+                <SignUp />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/write"
+            element={
+              <PrivateRoute>
+                <WriteBlog />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/blogs" element={<Blog />} />
+          <Route path="/blog/:id" element={<BlogPage />} />
+          <Route
+            path="/myblogs"
+            element={
+              <PrivateRoute>
+                <MyBlog />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <MyProfile />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/author/:username" element={<AuthorProfile />} />
+          <Route path="/about" element={<About />} />
+          <Route
+            path="/community"
+            element={
+              <PrivateRoute>
+                <CommDash />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </Suspense>
     </>
   );
 };

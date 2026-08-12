@@ -25,7 +25,11 @@ import { useFocusMode } from "@/hooks/use-focus-mode";
 import { useAuth } from "../../context/authContext";
 import { BookmarkSidebar } from "@/components/bookmarks/BookmarkSidebar";
 import { useBookmarks } from "@/hooks/use-bookmarks";
-import { getAnchorFromEditor, migrateBookmarks } from "@/lib/bookmarks";
+import {
+  createDraftBookmarkDocumentId,
+  getAnchorFromEditor,
+  migrateBookmarks,
+} from "@/lib/bookmarks";
 import "@/components/bookmarks/bookmarks.scss";
 import {
   Dialog,
@@ -44,7 +48,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-const AUTO_SAVE_DELAY_MS = 1000;
+const AUTO_SAVE_DELAY_MS = 4000;
 const DRAFT_BACKUP_KEY = "writex_draft_backup";
 const DRAFT_BACKUP_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const PRIVATE_BLOG_STATUSES = ["published", "personal"];
@@ -53,6 +57,7 @@ const EMPTY_EDITOR_CONTENT = {
   type: "doc",
   content: [{ type: "paragraph" }],
 };
+const EMPTY_BOOKMARKS = [];
 
 const parseBlogContent = (content) => {
   if (!content) return EMPTY_EDITOR_CONTENT;
@@ -145,6 +150,8 @@ const saveDraftWithKeepalive = (draftData, editBlogId) => {
 const WriteBlog = () => {
   const editorRef = useRef(null);
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("General");
   const [isPublishing, setIsPublishing] = useState(false);
@@ -163,20 +170,41 @@ const WriteBlog = () => {
   const [publishStatus, setPublishStatus] = useState("published");
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [aiMessage, setAiMessage] = useState("");
-  const bookmarkDocumentId = editBlogId ? `blog-${editBlogId}` : "write-new-draft";
+  const [draftBookmarkDocumentId] = useState(() => createDraftBookmarkDocumentId());
+  const [bookmarkDocumentId, setBookmarkDocumentId] = useState(() =>
+    location.state?.editBlog?._id
+      ? `blog-${location.state.editBlog._id}`
+      : draftBookmarkDocumentId
+  );
   const userId = user?._id || user?.id;
   const {
     bookmarks,
     addBookmark,
     removeBookmark,
     goToBookmark,
-  } = useBookmarks(userId, bookmarkDocumentId);
+    migrateToDocument,
+  } = useBookmarks(
+    userId,
+    bookmarkDocumentId,
+    location.state?.editBlog?.bookmarks || EMPTY_BOOKMARKS
+  );
 
   useEffect(() => {
-    if (editBlogId && userId) {
-      migrateBookmarks(userId, "write-new-draft", `blog-${editBlogId}`);
-    }
+    if (!editBlogId || !userId) return;
+    // Migrate any legacy shared draft key into the current blog key.
+    migrateBookmarks(userId, "write-new-draft", `blog-${editBlogId}`);
   }, [editBlogId, userId]);
+
+  const bindBookmarksToBlogId = useCallback(
+    (blogId) => {
+      if (!blogId) return bookmarks;
+      const nextDocumentId = `blog-${blogId}`;
+      const migrated = migrateToDocument(nextDocumentId);
+      setBookmarkDocumentId(nextDocumentId);
+      return migrated;
+    },
+    [bookmarks, migrateToDocument]
+  );
 
   const handleBookmarkAdd = (color) => {
     const editor = editorRef.current;
@@ -223,8 +251,6 @@ const WriteBlog = () => {
     "End with a strong conclusion that summarizes your main points"
   ]);
   
-  const location = useLocation();
-  const navigate = useNavigate();
   const lastSavedSnapshotRef = useRef(null);
   const autoSaveReadyRef = useRef(false);
   const isSavingRef = useRef(false);
@@ -258,11 +284,12 @@ const WriteBlog = () => {
       title: t.trim() || "Untitled Draft",
       mainImage: img || null,
       content: editorContent,
+      bookmarks,
       category: formatCategory(c),
       tags: tg.trim(),
       description: d.trim() || "No description",
     };
-  }, []);
+  }, [bookmarks]);
 
   const handleEditorContentChange = useCallback(() => {
     setEditorRevision((revision) => revision + 1);
@@ -277,14 +304,46 @@ const WriteBlog = () => {
 
   const snapshotsMatch = useCallback((left, right) => {
     if (!left || !right) return false;
-    return (
-      left.title === right.title &&
-      left.mainImage === right.mainImage &&
-      left.category === right.category &&
-      left.tags === right.tags &&
-      left.description === right.description &&
-      JSON.stringify(left.content) === JSON.stringify(right.content)
-    );
+    if (
+      left.title !== right.title ||
+      left.mainImage !== right.mainImage ||
+      left.category !== right.category ||
+      left.tags !== right.tags ||
+      left.description !== right.description
+    ) {
+      return false;
+    }
+
+    const leftBookmarks = left.bookmarks || [];
+    const rightBookmarks = right.bookmarks || [];
+    if (leftBookmarks.length !== rightBookmarks.length) return false;
+    if (
+      leftBookmarks.length > 0 &&
+      leftBookmarks.some((bookmark, index) => {
+        const other = rightBookmarks[index];
+        return (
+          !other ||
+          bookmark.id !== other.id ||
+          bookmark.color !== other.color ||
+          bookmark.anchor?.blockIndex !== other.anchor?.blockIndex ||
+          bookmark.anchor?.startOffset !== other.anchor?.startOffset ||
+          bookmark.anchor?.endOffset !== other.anchor?.endOffset
+        );
+      })
+    ) {
+      return false;
+    }
+
+    // Cheap content compare: identity, then structural size fingerprint
+    if (left.content === right.content) return true;
+    const leftSize = left.content?.content?.length ?? 0;
+    const rightSize = right.content?.content?.length ?? 0;
+    if (leftSize !== rightSize) return false;
+    try {
+      return JSON.stringify(left.content) === JSON.stringify(right.content);
+    } catch {
+      return false;
+    }
   }, []);
 
   const hasMeaningfulContent = useCallback(() => {
@@ -311,6 +370,7 @@ const WriteBlog = () => {
     autoSaveReadyRef.current = false;
     latestSnapshotRef.current = null;
     clearDraftBackup();
+    setBookmarkDocumentId(createDraftBookmarkDocumentId());
 
     if (editorRef.current) {
       editorRef.current.commands.clearContent();
@@ -368,6 +428,7 @@ const WriteBlog = () => {
           draftData,
           { withCredentials: true }
         );
+        lastSavedSnapshotRef.current = draftSnapshot;
         if (!silent) {
           toast.success("Draft updated successfully!");
         }
@@ -379,18 +440,27 @@ const WriteBlog = () => {
         );
         const newBlogId = response.data?.post?._id;
         if (newBlogId) {
+          const migratedBookmarks = bindBookmarksToBlogId(newBlogId);
           editBlogIdRef.current = newBlogId;
           setEditBlogId(newBlogId);
           setIsEditMode(true);
+          lastSavedSnapshotRef.current = {
+            ...draftSnapshot,
+            bookmarks: migratedBookmarks,
+          };
+        } else {
+          lastSavedSnapshotRef.current = draftSnapshot;
         }
         if (!silent) {
           toast.success("Draft saved successfully!");
         }
       }
 
-      lastSavedSnapshotRef.current = draftSnapshot;
       const savedBlogId = editBlogIdRef.current ?? response.data?.post?._id;
-      persistDraftBackup(draftSnapshot, savedBlogId);
+      persistDraftBackup(
+        lastSavedSnapshotRef.current || draftSnapshot,
+        savedBlogId
+      );
       setSaveStatus("saved");
 
       if (navigateAfter) {
@@ -418,6 +488,7 @@ const WriteBlog = () => {
     hasMeaningfulContent,
     editBlogId,
     navigate,
+    bindBookmarksToBlogId,
   ]);
 
   const handleSaveDraft = async () => {
@@ -522,6 +593,7 @@ const WriteBlog = () => {
       if (backupBlogId) {
         editBlogIdRef.current = backupBlogId;
         setEditBlogId(backupBlogId);
+        setBookmarkDocumentId(`blog-${backupBlogId}`);
         setIsEditMode(true);
       }
 
@@ -539,44 +611,73 @@ const WriteBlog = () => {
 
   // Handle edit mode when component mounts
   useEffect(() => {
-    const editBlog = location.state?.editBlog;
-    if (!editBlog) {
+    const editBlogSeed = location.state?.editBlog;
+    if (!editBlogSeed?._id) {
       return;
     }
 
-    autoSaveReadyRef.current = false;
-    clearDraftBackup();
-    const parsedContent = parseBlogContent(editBlog.content);
+    let cancelled = false;
+    let readyTimer;
 
-    setIsEditMode(true);
-    setEditBlogId(editBlog._id);
-    setTitle(editBlog.title || "");
-    setCategory(editBlog.category || "General");
-    setMainImage(editBlog.mainImage || null);
-    setDescription(editBlog.description || "");
-    setTags(normalizeTags(editBlog.tags));
-    setOriginalStatus(editBlog.status || "draft");
-    setPublishStatus(
-      PRIVATE_BLOG_STATUSES.includes(editBlog.status) ? editBlog.status : "published"
-    );
-    setEditorInitialContent(parsedContent);
-    setEditorSessionKey(editBlog._id);
+    const applyEditBlog = (editBlog) => {
+      if (cancelled) return;
+      autoSaveReadyRef.current = false;
+      clearDraftBackup();
+      const parsedContent = parseBlogContent(editBlog.content);
 
-    const readyTimer = setTimeout(() => {
-      lastSavedSnapshotRef.current = {
-        title: editBlog.title?.trim() || "Untitled Draft",
-        mainImage: editBlog.mainImage || null,
-        content: parsedContent,
-        category: formatCategory(editBlog.category || "General"),
-        tags: normalizeTags(editBlog.tags),
-        description: editBlog.description?.trim() || "No description",
-      };
-      autoSaveReadyRef.current = true;
-      setSaveStatus("saved");
-    }, 150);
+      setIsEditMode(true);
+      setEditBlogId(editBlog._id);
+      setBookmarkDocumentId(`blog-${editBlog._id}`);
+      setTitle(editBlog.title || "");
+      setCategory(editBlog.category || "General");
+      setMainImage(editBlog.mainImage || null);
+      setDescription(editBlog.description || "");
+      setTags(normalizeTags(editBlog.tags));
+      setOriginalStatus(editBlog.status || "draft");
+      setPublishStatus(
+        PRIVATE_BLOG_STATUSES.includes(editBlog.status) ? editBlog.status : "published"
+      );
+      setEditorInitialContent(parsedContent);
+      setEditorSessionKey(editBlog._id);
 
-    return () => clearTimeout(readyTimer);
-  }, [location.state?.editBlog?._id]);
+      readyTimer = setTimeout(() => {
+        lastSavedSnapshotRef.current = {
+          title: editBlog.title?.trim() || "Untitled Draft",
+          mainImage: editBlog.mainImage || null,
+          content: parsedContent,
+          bookmarks: editBlog.bookmarks || [],
+          category: formatCategory(editBlog.category || "General"),
+          tags: normalizeTags(editBlog.tags),
+          description: editBlog.description?.trim() || "No description",
+        };
+        autoSaveReadyRef.current = true;
+        setSaveStatus("saved");
+      }, 150);
+    };
+
+    const loadEditBlog = async () => {
+      if (editBlogSeed.content != null) {
+        applyEditBlog(editBlogSeed);
+        return;
+      }
+
+      try {
+        const { data } = await axiosInstance.get(`/blog/edit/${editBlogSeed._id}`);
+        applyEditBlog(data.post || editBlogSeed);
+      } catch (error) {
+        console.error("Failed to load blog for edit:", error);
+        toast.error("Failed to load blog for editing");
+        navigate("/myblogs");
+      }
+    };
+
+    loadEditBlog();
+
+    return () => {
+      cancelled = true;
+      if (readyTimer) clearTimeout(readyTimer);
+    };
+  }, [location.state?.editBlog?._id, navigate]);
 
   // Keep local backup in sync on every change (instant, not debounced)
   useEffect(() => {
@@ -590,7 +691,7 @@ const WriteBlog = () => {
     }
   }, [title, description, tags, category, mainImage, editorRevision, getLiveSnapshot, editBlogId]);
 
-  // Debounced auto-save while writing (1s after typing stops)
+  // Debounced auto-save while writing (4s after typing stops)
   useEffect(() => {
     if (!autoSaveReadyRef.current || isPublishing) {
       return;
@@ -713,6 +814,7 @@ const WriteBlog = () => {
         title: title.trim(),
         mainImage: mainImage || "",
         content: editorContent,
+        bookmarks,
         category: formatCategory(category),
         status: publishStatus,
         tags: tags.trim() || [],
@@ -738,6 +840,13 @@ const WriteBlog = () => {
           blogData,
           { withCredentials: true }
         );
+        const newBlogId = response.data?.post?._id;
+        if (newBlogId) {
+          bindBookmarksToBlogId(newBlogId);
+          editBlogIdRef.current = newBlogId;
+          setEditBlogId(newBlogId);
+          setIsEditMode(true);
+        }
         toast.success(
           publishStatus === "personal"
             ? "Personal blog saved successfully!"
@@ -748,25 +857,7 @@ const WriteBlog = () => {
       if (response.data) {
         clearDraftBackup();
         setDialogOpen(false);
-        
-        if (isEditMode) {
-          // Navigate back to MyBlog page after successful edit
-          navigate("/myblogs");
-        } else {
-          // Reset form for new blog
-          setTitle("");
-          setDescription("");
-          setTags("");
-          setCategory("General");
-          setMainImage(null);
-          lastSavedSnapshotRef.current = null;
-          setSaveStatus("idle");
-          
-          // Clear editor content
-          if (editorRef.current) {
-            editorRef.current.commands.clearContent();
-          }
-        }
+        navigate("/myblogs");
       }
     } catch (error) {
       console.error("Publishing error:", error);

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Blog from "../models/postModel.js";
 import BlogFolder from "../models/blogFolderModel.js";
 import FolderItem from "../models/folderItemModel.js";
@@ -5,13 +6,47 @@ import FolderItem from "../models/folderItemModel.js";
 const isValidObjectId = (id) => id && /^[0-9a-fA-F]{24}$/.test(id);
 
 async function getDirectItemCounts(userId) {
-  const items = await FolderItem.find({ user: userId }).select("folder").lean();
+  const userOid =
+    userId instanceof mongoose.Types.ObjectId
+      ? userId
+      : new mongoose.Types.ObjectId(userId);
+  const rows = await FolderItem.aggregate([
+    { $match: { user: userOid } },
+    { $group: { _id: "$folder", count: { $sum: 1 } } },
+  ]);
   const counts = {};
-  for (const item of items) {
-    const key = item.folder.toString();
-    counts[key] = (counts[key] || 0) + 1;
+  for (const row of rows) {
+    counts[row._id.toString()] = row.count;
   }
   return counts;
+}
+
+function getBreadcrumbsFromFolders(folders, folderId) {
+  if (!folderId) return [{ _id: null, name: "Library" }];
+
+  const byId = new Map(folders.map((f) => [f._id.toString(), f]));
+  const crumbs = [];
+  let current = byId.get(folderId.toString());
+  while (current) {
+    crumbs.unshift({ _id: current._id, name: current.name });
+    if (!current.parent) break;
+    current = byId.get(current.parent.toString());
+  }
+  return [{ _id: null, name: "Library" }, ...crumbs];
+}
+
+const LIBRARY_BLOG_SELECT =
+  "title description mainImage slug author category status readTime publishedAt createdAt updatedAt viewCount likes";
+
+function shapeLibraryBlog(blog) {
+  if (!blog) return blog;
+  const likeCount = Array.isArray(blog.likes) ? blog.likes.length : 0;
+  const { likes, content, comments, uniqueViews, bookmarks, ...rest } = blog;
+  return {
+    ...rest,
+    likeCount,
+    likes: { length: likeCount },
+  };
 }
 
 function buildCountLookup(tree) {
@@ -80,33 +115,23 @@ function buildFolderTree(folders, directCounts, parentId = null) {
   });
 }
 
-async function getBreadcrumbs(userId, folderId) {
-  if (!folderId) return [{ _id: null, name: "Library" }];
-
-  const crumbs = [];
-  let current = await BlogFolder.findOne({ _id: folderId, user: userId });
-  while (current) {
-    crumbs.unshift({ _id: current._id, name: current.name });
-    if (!current.parent) break;
-    current = await BlogFolder.findOne({ _id: current.parent, user: userId });
-  }
-  return [{ _id: null, name: "Library" }, ...crumbs];
-}
-
 const getFolderTree = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const folders = await BlogFolder.find({ user: userId }).lean();
-    const directCounts = await getDirectItemCounts(userId);
-    const tree = buildFolderTree(folders, directCounts);
+    const userId = req.user._id || req.user.id;
+    const [folders, directCounts, filedBlogIds] = await Promise.all([
+      BlogFolder.find({ user: userId }).lean(),
+      getDirectItemCounts(userId),
+      FolderItem.find({ user: userId }).distinct("blog"),
+    ]);
 
-    const filedBlogIds = await FolderItem.find({ user: userId }).distinct("blog");
+    const tree = buildFolderTree(folders, directCounts);
+    const filedCount = filedBlogIds.length;
+
     const unfiledCount = await Blog.countDocuments({
       author: userId,
       _id: { $nin: filedBlogIds },
       status: { $in: ["draft", "personal", "published"] },
     });
-    const filedCount = await FolderItem.countDocuments({ user: userId });
 
     res.status(200).json({
       tree,
@@ -122,32 +147,37 @@ const getFolderTree = async (req, res) => {
 
 const getLibraryContents = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id || req.user.id;
     const folderId = req.query.folderId || null;
 
     if (folderId && !isValidObjectId(folderId)) {
       return res.status(400).json({ message: "Invalid folder ID" });
     }
 
+    const [allFolders, directCounts, filedBlogIds] = await Promise.all([
+      BlogFolder.find({ user: userId }).lean(),
+      getDirectItemCounts(userId),
+      FolderItem.find({ user: userId }).distinct("blog"),
+    ]);
+
     let currentFolder = null;
     if (folderId) {
-      currentFolder = await BlogFolder.findOne({ _id: folderId, user: userId });
+      currentFolder = allFolders.find((f) => f._id.toString() === folderId) || null;
       if (!currentFolder) {
         return res.status(404).json({ message: "Folder not found" });
       }
     }
 
-    const subfoldersRaw = sortFolders(
-      await BlogFolder.find({
-        user: userId,
-        parent: folderId || null,
-      }).lean()
-    );
-
-    const allFolders = await BlogFolder.find({ user: userId }).lean();
-    const directCounts = await getDirectItemCounts(userId);
     const fullTree = buildFolderTree(allFolders, directCounts);
     const countLookup = buildCountLookup(fullTree);
+
+    const subfoldersRaw = sortFolders(
+      allFolders.filter((f) => {
+        const pid = f.parent ? f.parent.toString() : null;
+        const target = folderId ? folderId.toString() : null;
+        return pid === target;
+      })
+    );
 
     const subfolders = subfoldersRaw.map((folder) => ({
       ...folder,
@@ -162,43 +192,53 @@ const getLibraryContents = async (req, res) => {
 
     const currentFolderWithCounts = currentFolder
       ? {
-          ...currentFolder.toObject(),
+          ...currentFolder,
           ...currentFolderCounts,
         }
       : null;
 
-    const breadcrumbs = await getBreadcrumbs(userId, folderId);
+    const breadcrumbs = getBreadcrumbsFromFolders(allFolders, folderId);
 
-    const folderItems = folderId
-      ? await FolderItem.find({ user: userId, folder: folderId })
-          .populate({
-            path: "blog",
-            populate: { path: "author", select: "username profileImage" },
-          })
-          .lean()
-      : [];
+    const isRoot =
+      folderId === null || folderId === undefined || folderId === "null";
 
-    const filedBlogIds = await FolderItem.find({ user: userId }).distinct("blog");
-
-    const unfiledBlogs =
-      folderId === null || folderId === undefined || folderId === "null"
-        ? await Blog.find({
+    const [folderItems, unfiledBlogs] = await Promise.all([
+      folderId
+        ? FolderItem.find({ user: userId, folder: folderId })
+            .populate({
+              path: "blog",
+              select: LIBRARY_BLOG_SELECT,
+              populate: { path: "author", select: "username profileImage" },
+            })
+            .lean()
+        : Promise.resolve([]),
+      isRoot
+        ? Blog.find({
             author: userId,
             _id: { $nin: filedBlogIds },
             status: { $in: ["draft", "personal", "published"] },
           })
+            .select(LIBRARY_BLOG_SELECT)
             .populate("author", "username profileImage")
             .sort({ updatedAt: -1 })
             .lean()
-        : [];
+        : Promise.resolve([]),
+    ]);
+
+    const shapedItems = folderItems.map((item) => ({
+      ...item,
+      blog: shapeLibraryBlog(item.blog),
+    }));
+
+    const shapedUnfiled = unfiledBlogs.map(shapeLibraryBlog);
 
     res.status(200).json({
       folder: currentFolderWithCounts,
       breadcrumbs,
       subfolders,
-      items: folderItems,
-      unfiledBlogs,
-      unfiledCount: unfiledBlogs.length,
+      items: shapedItems,
+      unfiledBlogs: shapedUnfiled,
+      unfiledCount: shapedUnfiled.length,
     });
   } catch (error) {
     console.error("getLibraryContents", error);

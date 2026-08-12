@@ -22,7 +22,6 @@ import {
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import Navbar from '../Components/Navbar';
-import { SiteFooter } from '../../components/layout/SiteFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { useAuth } from '../../context/authContext';
@@ -653,8 +652,6 @@ const MyProfile = () => {
           </section>
         </main>
       )}
-
-      <SiteFooter />
 
       {/* Social Media Modal */}
       {showSocialModal && (

@@ -7,6 +7,7 @@ const postRouter = express.Router();
 
 postRouter.post("/addblog", protectRoute, postController.createBlog);
 postRouter.get("/myblogs" , protectRoute , postController.getUserBlogs);
+postRouter.get("/edit/:id", protectRoute, postController.getBlogForEdit);
 postRouter.put("/updateblog/:id" , protectRoute , postController.updateBlog);
 postRouter.delete("/deleteblog/:id" , protectRoute , postController.deleteBlog);
 

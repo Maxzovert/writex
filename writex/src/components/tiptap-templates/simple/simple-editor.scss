@@ -40,6 +40,10 @@ body,
   position: relative;
   top: auto;
   flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 0.375rem 0.5rem;
+  min-height: auto;
 }
 
 .content-wrapper {

@@ -9,6 +9,22 @@ const blogSchema = new mongoose.Schema({
         type: Schema.Types.Mixed,
         required: true
     },
+    bookmarks: [{
+        _id: false,
+        id: { type: String, required: true },
+        color: {
+            type: String,
+            enum: ['red', 'green', 'yellow', 'blue'],
+            required: true
+        },
+        label: { type: String, default: "Bookmark" },
+        anchor: {
+            blockIndex: { type: Number, required: true },
+            startOffset: { type: Number, required: true },
+            endOffset: { type: Number, required: true }
+        },
+        createdAt: { type: Number, default: Date.now }
+    }],
     mainImage: {
         type: String,
         default: ""
@@ -120,6 +136,8 @@ const blogSchema = new mongoose.Schema({
 // Index for better query performance
 blogSchema.index({ author: 1, status: 1 });
 blogSchema.index({ createdAt: -1 });
+blogSchema.index({ status: 1, publishedAt: -1 });
+blogSchema.index({ status: 1, author: 1, publishedAt: -1 });
 
 const Blog = mongoose.model("Blog", blogSchema );
 export default Blog;

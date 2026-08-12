@@ -4,7 +4,6 @@ import axios from "axios"
 import { ArrowRight, Eye, Tag } from "lucide-react"
 import { getSafeImageUrl } from "@/lib/image-url"
 import {
-  blogMatchesCategory,
   getCategoryFeedUrl,
   normalizeCategory,
 } from "@/lib/blog-categories"
@@ -55,22 +54,22 @@ export function RelatedBlogsSection({
     const fetchRelatedBlogs = async () => {
       try {
         setLoading(true)
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/public/posts/blogs/`
-        )
-        const allBlogs: RelatedBlog[] = response.data.allBlogs ?? []
         const normalizedCategory = normalizeCategory(category)
+        const params = new URLSearchParams({
+          exclude: currentBlogId,
+          limit: String(limit),
+        })
+        if (normalizedCategory && normalizedCategory !== "All") {
+          params.set("category", normalizedCategory)
+        }
 
-        const filtered = allBlogs
-          .filter(
-            (item) =>
-              item._id !== currentBlogId &&
-              blogMatchesCategory(item, normalizedCategory)
-          )
-          .slice(0, limit)
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/public/posts/related?${params.toString()}`
+        )
+        const blogs: RelatedBlog[] = response.data.blogs ?? []
 
         if (!cancelled) {
-          setRelatedBlogs(filtered)
+          setRelatedBlogs(blogs)
         }
       } catch {
         if (!cancelled) {
@@ -142,6 +141,8 @@ export function RelatedBlogsSection({
                       <img
                         src={safeImage}
                         alt=""
+                        loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-cover transition-transform group-hover:scale-105"
                       />
                     ) : (

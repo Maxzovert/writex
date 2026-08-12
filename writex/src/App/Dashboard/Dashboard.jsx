@@ -667,24 +667,6 @@ const Dashboard = () => {
           </motion.div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16 px-4 lg:px-8 mt-20 rounded-t-4xl">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="p-3 bg-gray-600 rounded-full">
-              <PenTool className="w-8 h-8 text-white" />
-            </div>
-            <span className="text-3xl font-bold lexend-txt">Writex</span>
-          </div>
-          <p className="text-gray-300 mb-8 text-lg oxygen-regular max-w-2xl mx-auto">
-            Empowering writers to share their stories with the world. Join our community and start creating today.
-          </p>
-          <div className="text-sm text-gray-500 dark:text-gray-400 oxygen-regular">
-            © 2024 Writex. All rights reserved. Made with ❤️ for the writing community.
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

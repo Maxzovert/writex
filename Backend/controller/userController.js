@@ -1,8 +1,10 @@
+import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import Blog from "../models/postModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { createNotification } from "../utils/createNotification.js";
+import { fetchLeanBlogList, parsePagination } from "../utils/blogList.js";
 
 const formatPublicUser = (user) => ({
     _id: user._id,
@@ -123,20 +125,36 @@ const logout = async (req,res) => {
 const getUserProfileStats = async (req, res) => {
     try {
         const userId = req.user.id;
-        
-        // Get user's published blogs count
-        const publishedBlogsCount = await Blog.countDocuments({ 
-            author: userId, 
-            status: 'published' 
-        });
-        
-        // Get total likes received by user's blogs
-        const userBlogs = await Blog.find({ author: userId });
-        const totalLikes = userBlogs.reduce((total, blog) => total + (blog.likes?.length || 0), 0);
-        
-        // Get user basic info including profile image, bio, and social links
-        const user = await User.findById(userId).select('username email profileImage bio socialLinks createdAt followers following');
-        
+        const authorOid = new mongoose.Types.ObjectId(userId);
+
+        const [statsAgg, user] = await Promise.all([
+            Blog.aggregate([
+                { $match: { author: authorOid } },
+                {
+                    $group: {
+                        _id: null,
+                        publishedBlogs: {
+                            $sum: {
+                                $cond: [{ $eq: ["$status", "published"] }, 1, 0],
+                            },
+                        },
+                        totalLikes: {
+                            $sum: { $size: { $ifNull: ["$likes", []] } },
+                        },
+                    },
+                },
+            ]),
+            User.findById(userId).select(
+                "username email profileImage bio socialLinks createdAt followers following"
+            ),
+        ]);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const stats = statsAgg[0] || { publishedBlogs: 0, totalLikes: 0 };
+
         res.status(200).json({
             user: {
                 _id: user._id,
@@ -147,19 +165,18 @@ const getUserProfileStats = async (req, res) => {
                 socialLinks: user.socialLinks,
                 createdAt: user.createdAt,
                 followerCount: user.followers?.length || 0,
-                followingCount: user.following?.length || 0
+                followingCount: user.following?.length || 0,
             },
             stats: {
-                publishedBlogs: publishedBlogsCount,
-                totalLikes: totalLikes
-            }
+                publishedBlogs: stats.publishedBlogs,
+                totalLikes: stats.totalLikes,
+            },
         });
-        
     } catch (error) {
         console.error("Error in getUserProfileStats:", error);
-        res.status(500).json({ 
-            message: "Error fetching user profile stats", 
-            error: error.message 
+        res.status(500).json({
+            message: "Error fetching user profile stats",
+            error: error.message,
         });
     }
 };
@@ -282,25 +299,36 @@ const getPublicProfile = async (req, res) => {
 const getPublicUserBlogs = async (req, res) => {
     try {
         const { username } = req.params;
-        const user = await User.findOne({ username: { $regex: new RegExp(`^${username}$`, "i") } }).select("_id");
+        const { page, limit, skip } = parsePagination(req.query);
+        const user = await User.findOne({
+            username: { $regex: new RegExp(`^${username}$`, "i") },
+        }).select("_id");
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const blogs = await Blog.find({ author: user._id, status: "published" })
-            .populate("author", "username profileImage")
-            .sort({ publishedAt: -1, createdAt: -1 });
+        const { total, blogs, hasMore } = await fetchLeanBlogList({
+            Blog,
+            filter: { author: user._id, status: "published" },
+            skip,
+            limit,
+            sort: { publishedAt: -1, createdAt: -1 },
+        });
 
         res.status(200).json({
             message: "Blogs fetched",
-            blogs
+            blogs,
+            page,
+            limit,
+            total,
+            hasMore,
         });
     } catch (error) {
         console.error("Error in getPublicUserBlogs:", error);
         res.status(500).json({
             message: "Error fetching user blogs",
-            error: error.message
+            error: error.message,
         });
     }
 };

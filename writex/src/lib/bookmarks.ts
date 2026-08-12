@@ -43,6 +43,7 @@ export const BOOKMARK_COLOR_STYLES: Record<
 }
 
 const STORAGE_PREFIX = "writex_bookmarks"
+export const BOOKMARKS_UPDATED_EVENT = "writex:bookmarks-updated"
 
 function storageKey(userId: string, documentId: string): string {
   return `${STORAGE_PREFIX}_${userId}_${documentId}`
@@ -71,20 +72,76 @@ export function saveBookmarks(
     storageKey(userId, documentId),
     JSON.stringify(bookmarks)
   )
+  queueMicrotask(() => {
+    window.dispatchEvent(
+      new CustomEvent(BOOKMARKS_UPDATED_EVENT, {
+        detail: { userId, documentId },
+      })
+    )
+  })
+}
+
+export function mergeBookmarkLists(
+  primary: Bookmark[],
+  secondary: Bookmark[]
+): Bookmark[] {
+  const byId = new Map<string, Bookmark>()
+  for (const bookmark of [...secondary, ...primary]) {
+    if (bookmark?.id) byId.set(bookmark.id, bookmark)
+  }
+  return [...byId.values()].sort((left, right) => {
+    if (left.anchor.blockIndex !== right.anchor.blockIndex) {
+      return left.anchor.blockIndex - right.anchor.blockIndex
+    }
+    return left.anchor.startOffset - right.anchor.startOffset
+  })
 }
 
 export function migrateBookmarks(
   userId: string,
   fromDocumentId: string,
   toDocumentId: string
-): void {
-  if (fromDocumentId === toDocumentId) return
-  const existing = loadBookmarks(userId, toDocumentId)
-  if (existing.length > 0) return
+): Bookmark[] {
+  if (fromDocumentId === toDocumentId) {
+    return loadBookmarks(userId, toDocumentId)
+  }
+
+  const destination = loadBookmarks(userId, toDocumentId)
   const source = loadBookmarks(userId, fromDocumentId)
-  if (source.length === 0) return
-  saveBookmarks(userId, toDocumentId, source)
-  localStorage.removeItem(storageKey(userId, fromDocumentId))
+  const merged = mergeBookmarkLists(destination, source)
+
+  saveBookmarks(userId, toDocumentId, merged)
+  if (source.length > 0) {
+    localStorage.removeItem(storageKey(userId, fromDocumentId))
+  }
+  return merged
+}
+
+export function migrateBookmarksAcrossUsers(
+  fromUserId: string,
+  toUserId: string,
+  documentId: string
+): Bookmark[] {
+  if (fromUserId === toUserId) {
+    return loadBookmarks(toUserId, documentId)
+  }
+
+  const destination = loadBookmarks(toUserId, documentId)
+  const source = loadBookmarks(fromUserId, documentId)
+  const merged = mergeBookmarkLists(destination, source)
+
+  saveBookmarks(toUserId, documentId, merged)
+  if (source.length > 0) {
+    localStorage.removeItem(storageKey(fromUserId, documentId))
+  }
+  return merged
+}
+
+export function createDraftBookmarkDocumentId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return `draft-${crypto.randomUUID()}`
+  }
+  return `draft-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
 export function createBookmarkId(): string {

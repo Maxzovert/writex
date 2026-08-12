@@ -14,7 +14,6 @@ import {
 } from "lucide-react"
 import { MyBlogsList } from "@/components/blogs/MyBlogsList"
 import Navbar from "../Components/Navbar"
-import { SiteFooter } from "../../components/layout/SiteFooter"
 import { BlogLibraryExplorer } from "@/components/folders/BlogLibraryExplorer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -62,7 +61,9 @@ const MyBlog = () => {
   const fetchBlogs = async () => {
     try {
       setLoading(true)
-      const res = await axiosInstance.get("/blog/myblogs/")
+      const res = await axiosInstance.get("/blog/myblogs/", {
+        params: { page: 1, limit: 100 },
+      })
       setData(res.data.blogs)
     } catch {
       toast.error("Failed to fetch blogs")
@@ -127,7 +128,11 @@ const MyBlog = () => {
       <Navbar />
 
       <main className="flex-1">
-        <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-muted/40 via-background to-background px-4 py-10 sm:px-6 lg:px-8">
+        <section
+          className={`relative overflow-hidden border-b border-border bg-gradient-to-br from-muted/40 via-background to-background px-4 sm:px-6 lg:px-8 ${
+            activeView === "folders" ? "py-6" : "py-10"
+          }`}
+        >
           <div className="relative mx-auto max-w-7xl">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
               <motion.div
@@ -136,14 +141,21 @@ const MyBlog = () => {
               >
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1 text-xs font-medium text-muted-foreground">
                   <Sparkles className="h-3.5 w-3.5" />
-                  File explorer
+                  {activeView === "folders" ? "Folder library" : "File explorer"}
                 </div>
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  My Blogs
+                <h1
+                  className={`font-bold tracking-tight ${
+                    activeView === "folders"
+                      ? "text-2xl sm:text-3xl"
+                      : "text-3xl sm:text-4xl"
+                  }`}
+                >
+                  {activeView === "folders" ? "Folders" : "My Blogs"}
                 </h1>
                 <p className="mt-2 max-w-xl text-muted-foreground">
-                  Manage every post in one place, then organize selected posts in
-                  folders without losing the big picture.
+                  {activeView === "folders"
+                    ? "A full workspace for pinned folders, nested collections, and organized posts."
+                    : "Manage every post in one place, then organize selected posts in folders without losing the big picture."}
                 </p>
               </motion.div>
               <Button
@@ -198,14 +210,20 @@ const MyBlog = () => {
           </div>
         </section>
 
-        <section className="w-full px-3 py-8 sm:px-5 lg:px-8 xl:px-10 lg:py-10">
+        <section
+          className={`w-full ${
+            activeView === "folders"
+              ? "px-0 pb-0 pt-4 sm:pt-5"
+              : "px-3 py-8 sm:px-5 lg:px-8 xl:px-10 lg:py-10"
+          }`}
+        >
           {loading ? (
-            <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-border bg-card/50">
+            <div className="mx-3 flex min-h-[420px] items-center justify-center rounded-2xl border border-border bg-card/50 sm:mx-5 lg:mx-8 xl:mx-10">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-foreground" />
             </div>
           ) : (
-            <div className="space-y-5">
-              <div className="flex justify-center">
+            <div className={activeView === "folders" ? "space-y-4" : "space-y-5"}>
+              <div className={`flex justify-center ${activeView === "folders" ? "px-3" : ""}`}>
                 <div className="inline-flex rounded-full border border-border bg-card p-1 shadow-sm">
                   <button
                     type="button"
@@ -235,20 +253,22 @@ const MyBlog = () => {
               </div>
 
               {activeView === "allBlogs" ? (
-                <MyBlogsList
-                  allBlogs={data}
-                  blogs={filteredBlogs}
-                  folderTree={folderTree}
-                  activeFilter={activeStatusFilter}
-                  onFilterChange={setActiveStatusFilter}
-                  onEditBlog={(blog) =>
-                    navigate("/write", { state: { editBlog: blog } })
-                  }
-                  onReadBlog={(blogId) => navigate(`/blog/${blogId}`)}
-                  onDeleteBlog={setDeleteTargetId}
-                  onNewBlog={() => navigate("/write")}
-                  onMoveBlog={handleMoveBlog}
-                />
+                <div className="px-3 sm:px-5 lg:px-8 xl:px-10">
+                  <MyBlogsList
+                    allBlogs={data}
+                    blogs={filteredBlogs}
+                    folderTree={folderTree}
+                    activeFilter={activeStatusFilter}
+                    onFilterChange={setActiveStatusFilter}
+                    onEditBlog={(blog) =>
+                      navigate("/write", { state: { editBlog: blog } })
+                    }
+                    onReadBlog={(blogId) => navigate(`/blog/${blogId}`)}
+                    onDeleteBlog={setDeleteTargetId}
+                    onNewBlog={() => navigate("/write")}
+                    onMoveBlog={handleMoveBlog}
+                  />
+                </div>
               ) : (
                 <BlogLibraryExplorer
                   key={explorerKey}
@@ -294,8 +314,6 @@ const MyBlog = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <SiteFooter />
     </div>
   )
 }

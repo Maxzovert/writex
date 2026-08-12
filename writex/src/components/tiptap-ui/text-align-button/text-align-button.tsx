@@ -117,12 +117,11 @@ export function setTextAlign(editor: Editor | null, align: TextAlign): boolean {
 export function isTextAlignButtonDisabled(
   editor: Editor | null,
   alignAvailable: boolean,
-  canAlign: boolean,
+  _canAlign: boolean,
   userDisabled: boolean = false
 ): boolean {
   if (!editor || !alignAvailable) return true
   if (userDisabled) return true
-  if (!canAlign) return true
   return false
 }
 
@@ -142,16 +141,27 @@ export function useTextAlign(
   disabled: boolean = false,
   hideWhenUnavailable: boolean = false
 ) {
+  const [, setEditorTick] = React.useState(0)
+
+  React.useEffect(() => {
+    if (!editor) return
+
+    const refresh = () => setEditorTick((tick) => tick + 1)
+    editor.on("selectionUpdate", refresh)
+    editor.on("transaction", refresh)
+
+    return () => {
+      editor.off("selectionUpdate", refresh)
+      editor.off("transaction", refresh)
+    }
+  }, [editor])
+
   const alignAvailable = React.useMemo(
     () => checkTextAlignExtension(editor),
     [editor]
   )
 
-  const canAlign = React.useMemo(
-    () => canSetTextAlign(editor, align, alignAvailable),
-    [editor, align, alignAvailable]
-  )
-
+  const canAlign = canSetTextAlign(editor, align, alignAvailable)
   const isDisabled = isTextAlignButtonDisabled(
     editor,
     alignAvailable,
@@ -165,9 +175,10 @@ export function useTextAlign(
     return setTextAlign(editor, align)
   }, [alignAvailable, editor, isDisabled, align])
 
-  const shouldShow = React.useMemo(
-    () => shouldShowTextAlignButton(editor, canAlign, hideWhenUnavailable),
-    [editor, canAlign, hideWhenUnavailable]
+  const shouldShow = shouldShowTextAlignButton(
+    editor,
+    canAlign,
+    hideWhenUnavailable
   )
 
   const Icon = textAlignIcons[align]

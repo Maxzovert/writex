@@ -37,6 +37,14 @@
     margin-top: 20px;
   }
 
+  p.is-empty + p.is-empty,
+  h1 + p.is-empty,
+  h2 + p.is-empty,
+  h3 + p.is-empty,
+  h4 + p.is-empty {
+    margin-top: 0;
+  }
+
   // Selection styles
   &:not(.readonly):not(.ProseMirror-hideselection) {
     ::selection {
@@ -207,6 +215,10 @@
     position: relative;
     color: inherit;
     font-style: inherit;
+    margin-top: 1.1em;
+    margin-bottom: 0.4em;
+    padding: 0;
+    line-height: 1.25;
 
     &:first-child {
       margin-top: 0;
@@ -214,27 +226,49 @@
   }
 
   h1 {
-    font-size: 1.5em;
+    font-size: 1.75em;
     font-weight: 700;
-    margin-top: 3em;
+    line-height: 1.2;
   }
 
   h2 {
-    font-size: 1.25em;
+    font-size: 1.4em;
     font-weight: 700;
-    margin-top: 2.5em;
   }
 
   h3 {
-    font-size: 1.125em;
+    font-size: 1.2em;
     font-weight: 600;
-    margin-top: 2em;
   }
 
   h4 {
-    font-size: 1em;
+    font-size: 1.05em;
     font-weight: 600;
-    margin-top: 2em;
+  }
+
+  h1 + h2,
+  h1 + h3,
+  h1 + h4,
+  h2 + h3,
+  h2 + h4,
+  h3 + h4,
+  h2 + h2,
+  h3 + h3 {
+    margin-top: 0.75em;
+  }
+
+  h1 + p,
+  h2 + p,
+  h3 + p,
+  h4 + p {
+    margin-top: 0.35rem;
+  }
+
+  p + h1,
+  p + h2,
+  p + h3,
+  p + h4 {
+    margin-top: 1.25rem;
   }
 }
 
@@ -243,18 +277,18 @@
      ===================== */
 .tiptap.ProseMirror {
   hr {
-    margin-top: 3em;
-    margin-bottom: 3em;
+    margin: 1rem 0;
     border: none;
     height: 1px;
-    background-color: var(--separator-color);
+    width: 100%;
+    background-color: var(--separator-color, #d1d5db);
   }
 
   &.ProseMirror-focused {
     hr.ProseMirror-selectednode {
       border-radius: 9999px;
-      outline: 3px solid var(--tt-brand-color-500);
-      outline-offset: 2px;
+      outline: 2px solid var(--tt-brand-color-500);
+      outline-offset: 3px;
     }
   }
 }

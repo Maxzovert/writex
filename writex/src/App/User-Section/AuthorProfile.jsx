@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Navbar from "../Components/Navbar";
-import { SiteFooter } from "../../components/layout/SiteFooter";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import { useAuth } from "../../context/authContext";
@@ -337,6 +336,8 @@ const AuthorProfile = () => {
                             <img
                               src={safeMainImage}
                               alt={blog.title}
+                              loading="lazy"
+                              decoding="async"
                               className="h-full w-full object-cover transition-transform group-hover:scale-105"
                             />
                           </div>
@@ -357,7 +358,7 @@ const AuthorProfile = () => {
                             </span>
                             <span className="flex items-center gap-1">
                               <Heart className="h-3 w-3" />
-                              {blog.likes?.length || 0}
+                              {blog.likeCount ?? blog.likes?.length ?? 0}
                             </span>
                           </div>
                           <Button
@@ -390,8 +391,6 @@ const AuthorProfile = () => {
           }}
         />
       )}
-
-      <SiteFooter />
     </div>
   );
 };

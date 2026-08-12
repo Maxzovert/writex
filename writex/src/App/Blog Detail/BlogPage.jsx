@@ -39,6 +39,8 @@ import { getAnchorFromDomSelection, getChildTextOffsetBase, getTableCellTextOffs
 import { shareBlogWithFollowers } from '../../lib/follow-api';
 import '@/components/bookmarks/bookmarks.scss';
 
+const EMPTY_BOOKMARKS = [];
+
 /** Renders TipTap `text` nodes (with marks) for paragraphs, table cells, etc. */
 function renderTextRuns(nodes, keyPrefix = 't') {
   if (!nodes || !Array.isArray(nodes)) return null;
@@ -50,6 +52,7 @@ function renderTextRuns(nodes, keyPrefix = 't') {
     let customHighlightColor = null;
     let linkHref = null;
     let linkTarget = null;
+    const textStyle = {};
 
     if (textNode.marks) {
       textNode.marks.forEach((mark) => {
@@ -135,6 +138,13 @@ function renderTextRuns(nodes, keyPrefix = 't') {
             linkTarget = mark.attrs?.target;
             className += ' text-blue-600 dark:text-blue-400 underline';
             break;
+          case 'textStyle': {
+            const fontSize = Number(mark.attrs?.fontSize);
+            if (Number.isFinite(fontSize) && fontSize >= 8 && fontSize <= 96) {
+              textStyle.fontSize = `${fontSize}px`;
+            }
+            break;
+          }
           default:
             break;
         }
@@ -151,6 +161,7 @@ function renderTextRuns(nodes, keyPrefix = 't') {
           target={linkTarget ?? undefined}
           rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
           className={className}
+          style={textStyle}
         >
           {text}
         </a>
@@ -163,6 +174,7 @@ function renderTextRuns(nodes, keyPrefix = 't') {
           key={key}
           className={className}
           style={{
+            ...textStyle,
             backgroundColor: customHighlightColor,
             display: 'inline-block',
           }}
@@ -173,7 +185,7 @@ function renderTextRuns(nodes, keyPrefix = 't') {
     }
 
     return (
-      <span key={key} className={className}>
+      <span key={key} className={className} style={textStyle}>
         {text}
       </span>
     );
@@ -202,7 +214,7 @@ const BlogPage = () => {
     addBookmark,
     removeBookmark,
     goToBookmark,
-  } = useBookmarks(userId, documentId);
+  } = useBookmarks(userId, documentId, blog?.bookmarks || EMPTY_BOOKMARKS);
 
   const handleAddBookmark = (color) => {
     const container = focusContentRef.current ?? contentRef.current;
@@ -220,21 +232,22 @@ const BlogPage = () => {
     const fetchBlog = async () => {
       try {
         setLoading(true);
-        // First, track the view
-        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/view`, {}, {
-          withCredentials: true
-        });
-        
-        // Then fetch the blog with interactions
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/interactions`, {
-          withCredentials: true
-        });
+        // Fire-and-forget view tracking; do not block content load
+        void axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/view`,
+          {},
+          { withCredentials: true }
+        );
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/interactions/blog/${id}/interactions`,
+          { withCredentials: true }
+        );
         setBlog(response.data.blog);
       } catch (error) {
         console.error('Error fetching blog:', error);
         console.error('Error response:', error.response?.data);
         toast.error('Error loading blog');
-        // Redirect back to blogs page if blog not found
         navigate('/blogs');
       } finally {
         setLoading(false);
@@ -263,9 +276,7 @@ const BlogPage = () => {
       setBlog(prev => ({
         ...prev,
         isLiked: response.data.isLiked,
-        likes: response.data.isLiked 
-          ? [...prev.likes, { _id: user.id, username: user.username }]
-          : prev.likes.filter(like => like._id !== user.id)
+        likeCount: response.data.likeCount,
       }));
       
       toast.success(response.data.message);
@@ -296,9 +307,7 @@ const BlogPage = () => {
             ? {
                 ...comment,
                 isLiked: response.data.isLiked,
-                likes: response.data.isLiked 
-                  ? [...comment.likes, { _id: user.id, username: user.username }]
-                  : comment.likes.filter(like => like._id !== user.id)
+                likeCount: response.data.likeCount,
               }
             : comment
         )
@@ -336,9 +345,7 @@ const BlogPage = () => {
                     ? {
                         ...reply,
                         isLiked: response.data.isLiked,
-                        likes: response.data.isLiked 
-                          ? [...reply.likes, { _id: user.id, username: user.username }]
-                          : reply.likes.filter(like => like._id !== user.id)
+                        likeCount: response.data.likeCount,
                       }
                     : reply
                 )
@@ -603,20 +610,34 @@ const BlogPage = () => {
         switch (node.type) {
           case 'paragraph':
             return (
-              <p key={index} data-block-index={index} className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+              <p
+                key={index}
+                data-block-index={index}
+                className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed text-lg"
+                style={{
+                  textAlign: node.attrs?.textAlign || 'left',
+                  ...(Number.isFinite(Number(node.attrs?.lineHeight)) &&
+                  Number(node.attrs.lineHeight) >= 1.15
+                    ? { lineHeight: Number(node.attrs.lineHeight) }
+                    : {}),
+                  ...(Number.isFinite(Number(node.attrs?.letterSpacing))
+                    ? { letterSpacing: `${Number(node.attrs.letterSpacing)}px` }
+                    : {}),
+                }}
+              >
                 {renderBlockText(node.content, index, `p-${index}`)}
               </p>
             );
           
-          case 'heading':
+          case 'heading': {
             const HeadingTag = `h${node.attrs?.level || 1}`;
             const headingStyles = {
-              1: 'text-3xl font-bold text-gray-900 dark:text-gray-50 mb-4 mt-8 first:mt-0',
-              2: 'text-2xl font-bold text-gray-800 dark:text-gray-200 mb-3 mt-6',
-              3: 'text-xl font-semibold text-gray-800 dark:text-gray-200 mb-3 mt-5',
-              4: 'text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2 mt-4',
-              5: 'text-base font-semibold text-gray-700 dark:text-gray-300 mb-2 mt-3',
-              6: 'text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 mt-2'
+              1: 'text-3xl font-bold leading-snug text-gray-900 dark:text-gray-50 mt-6 mb-3 first:mt-0',
+              2: 'text-2xl font-bold leading-snug text-gray-800 dark:text-gray-200 mt-5 mb-2',
+              3: 'text-xl font-semibold leading-snug text-gray-800 dark:text-gray-200 mt-4 mb-2',
+              4: 'text-lg font-semibold leading-snug text-gray-700 dark:text-gray-300 mt-4 mb-2',
+              5: 'text-base font-semibold leading-snug text-gray-700 dark:text-gray-300 mt-3 mb-1',
+              6: 'text-sm font-semibold leading-snug text-gray-700 dark:text-gray-300 mt-3 mb-1'
             };
             
             return (
@@ -624,9 +645,29 @@ const BlogPage = () => {
                 key={index}
                 data-block-index={index}
                 className={headingStyles[node.attrs?.level || 1]}
+                style={{
+                  textAlign: node.attrs?.textAlign || 'left',
+                  ...(Number.isFinite(Number(node.attrs?.lineHeight)) &&
+                  Number(node.attrs.lineHeight) >= 1.15
+                    ? { lineHeight: Number(node.attrs.lineHeight) }
+                    : {}),
+                  ...(Number.isFinite(Number(node.attrs?.letterSpacing))
+                    ? { letterSpacing: `${Number(node.attrs.letterSpacing)}px` }
+                    : {}),
+                }}
               >
                 {renderBlockText(node.content, index, `h-${index}`)}
               </HeadingTag>
+            );
+          }
+
+          case 'horizontalRule':
+            return (
+              <hr
+                key={index}
+                data-block-index={index}
+                className="my-6 border-0 border-t border-gray-300 dark:border-zinc-600"
+              />
             );
           
           case 'image': {
@@ -970,7 +1011,7 @@ const BlogPage = () => {
                     }`}
                   >
                     <Heart className={`h-4 w-4 ${blog.isLiked ? "fill-current" : ""}`} />
-                    {blog.likes?.length || 0} likes
+                    {blog.likeCount ?? blog.likes?.length ?? 0} likes
                   </button>
                   <div className="flex items-center gap-1">
                     <Eye className="w-4 h-4" />
@@ -1142,7 +1183,7 @@ const BlogPage = () => {
                             }`}
                           >
                             <ThumbsUp className={`w-3 h-3 ${comment.isLiked ? "fill-current" : ""}`} />
-                            {comment.likes?.length || 0}
+                            {comment.likeCount ?? comment.likes?.length ?? 0}
                           </Button>
                           
                           <Button
@@ -1237,7 +1278,7 @@ const BlogPage = () => {
                                     }`}
                                   >
                                     <ThumbsUp className={`w-3 h-3 ${reply.isLiked ? "fill-current" : ""}`} />
-                                    {reply.likes?.length || 0}
+                                    {reply.likeCount ?? reply.likes?.length ?? 0}
                                   </Button>
                                   
                                   {(user?.id === reply.user?._id || user?.id === blog.author?._id) && (
@@ -1343,7 +1384,7 @@ const BlogPage = () => {
                   }`}
                 >
                   <Heart className={`h-4 w-4 ${blog.isLiked ? "fill-current" : ""}`} />
-                  {blog.likes?.length || 0} likes
+                  {blog.likeCount ?? blog.likes?.length ?? 0} likes
                 </button>
                 <div className="flex items-center gap-1">
                   <Eye className="h-4 w-4" />

@@ -54,11 +54,16 @@ export async function fetchFollowing(userId: string) {
   return data.users ?? [];
 }
 
-export async function fetchFollowingFeed() {
-  const { data } = await axiosInstance.get("/public/posts/following");
+export async function fetchFollowingFeed({ page = 1, limit = 20 } = {}) {
+  const { data } = await axiosInstance.get("/public/posts/following", {
+    params: { page, limit },
+  });
   return {
     allBlogs: data.allBlogs ?? [],
     sharedBlogs: data.sharedBlogs ?? [],
+    page: data.page,
+    hasMore: data.hasMore,
+    total: data.total,
   };
 }
 

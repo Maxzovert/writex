@@ -146,6 +146,8 @@ export function MyBlogsList({
                         <img
                           src={blog.mainImage}
                           alt={blog.title || "Blog cover"}
+                          loading="lazy"
+                          decoding="async"
                           className="h-44 w-full object-cover"
                         />
                       ) : (

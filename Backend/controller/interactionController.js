@@ -3,7 +3,6 @@ import User from "../models/userModel.js";
 import BlogShare from "../models/blogShareModel.js";
 import { createNotification, createNotificationsForUsers } from "../utils/createNotification.js";
 
-// Add a comment to a blog post
 const addComment = async (req, res) => {
     try {
         const { blogId } = req.params;
@@ -14,7 +13,7 @@ const addComment = async (req, res) => {
             return res.status(400).json({ message: "Comment content is required" });
         }
 
-        const blog = await Blog.findById(blogId);
+        const blog = await Blog.findById(blogId).select("author comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -41,13 +40,11 @@ const addComment = async (req, res) => {
             });
         }
 
-        // Populate the comment with user details
-        await blog.populate({
-            path: 'comments.user',
-            select: 'username profileImage'
-        });
-
         const addedComment = blog.comments[blog.comments.length - 1];
+        await Blog.populate(addedComment, {
+            path: "user",
+            select: "username profileImage"
+        });
 
         res.status(201).json({
             message: "Comment added successfully",
@@ -59,7 +56,6 @@ const addComment = async (req, res) => {
     }
 };
 
-// Add a reply to a comment
 const addReply = async (req, res) => {
     try {
         const { blogId, commentId } = req.params;
@@ -70,7 +66,7 @@ const addReply = async (req, res) => {
             return res.status(400).json({ message: "Reply content is required" });
         }
 
-        const blog = await Blog.findById(blogId);
+        const blog = await Blog.findById(blogId).select("comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -90,13 +86,11 @@ const addReply = async (req, res) => {
         comment.replies.push(newReply);
         await blog.save();
 
-        // Populate the reply with user details
-        await blog.populate({
-            path: 'comments.replies.user',
-            select: 'username profileImage'
-        });
-
         const addedReply = comment.replies[comment.replies.length - 1];
+        await Blog.populate(addedReply, {
+            path: "user",
+            select: "username profileImage"
+        });
 
         res.status(201).json({
             message: "Reply added successfully",
@@ -108,25 +102,31 @@ const addReply = async (req, res) => {
     }
 };
 
-// Like/Unlike a blog post
 const toggleLike = async (req, res) => {
     try {
         const { blogId } = req.params;
         const userId = req.user.id;
 
-        const blog = await Blog.findById(blogId);
+        const blog = await Blog.findById(blogId).select("author likes");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
 
-        const isLiked = blog.likes.includes(userId);
-        
+        const isLiked = blog.likes.some((like) => like.toString() === userId.toString());
+
+        let updated;
         if (isLiked) {
-            // Unlike the post
-            blog.likes = blog.likes.filter(like => like.toString() !== userId);
+            updated = await Blog.findByIdAndUpdate(
+                blogId,
+                { $pull: { likes: userId } },
+                { new: true }
+            ).select("likes");
         } else {
-            // Like the post
-            blog.likes.push(userId);
+            updated = await Blog.findByIdAndUpdate(
+                blogId,
+                { $addToSet: { likes: userId } },
+                { new: true }
+            ).select("likes");
 
             if (blog.author.toString() !== userId.toString()) {
                 await createNotification({
@@ -138,12 +138,10 @@ const toggleLike = async (req, res) => {
             }
         }
 
-        await blog.save();
-
         res.status(200).json({
             message: isLiked ? "Post unliked successfully" : "Post liked successfully",
             isLiked: !isLiked,
-            likeCount: blog.likes.length
+            likeCount: updated?.likes?.length || 0
         });
     } catch (error) {
         console.error("Error in toggleLike:", error);
@@ -151,13 +149,12 @@ const toggleLike = async (req, res) => {
     }
 };
 
-// Like/Unlike a comment
 const toggleCommentLike = async (req, res) => {
     try {
         const { blogId, commentId } = req.params;
         const userId = req.user.id;
 
-        const blog = await Blog.findById(blogId);
+        const blog = await Blog.findById(blogId).select("comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -167,13 +164,11 @@ const toggleCommentLike = async (req, res) => {
             return res.status(404).json({ message: "Comment not found" });
         }
 
-        const isLiked = comment.likes.includes(userId);
-        
+        const isLiked = comment.likes.some((like) => like.toString() === userId.toString());
+
         if (isLiked) {
-            // Unlike the comment
-            comment.likes = comment.likes.filter(like => like.toString() !== userId);
+            comment.likes = comment.likes.filter((like) => like.toString() !== userId.toString());
         } else {
-            // Like the comment
             comment.likes.push(userId);
         }
 
@@ -190,13 +185,12 @@ const toggleCommentLike = async (req, res) => {
     }
 };
 
-// Like/Unlike a reply
 const toggleReplyLike = async (req, res) => {
     try {
         const { blogId, commentId, replyId } = req.params;
         const userId = req.user.id;
 
-        const blog = await Blog.findById(blogId);
+        const blog = await Blog.findById(blogId).select("comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -211,13 +205,11 @@ const toggleReplyLike = async (req, res) => {
             return res.status(404).json({ message: "Reply not found" });
         }
 
-        const isLiked = reply.likes.includes(userId);
-        
+        const isLiked = reply.likes.some((like) => like.toString() === userId.toString());
+
         if (isLiked) {
-            // Unlike the reply
-            reply.likes = reply.likes.filter(like => like.toString() !== userId);
+            reply.likes = reply.likes.filter((like) => like.toString() !== userId.toString());
         } else {
-            // Like the reply
             reply.likes.push(userId);
         }
 
@@ -234,40 +226,47 @@ const toggleReplyLike = async (req, res) => {
     }
 };
 
-// Track a view for a blog post
 const trackView = async (req, res) => {
     try {
         const { blogId } = req.params;
-        const userId = req.user?.id; // Optional for anonymous users
+        const userId = req.user?.id;
 
-        const blog = await Blog.findById(blogId);
+        const blog = await Blog.findByIdAndUpdate(
+            blogId,
+            { $inc: { viewCount: 1 } },
+            { new: true }
+        ).select("viewCount");
+
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
 
-        // Increment view count
-        blog.viewCount += 1;
-
-        // If user is logged in, track unique view
+        let uniqueViewCount;
         if (userId) {
-            const existingView = blog.uniqueViews.find(view => 
-                view.user.toString() === userId
-            );
+            const uniqueResult = await Blog.findOneAndUpdate(
+                { _id: blogId, "uniqueViews.user": { $ne: userId } },
+                {
+                    $push: {
+                        uniqueViews: { user: userId, viewedAt: new Date() },
+                    },
+                },
+                { new: true }
+            ).select("uniqueViews");
 
-            if (!existingView) {
-                blog.uniqueViews.push({
-                    user: userId,
-                    viewedAt: new Date()
-                });
+            if (uniqueResult) {
+                uniqueViewCount = uniqueResult.uniqueViews.length;
+            } else {
+                const existing = await Blog.findById(blogId)
+                    .select("uniqueViews")
+                    .lean();
+                uniqueViewCount = existing?.uniqueViews?.length || 0;
             }
         }
-
-        await blog.save();
 
         res.status(200).json({
             message: "View tracked successfully",
             viewCount: blog.viewCount,
-            uniqueViewCount: blog.uniqueViews.length
+            ...(uniqueViewCount !== undefined ? { uniqueViewCount } : {}),
         });
     } catch (error) {
         console.error("Error in trackView:", error);
@@ -275,52 +274,62 @@ const trackView = async (req, res) => {
     }
 };
 
-// Get blog with all interactions
 const getBlogWithInteractions = async (req, res) => {
     try {
         const { blogId } = req.params;
         const userId = req.user?.id;
 
         const blog = await Blog.findById(blogId)
-            .populate('author', 'username profileImage')
-            .populate('likes', 'username')
-            .populate('comments.user', 'username profileImage')
-            .populate('comments.likes', 'username')
-            .populate('comments.replies.user', 'username profileImage')
-            .populate('comments.replies.likes', 'username')
-            .populate('uniqueViews.user', 'username');
+            .select("-uniqueViews")
+            .populate("author", "username profileImage")
+            .populate("comments.user", "username profileImage")
+            .populate("comments.replies.user", "username profileImage")
+            .lean();
 
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
 
-        // Check if current user has liked the post
-        const isLiked = userId ? blog.likes.some(like => like._id.toString() === userId) : false;
+        const likeCount = Array.isArray(blog.likes) ? blog.likes.length : 0;
+        const isLiked = userId
+            ? blog.likes.some((like) => like.toString() === userId.toString())
+            : false;
 
-        // Check if current user has liked each comment
-        const commentsWithLikes = blog.comments.map(comment => {
-            const isCommentLiked = userId ? comment.likes.some(like => like._id.toString() === userId) : false;
-            
-            const repliesWithLikes = comment.replies.map(reply => {
-                const isReplyLiked = userId ? reply.likes.some(like => like._id.toString() === userId) : false;
+        const commentsWithLikes = (blog.comments || []).map((comment) => {
+            const commentLikes = comment.likes || [];
+            const isCommentLiked = userId
+                ? commentLikes.some((like) => like.toString() === userId.toString())
+                : false;
+
+            const repliesWithLikes = (comment.replies || []).map((reply) => {
+                const replyLikes = reply.likes || [];
+                const isReplyLiked = userId
+                    ? replyLikes.some((like) => like.toString() === userId.toString())
+                    : false;
                 return {
-                    ...reply.toObject(),
+                    ...reply,
+                    likes: undefined,
+                    likeCount: replyLikes.length,
                     isLiked: isReplyLiked
                 };
             });
 
             return {
-                ...comment.toObject(),
+                ...comment,
+                likes: undefined,
+                likeCount: commentLikes.length,
                 isLiked: isCommentLiked,
                 replies: repliesWithLikes
             };
         });
 
+        const { likes, ...blogRest } = blog;
         const blogWithInteractions = {
-            ...blog.toObject(),
+            ...blogRest,
+            likes: undefined,
+            likeCount,
             isLiked,
-            comments: commentsWithLikes,
-            uniqueViewCount: blog.uniqueViews.length
+            comments: commentsWithLikes
         };
 
         res.status(200).json({
@@ -333,13 +342,12 @@ const getBlogWithInteractions = async (req, res) => {
     }
 };
 
-// Delete a comment (only by the author or blog owner)
 const deleteComment = async (req, res) => {
     try {
         const { blogId, commentId } = req.params;
         const userId = req.user.id;
 
-        const blog = await Blog.findById(blogId);
+        const blog = await Blog.findById(blogId).select("author comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -349,7 +357,6 @@ const deleteComment = async (req, res) => {
             return res.status(404).json({ message: "Comment not found" });
         }
 
-        // Check if user is the comment author or blog owner
         const isCommentAuthor = comment.user.toString() === userId;
         const isBlogOwner = blog.author.toString() === userId;
 
@@ -369,13 +376,12 @@ const deleteComment = async (req, res) => {
     }
 };
 
-// Delete a reply (only by the author or blog owner)
 const deleteReply = async (req, res) => {
     try {
         const { blogId, commentId, replyId } = req.params;
         const userId = req.user.id;
 
-        const blog = await Blog.findById(blogId);
+        const blog = await Blog.findById(blogId).select("author comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -390,7 +396,6 @@ const deleteReply = async (req, res) => {
             return res.status(404).json({ message: "Reply not found" });
         }
 
-        // Check if user is the reply author or blog owner
         const isReplyAuthor = reply.user.toString() === userId;
         const isBlogOwner = blog.author.toString() === userId;
 
@@ -415,7 +420,7 @@ const shareBlog = async (req, res) => {
         const { blogId } = req.params;
         const userId = req.user._id;
 
-        const blog = await Blog.findById(blogId);
+        const blog = await Blog.findById(blogId).select("status title author");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -424,7 +429,7 @@ const shareBlog = async (req, res) => {
             return res.status(400).json({ message: "Only published blogs can be shared" });
         }
 
-        const existingShare = await BlogShare.findOne({ user: userId, blog: blogId });
+        const existingShare = await BlogShare.findOne({ user: userId, blog: blogId }).select("_id");
         if (existingShare) {
             return res.status(200).json({
                 message: "Blog already shared with your followers",

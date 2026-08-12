@@ -412,55 +412,6 @@ const Home = () => {
           </motion.div>
         </div>
       </section>
-
-      {/* Footer - Matching Other Components */}
-      <footer className="bg-stone-200 dark:bg-stone-950 text-gray-900 dark:text-stone-100 py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
-            <div className="md:col-span-2">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-                  <PenTool className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-2xl font-bold">WriteX</span>
-              </div>
-              <p className="text-gray-700 dark:text-stone-300 text-lg leading-relaxed max-w-md">
-                Empowering the next generation of writers to share their authentic voice. 
-                No corporate BS, just real creativity.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-lg mb-6">Product</h3>
-              <ul className="space-y-3 text-gray-700 dark:text-stone-300">
-                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Features</li>
-                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Pricing</li>
-                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">API</li>
-                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Integrations</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-lg mb-6">Company</h3>
-              <ul className="space-y-3 text-gray-700 dark:text-stone-300">
-                <li
-                  onClick={() => Navigate("/about")}
-                  className="cursor-pointer transition-colors duration-300 hover:text-black dark:hover:text-white"
-                >
-                  About
-                </li>
-                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Blog</li>
-                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Careers</li>
-                <li className="hover:text-black dark:hover:text-white transition-colors duration-300 cursor-pointer">Press</li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-300 dark:border-stone-700 pt-8 text-center text-gray-600 dark:text-stone-400">
-            <p>&copy; 2024 WriteX. Built with ❤️ for the next generation of writers.</p>
-          </div>
-        </div>
-      </footer>
     </>
   );
 };

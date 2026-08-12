@@ -18,6 +18,8 @@ const blogShareSchema = new mongoose.Schema({
 });
 
 blogShareSchema.index({ user: 1, blog: 1 }, { unique: true });
+blogShareSchema.index({ user: 1, createdAt: -1 });
+blogShareSchema.index({ blog: 1 });
 
 const BlogShare = mongoose.model("BlogShare", blogShareSchema);
 export default BlogShare;

@@ -1,12 +1,13 @@
 import express from "express";
 import interactionController from "../controller/interactionController.js";
 import protectRoute from "../middleware/auth.js";
+import optionalAuth from "../middleware/optionalAuth.js";
 
 const interactionRouter = express.Router();
 
-// Public routes (no authentication required)
-interactionRouter.get("/blog/:blogId/interactions", interactionController.getBlogWithInteractions);
-interactionRouter.post("/blog/:blogId/view", interactionController.trackView);
+// Public routes (optional auth for isLiked / unique views)
+interactionRouter.get("/blog/:blogId/interactions", optionalAuth, interactionController.getBlogWithInteractions);
+interactionRouter.post("/blog/:blogId/view", optionalAuth, interactionController.trackView);
 
 // Protected routes (authentication required)
 interactionRouter.post("/blog/:blogId/comment", protectRoute, interactionController.addComment);

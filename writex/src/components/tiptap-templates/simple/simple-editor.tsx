@@ -11,6 +11,7 @@ import { Image } from "@tiptap/extension-image"
 import { TaskItem } from "@tiptap/extension-task-item"
 import { TaskList } from "@tiptap/extension-task-list"
 import { TextAlign } from "@tiptap/extension-text-align"
+import { TextStyle } from "@tiptap/extension-text-style"
 import { Typography } from "@tiptap/extension-typography"
 import { Highlight } from "@tiptap/extension-highlight"
 import { Subscript } from "@tiptap/extension-subscript"
@@ -28,11 +29,12 @@ import { Link } from "@/components/tiptap-extension/link-extension"
 import { Selection } from "@/components/tiptap-extension/selection-extension"
 import { TrailingNode } from "@/components/tiptap-extension/trailing-node-extension"
 import { BookmarkDecorations } from "@/components/tiptap-extension/bookmark-decoration-extension"
+import { FontSize } from "@/components/tiptap-extension/font-size-extension"
+import { BlockTypography } from "@/components/tiptap-extension/block-typography-extension"
 import type { Bookmark, BookmarkColor } from "@/lib/bookmarks"
 
 // --- UI Primitives ---
 import { Button } from "@/components/tiptap-ui-primitive/button"
-import { Spacer } from "@/components/tiptap-ui-primitive/spacer"
 import {
   Toolbar,
   ToolbarGroup,
@@ -52,6 +54,7 @@ import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
 import { TableDropdownMenu } from "@/components/tiptap-ui/table-dropdown-menu/table-dropdown-menu"
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
+import { DividerButton } from "@/components/tiptap-ui/divider-button/divider-button"
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
 import { CodeBlockLanguageSelect } from "@/components/tiptap-ui/code-block-language-select"
 import {
@@ -66,6 +69,8 @@ import {
 } from "@/components/tiptap-ui/link-popover"
 import { MarkButton } from "@/components/tiptap-ui/mark-button"
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
+import { FontSizeControl } from "@/components/tiptap-ui/font-size-control/font-size-control"
+import { TypographySpacingControls } from "@/components/tiptap-ui/typography-spacing-controls/typography-spacing-controls"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
 import { ClearContentButton } from "@/components/tiptap-ui/clear-content-button/clear-content-button"
 
@@ -80,9 +85,6 @@ import { useWindowSize } from "@/hooks/use-window-size"
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 import { BookmarkSelectionToolbar } from "@/components/bookmarks/BookmarkSelectionToolbar"
 import "@/components/bookmarks/bookmarks.scss"
-
-// --- Components ---
-// import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle"
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/new-tiptap-utils"
@@ -107,8 +109,6 @@ const MainToolbarContent = ({
 }) => {
   return (
     <>
-      <Spacer />
-
       <ToolbarGroup>
         <UndoRedoButton action="undo" />
         <UndoRedoButton action="redo" />
@@ -119,9 +119,12 @@ const MainToolbarContent = ({
 
       <ToolbarGroup>
         <HeadingDropdownMenu levels={[1, 2, 3, 4]} />
+        <FontSizeControl />
+        <TypographySpacingControls />
         <ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} />
         <TableDropdownMenu />
         <BlockquoteButton />
+        <DividerButton />
         <CodeBlockButton />
         <CodeBlockLanguageSelect />
       </ToolbarGroup>
@@ -131,20 +134,15 @@ const MainToolbarContent = ({
       <ToolbarGroup>
         <MarkButton type="bold" />
         <MarkButton type="italic" />
+        <MarkButton type="underline" />
         <MarkButton type="strike" />
         <MarkButton type="code" />
-        <MarkButton type="underline" />
         {!isMobile ? (
           <ColorHighlightPopover />
         ) : (
           <ColorHighlightPopoverButton onClick={onHighlighterClick} />
         )}
         {!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
         <MarkButton type="superscript" />
         <MarkButton type="subscript" />
       </ToolbarGroup>
@@ -163,15 +161,6 @@ const MainToolbarContent = ({
       <ToolbarGroup>
         <ImageUploadButton text="Add" />
       </ToolbarGroup>
-
-      <Spacer />
-
-      {isMobile && <ToolbarSeparator />}
-
-      {/* Removed ThemeToggle from toolbar */}
-      {/* <ToolbarGroup>
-        <ThemeToggle />
-      </ToolbarGroup> */}
     </>
   )
 }
@@ -257,7 +246,13 @@ export function SimpleEditor({
       CodeBlockLowlight.configure({
         lowlight,
       }),
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+        defaultAlignment: "left",
+      }),
+      TextStyle,
+      FontSize,
+      BlockTypography,
       Underline,
       TaskList,
       TaskItem.configure({ nested: true }),

@@ -39,14 +39,31 @@ const Blog = () => {
   const [showFilters, setShowFilters] = useState(true);
   const [feedMode, setFeedMode] = useState("all");
   const [feedLoading, setFeedLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const hasFatched = useRef(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const PAGE_LIMIT = 20;
+
   const applyCategoryFilter = (category, sourceData = data) => {
     setActiveCategory(category);
     setFilteredData(filterBlogsByCategory(sourceData, category));
+  };
+
+  const fetchAllBlogsPage = async (pageNum = 1) => {
+    const fetchData = await axios.get(
+      `${import.meta.env.VITE_API_BASE_URL}/public/posts/blogs/`,
+      { params: { page: pageNum, limit: PAGE_LIMIT } }
+    );
+    const allBlogs = fetchData.data.allBlogs ?? [];
+    setData(allBlogs);
+    setPage(fetchData.data.page ?? pageNum);
+    setHasMore(Boolean(fetchData.data.hasMore));
+    return allBlogs;
   };
 
   const handleFetchAllBlogs = async () => {
@@ -54,16 +71,36 @@ const Blog = () => {
     hasFatched.current = true;
 
     try {
-      const fetchData = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/public/posts/blogs/`);
-      const allBlogs = fetchData.data.allBlogs;
-      setData(allBlogs);
+      const allBlogs = await fetchAllBlogsPage(1);
       const category = resolveCategoryFilter(searchParams.get("category"));
       applyCategoryFilter(category, allBlogs);
-      toast.success("Blog Fetched")
     } catch (error) {
-      toast.error("Error in handle fetch all blogs");
+      toast.error("Error loading blogs");
     }
-  }
+  };
+
+  const handleLoadMore = async () => {
+    if (!hasMore || loadingMore || feedMode !== "all") return;
+    try {
+      setLoadingMore(true);
+      const nextPage = page + 1;
+      const fetchData = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/public/posts/blogs/`,
+        { params: { page: nextPage, limit: PAGE_LIMIT } }
+      );
+      const allBlogs = fetchData.data.allBlogs ?? [];
+      setData((prev) => {
+        const seen = new Set(prev.map((b) => b._id));
+        return [...prev, ...allBlogs.filter((b) => b._id && !seen.has(b._id))];
+      });
+      setPage(fetchData.data.page ?? nextPage);
+      setHasMore(Boolean(fetchData.data.hasMore));
+    } catch {
+      toast.error("Error loading more blogs");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleFetchFollowingFeed = async () => {
     if (!user) {
@@ -74,7 +111,7 @@ const Blog = () => {
 
     try {
       setFeedLoading(true);
-      const { allBlogs, sharedBlogs } = await fetchFollowingFeed();
+      const { allBlogs, sharedBlogs } = await fetchFollowingFeed({ page: 1, limit: PAGE_LIMIT });
       const seen = new Set();
       const merged = [];
 
@@ -85,6 +122,8 @@ const Blog = () => {
       });
 
       setData(merged);
+      setHasMore(false);
+      setPage(1);
       const category = resolveCategoryFilter(searchParams.get("category"));
       applyCategoryFilter(category, merged);
     } catch (error) {
@@ -98,13 +137,14 @@ const Blog = () => {
     setFeedMode(mode);
     if (mode === "all") {
       try {
-        const fetchData = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/public/posts/blogs/`);
-        const allBlogs = fetchData.data.allBlogs;
-        setData(allBlogs);
+        setFeedLoading(true);
+        const allBlogs = await fetchAllBlogsPage(1);
         const category = resolveCategoryFilter(searchParams.get("category"));
         applyCategoryFilter(category, allBlogs);
       } catch {
         toast.error("Error loading blogs");
+      } finally {
+        setFeedLoading(false);
       }
     } else {
       await handleFetchFollowingFeed();
@@ -113,7 +153,7 @@ const Blog = () => {
 
   useEffect(() => {
     handleFetchAllBlogs();
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (data.length === 0) return;
@@ -350,7 +390,7 @@ const Blog = () => {
                   key={blog._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  transition={{ duration: 0.4, delay: Math.min(index, 8) * 0.05 }}
                   className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl border border-gray-200 dark:border-zinc-700 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group"
                 >
                   {/* Image */}
@@ -359,6 +399,8 @@ const Blog = () => {
                       <img
                         src={safeMainImage}
                         alt={blog.title || "Blog Image"}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
@@ -383,6 +425,8 @@ const Blog = () => {
                           <img
                             src={safeAuthorImage}
                             alt={blog.author?.username || "Author"}
+                            loading="lazy"
+                            decoding="async"
                             className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-600 shadow-sm"
                           />
                         </Link>
@@ -417,10 +461,7 @@ const Blog = () => {
 
                     {/* Excerpt */}
                     <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4">
-                      {typeof blog.content === "string"
-                        ? blog.content
-                        // : JSON.stringify(blog.content)}
-                        : blog.description}
+                      {blog.description || "No description"}
                     </p>
 
                     {/* Stats & Read More */}
@@ -432,11 +473,11 @@ const Blog = () => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Heart className="w-3 h-3" />
-                          {blog.likes?.length || "0"}
+                          {blog.likeCount ?? blog.likes?.length ?? 0}
                         </div>
                         <div className="flex items-center gap-1">
                           <MessageCircle className="w-3 h-3" />
-                          {blog.comments?.length || "0"}
+                          {blog.commentCount ?? blog.comments?.length ?? 0}
                         </div>
                       </div>
                       <button
@@ -450,6 +491,19 @@ const Blog = () => {
                   </div>
                 </motion.div>
               )})}
+            </div>
+          )}
+
+          {feedMode === "all" && hasMore && (
+            <div className="mt-10 flex justify-center">
+              <button
+                type="button"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="inline-flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-60 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
+              >
+                {loadingMore ? "Loading..." : "Load more blogs"}
+              </button>
             </div>
           )}
         </div>

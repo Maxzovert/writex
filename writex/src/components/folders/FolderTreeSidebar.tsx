@@ -1,4 +1,5 @@
-import { ChevronDown, ChevronRight, Home, Pin } from "lucide-react"
+import type { ReactNode } from "react"
+import { ChevronDown, ChevronRight, Folder, Library, Pin } from "lucide-react"
 import { FolderCountBadge } from "@/components/folders/FolderCountBadge"
 import { getFolderColor } from "@/lib/folder-colors"
 import type { BlogFolderNode } from "@/lib/folders-api"
@@ -11,6 +12,21 @@ interface FolderTreeSidebarProps {
   unfiledCount?: number
   onToggleExpand: (id: string) => void
   onSelectFolder: (id: string | null) => void
+}
+
+function getPinnedFolders(nodes: BlogFolderNode[]): BlogFolderNode[] {
+  return nodes.flatMap((node) => [
+    ...(node.isPinned ? [node] : []),
+    ...getPinnedFolders(node.children ?? []),
+  ])
+}
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <p className="px-2.5 pb-1.5 pt-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80">
+      {children}
+    </p>
+  )
 }
 
 function TreeNode({
@@ -28,43 +44,74 @@ function TreeNode({
   const isExpanded = expandedIds.has(node._id)
   const isActive = currentFolderId === node._id
   const total = node.totalItemCount ?? 0
+  const color = getFolderColor(node.color)
+  const indent = 8 + depth * 14
 
   return (
-    <div>
+    <div className="relative">
+      {depth > 0 && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute bottom-0 top-0 w-px bg-border/60"
+          style={{ left: `${indent - 6}px` }}
+        />
+      )}
+
       <div
         className={cn(
-          "flex items-center gap-0.5 rounded-md text-sm",
-          isActive ? "bg-accent text-accent-foreground" : "hover:bg-muted/60"
+          "group relative flex min-h-10 items-center gap-0.5 rounded-lg text-sm transition-colors",
+          isActive
+            ? "bg-muted/80 text-foreground"
+            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
         )}
-        style={{ paddingLeft: `${depth * 12 + 4}px` }}
+        style={{ marginLeft: `${indent}px` }}
       >
+        {isActive && (
+          <span
+            aria-hidden
+            className="absolute inset-y-1.5 left-0 w-0.5 rounded-full"
+            style={{ backgroundColor: color }}
+          />
+        )}
+
         <button
           type="button"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded"
+          className="flex h-8 w-7 shrink-0 items-center justify-center rounded-md hover:bg-background/80"
           onClick={() => hasChildren && onToggleExpand(node._id)}
+          aria-label={
+            hasChildren
+              ? `${isExpanded ? "Collapse" : "Expand"} ${node.name}`
+              : undefined
+          }
         >
           {hasChildren ? (
             isExpanded ? (
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              <ChevronDown className="h-4 w-4 opacity-70" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+              <ChevronRight className="h-4 w-4 opacity-70" />
             )
           ) : (
-            <span className="h-3.5 w-3.5" />
+            <span className="h-4 w-4" />
           )}
         </button>
 
         <button
           type="button"
           onClick={() => onSelectFolder(node._id)}
-          className="flex min-w-0 flex-1 items-center gap-2 py-1.5 pr-2 text-left"
+          className="flex min-w-0 flex-1 items-center gap-2.5 py-2 pr-2.5 text-left"
         >
           <span
-            className="h-2.5 w-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: getFolderColor(node.color) }}
-          />
-          <span className="min-w-0 flex-1 truncate">{node.name}</span>
-          {node.isPinned && <Pin className="h-3 w-3 shrink-0 text-muted-foreground" />}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-700"
+            style={{ backgroundColor: color }}
+          >
+            <Folder className="h-4 w-4" fill="currentColor" fillOpacity={0.2} />
+          </span>
+          <span className={cn("min-w-0 flex-1 truncate", isActive && "font-medium")}>
+            {node.name}
+          </span>
+          {node.isPinned && (
+            <Pin className="h-3.5 w-3.5 shrink-0 text-amber-500" fill="currentColor" />
+          )}
           <FolderCountBadge count={total} muted={!isActive} />
         </button>
       </div>
@@ -98,38 +145,122 @@ export function FolderTreeSidebar({
 }: FolderTreeSidebarProps) {
   const libraryTotal =
     unfiledCount + tree.reduce((sum, node) => sum + (node.totalItemCount ?? 0), 0)
+  const pinnedFolders = getPinnedFolders(tree)
+  const isLibraryActive = currentFolderId === null
 
   return (
     <nav className="space-y-0.5">
+      {pinnedFolders.length > 0 && (
+        <div className="mb-1">
+          <SectionLabel>Pinned</SectionLabel>
+          <div className="space-y-0.5">
+            {pinnedFolders.map((folder) => {
+              const isActive = currentFolderId === folder._id
+              const color = getFolderColor(folder.color)
+
+              return (
+                <button
+                  key={folder._id}
+                  type="button"
+                  onClick={() => onSelectFolder(folder._id)}
+                  className={cn(
+                    "relative flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                    isActive
+                      ? "bg-muted/80 text-foreground"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  )}
+                >
+                  {isActive && (
+                    <span
+                      aria-hidden
+                      className="absolute inset-y-1.5 left-0 w-0.5 rounded-full"
+                      style={{ backgroundColor: color }}
+                    />
+                  )}
+                  <span
+                    className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-700"
+                    style={{ backgroundColor: color }}
+                  >
+                    <Folder
+                      className="h-4 w-4"
+                      fill="currentColor"
+                      fillOpacity={0.2}
+                    />
+                    <Pin
+                      className="absolute -right-1 -top-1 h-3 w-3 text-amber-500"
+                      fill="currentColor"
+                    />
+                  </span>
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1 truncate text-left",
+                      isActive && "font-medium"
+                    )}
+                  >
+                    {folder.name}
+                  </span>
+                  <FolderCountBadge
+                    count={folder.totalItemCount ?? 0}
+                    muted={!isActive}
+                  />
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      <SectionLabel>Library</SectionLabel>
       <button
         type="button"
         onClick={() => onSelectFolder(null)}
         className={cn(
-          "flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm",
-          currentFolderId === null
-            ? "bg-accent text-accent-foreground"
-            : "hover:bg-muted/60"
+          "relative flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors",
+          isLibraryActive
+            ? "bg-muted/80 text-foreground"
+            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
         )}
       >
-        <Home className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <span className="flex-1 truncate text-left font-medium">Library</span>
-        <FolderCountBadge count={libraryTotal} muted={currentFolderId !== null} />
+        {isLibraryActive && (
+          <span
+            aria-hidden
+            className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-foreground/70"
+          />
+        )}
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-foreground/5 text-foreground/80">
+          <Library className="h-4 w-4" />
+        </span>
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate text-left",
+            isLibraryActive ? "font-medium" : "font-normal"
+          )}
+        >
+          All items
+        </span>
+        <FolderCountBadge count={libraryTotal} muted={!isLibraryActive} />
       </button>
 
+      <SectionLabel>Folders</SectionLabel>
       {tree.length === 0 ? (
-        <p className="px-2 py-3 text-xs text-muted-foreground">No folders yet</p>
+        <div className="mx-1 rounded-md border border-dashed border-border/80 px-3 py-4 text-center">
+          <Folder className="mx-auto mb-1.5 h-4 w-4 text-muted-foreground/50" />
+          <p className="text-[11px] text-muted-foreground">No folders yet</p>
+        </div>
       ) : (
-        tree.map((node) => (
-          <TreeNode
-            key={node._id}
-            node={node}
-            depth={0}
-            currentFolderId={currentFolderId}
-            expandedIds={expandedIds}
-            onToggleExpand={onToggleExpand}
-            onSelectFolder={onSelectFolder}
-          />
-        ))
+        <div className="space-y-0.5">
+          {tree.map((node) => (
+            <TreeNode
+              key={node._id}
+              node={node}
+              depth={0}
+              currentFolderId={currentFolderId}
+              expandedIds={expandedIds}
+              onToggleExpand={onToggleExpand}
+              onSelectFolder={onSelectFolder}
+            />
+          ))}
+        </div>
       )}
     </nav>
   )
