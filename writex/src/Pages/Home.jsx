@@ -1,418 +1,250 @@
-import React from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { DotPattern } from "../components/magicui/dot-pattern";
-import { LineShadowText } from "../components/magicui/line-shadow-text";
-import { InteractiveHoverButton } from "../components/magicui/interactive-hover-button";
 import { motion } from "framer-motion";
-import { Button } from "../components/ui/button";
-import { ArrowRight, PenTool, Users, Zap, Star, CheckCircle, ArrowUpRight, Sparkles, BookOpen, Globe, Heart, Rocket, Flame, Crown } from "lucide-react";
+import {
+  ArrowRight,
+  Bookmark,
+  CheckCircle,
+  Download,
+  Eye,
+  Folder,
+  PenLine,
+  Users,
+} from "lucide-react";
+import { GuestNav } from "@/components/home/GuestNav";
+import { CanvasDemo } from "@/components/home/CanvasDemo";
+import { FolderDemo } from "@/components/home/FolderDemo";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { useAuth } from "@/context/authContext";
+import heroImg from "@/assets/secondSec.jpg";
+import gridA from "@/assets/firstgrid.jpg";
+import gridB from "@/assets/twoGrid.jpg";
+import gridC from "@/assets/threeGrid.jpg";
+
+const FEATURES = [
+  {
+    icon: PenLine,
+    title: "Rich writing canvas",
+    description:
+      "Tables, code, images, highlights, task lists — TipTap tools without the clutter.",
+  },
+  {
+    icon: Folder,
+    title: "Folder library",
+    description:
+      "Nested pastel folders, pins, and room for your posts plus saved reads.",
+  },
+  {
+    icon: Bookmark,
+    title: "Passage bookmarks",
+    description: "Mark lines while you write or read. Color pins stay on-device.",
+  },
+  {
+    icon: Download,
+    title: "PDF export",
+    description: "Download clean PDFs of notes — lists, tables, and code included.",
+  },
+  {
+    icon: Users,
+    title: "Follow & feed",
+    description: "Follow writers and switch into a following feed of fresh work.",
+  },
+  {
+    icon: Eye,
+    title: "Publish your way",
+    description: "Auto-save, focus mode, public publish or keep it personal.",
+  },
+];
 
 const Home = () => {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
-  const Navigate = useNavigate()
-
-  const handleClick = () => {
-    Navigate("/SignUp")
+  if (!loading && user) {
+    return <Navigate to="/dashboard" replace />;
   }
-
-  const handleGetStarted = () => {
-    Navigate("/SignUp")
-  }
-
-  const handleLearnMore = () => {
-    Navigate("/about")
-  }
-
-  const features = [
-    {
-      icon: <PenTool className="w-8 h-8" />,
-      title: "Sick Writing Tools",
-      description: "Level up your writing game with our powerful editor and formatting options"
-    },
-    {
-      icon: <Users className="w-8 h-8" />,
-      title: "Vibing Community",
-      description: "Connect with fellow writers who get your vibe and share your energy"
-    },
-    {
-      icon: <Zap className="w-8 h-8" />,
-      title: "Lightning Fast",
-      description: "Write, edit, and publish in seconds - no more waiting around"
-    }
-  ];
-
-  const vibes = [
-    "No boring templates",
-    "Express yourself freely",
-    "Mobile-first design",
-    "24/7 community vibes",
-    "Free forever, no cap",
-    "Setup in under 2 mins"
-  ];
-
-  const whyChoose = [
-    {
-      icon: <Heart className="w-6 h-6" />,
-      title: "Made with Love",
-      description: "Built by writers who actually use the platform"
-    },
-    {
-      icon: <Rocket className="w-6 h-6" />,
-      title: "Always Evolving",
-      description: "We're constantly adding new features based on your feedback"
-    },
-    {
-      icon: <Crown className="w-6 h-6" />,
-      title: "Premium Quality",
-      description: "Professional tools without the corporate BS"
-    }
-  ];
-
-  const earlyAdopters = [
-    {
-      name: "Alex",
-      role: "Creative Writer",
-      avatar: "A",
-      content: "WriteX is literally everything I needed. Clean, simple, and actually fun to use. No more overcomplicated writing apps!",
-      vibe: "🔥"
-    },
-    {
-      name: "Jordan",
-      role: "Content Creator",
-      avatar: "J",
-      content: "Finally, a platform that doesn't make me feel like I'm writing a corporate report. Love the community vibes!",
-      vibe: "✨"
-    }
-  ];
 
   return (
-    <>
-      <div className="relative h-[800px] w-full overflow-hidden flex justify-center bg-stone-200 dark:bg-stone-950 border-b-4 border-border rounded-b-4xl text-foreground">
-        <div className="absolute inset-0 z-0">
-          <DotPattern />
+    <div className="wx-cool min-h-screen wx-sans">
+      <GuestNav />
+
+      {/* Full-bleed cinematic hero — dark media wash in both themes */}
+      <section className="relative min-h-[92vh] overflow-hidden">
+        <img
+          src={heroImg}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="wx-hero-shade absolute inset-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--wx-glow),transparent_45%)]" />
+
+        <div className="relative z-10 mx-auto flex min-h-[92vh] max-w-6xl flex-col justify-end px-5 pb-16 pt-28 sm:px-8 sm:pb-20">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="max-w-3xl"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#5eead4] dark:text-[var(--wx-accent)]">
+              Write · organize · share
+            </p>
+            <h1 className="wx-serif mt-5 text-[clamp(3.2rem,10vw,6rem)] text-white">
+              Write what stays with you.
+            </h1>
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/80">
+              A cinematic desk for drafts: rich canvas, folder library,
+              bookmarks, PDF export, and a feed that feels human.
+            </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => navigate("/signup")}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--wx-accent)] px-8 py-3.5 text-[15px] font-semibold text-[var(--wx-accent-fg)] transition hover:brightness-110"
+              >
+                Start writing free
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/blogs")}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/35 bg-white/10 px-8 py-3.5 text-[15px] font-semibold text-white backdrop-blur transition hover:bg-white/20"
+              >
+                Browse blogs
+              </button>
+            </div>
+            <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/70">
+              {["Auto-save drafts", "Folders for own & saved", "Free forever"].map(
+                (t) => (
+                  <span key={t} className="inline-flex items-center gap-1.5">
+                    <CheckCircle className="h-3.5 w-3.5 text-[#5eead4] dark:text-[var(--wx-accent)]" />
+                    {t}
+                  </span>
+                )
+              )}
+            </div>
+          </motion.div>
         </div>
-        <div className="flex items-center justify-center flex-col relative z-10">
-          <div className="text-9xl mt-[200px]">
-            Write<LineShadowText>X</LineShadowText>
+      </section>
+
+      {/* Image gallery strip */}
+      <section className="relative z-10 -mt-8 px-5 sm:px-8">
+        <div className="mx-auto grid max-w-6xl gap-3 sm:grid-cols-3">
+          {[
+            { src: gridA, label: "Draft nights" },
+            { src: gridB, label: "Quiet focus" },
+            { src: gridC, label: "Shared pages" },
+          ].map((item, i) => (
+            <motion.div
+              key={item.label}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: i * 0.08 }}
+              viewport={{ once: true }}
+              className="group relative h-48 overflow-hidden rounded-3xl sm:h-56"
+            >
+              <img
+                src={item.src}
+                alt=""
+                className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+              <p className="absolute bottom-4 left-4 wx-serif text-2xl text-white">
+                {item.label}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Canvas */}
+      <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-24">
+        <div className="mb-10 max-w-2xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--wx-accent)]">
+            Writing canvas
+          </p>
+          <h2 className="wx-serif mt-3 text-[clamp(2rem,4.5vw,3rem)] text-[var(--wx-text)]">
+            Tools that disappear while you write.
+          </h2>
+          <p className="mt-3 text-[var(--wx-mute)]">
+            TipTap canvas with tables, code, images, highlights, focus mode, and
+            auto-save.
+          </p>
+        </div>
+        <CanvasDemo />
+      </section>
+
+      {/* Folders */}
+      <section className="mx-auto max-w-6xl px-5 pb-20 sm:px-8 sm:pb-24">
+        <div className="mb-10 max-w-2xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--wx-accent)]">
+            Folder library
+          </p>
+          <h2 className="wx-serif mt-3 text-[clamp(2rem,4.5vw,3rem)] text-[var(--wx-text)]">
+            Keep every draft where it belongs.
+          </h2>
+          <p className="mt-3 text-[var(--wx-mute)]">
+            Nested folders, pastel colors, pinned shelves — for your posts and
+            pieces you save.
+          </p>
+        </div>
+        <FolderDemo />
+      </section>
+
+      {/* Features */}
+      <section className="border-t border-[var(--wx-line)] bg-[var(--wx-soft)]">
+        <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
+          <h2 className="wx-serif mb-10 text-[clamp(2rem,4vw,2.75rem)] text-[var(--wx-text)]">
+            Everything in one desk.
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((f) => {
+              const Icon = f.icon;
+              return (
+                <article
+                  key={f.title}
+                  className="rounded-3xl border border-[var(--wx-line)] bg-[var(--wx-elev)] p-6"
+                >
+                  <Icon className="mb-4 h-5 w-5 text-[var(--wx-accent)]" />
+                  <h3 className="wx-serif text-xl text-[var(--wx-text)]">{f.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--wx-mute)]">
+                    {f.description}
+                  </p>
+                </article>
+              );
+            })}
           </div>
-            <p className="text-muted-foreground">Lowkey deep, highkey real — post what hits different</p>
-          <InteractiveHoverButton className="mt-8" onClick={handleClick}>
-            Go To Dashboard
-          </InteractiveHoverButton>
         </div>
+      </section>
+
+      {/* CTA — photo band with fixed dark wash */}
+      <section className="relative overflow-hidden">
+        <img
+          src={gridB}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-slate-950/55 dark:bg-black/70" />
+        <div className="relative mx-auto max-w-3xl px-5 py-24 text-center sm:px-8">
+          <h2 className="wx-serif text-[clamp(2.25rem,5vw,3.5rem)] text-white">
+            Open your desk tonight.
+          </h2>
+          <p className="mx-auto mt-4 max-w-md text-white/80">
+            Free account. Canvas, folders, and feed — ready when you are.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("/signup")}
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[var(--wx-accent)] px-9 py-3.5 text-[15px] font-semibold text-[var(--wx-accent-fg)] transition hover:brightness-110"
+          >
+            Create free account
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      </section>
+
+      <div className="border-t border-[var(--wx-line)] bg-[var(--wx-bg)]">
+        <SiteFooter />
       </div>
-
-      {/* Gen-Z Focused Landing Page */}
-      
-      {/* Hero Section 2 */}
-      <section className="py-24 bg-gradient-to-br from-gray-50 to-white dark:from-zinc-900 dark:to-zinc-950">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true }}
-            className="mb-16"
-          >
-            <div className="inline-flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <Flame className="w-4 h-4" />
-              <span>Fresh & New - Join the Wave</span>
-            </div>
-                         <h2 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-gray-50 mb-6 leading-tight">
-               Write What You
-               <br />
-               <span className="bg-gradient-to-r from-gray-700 via-gray-800 to-black dark:from-gray-200 dark:via-gray-100 dark:to-white bg-clip-text text-transparent">
-                 Actually Feel
-               </span>
-             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              Stop writing for algorithms. Start writing for humans. 
-              Share your thoughts, stories, and vibes with people who actually care.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            viewport={{ once: true }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16"
-          >
-            <Button 
-              onClick={handleGetStarted}
-              size="lg"
-              className="bg-black hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 text-white px-10 py-6 text-lg h-auto rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-            >
-              Start Writing Now
-              <ArrowRight className="ml-3 w-5 h-5" />
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={handleLearnMore}
-              size="lg"
-              className="border-2 border-gray-300 hover:border-gray-400 text-gray-700 dark:text-gray-300 px-10 py-6 text-lg h-auto rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all duration-300"
-            >
-              See What's Up
-            </Button>
-          </motion.div>
-
-          {/* Trust indicators */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            viewport={{ once: true }}
-            className="flex flex-wrap justify-center items-center gap-8 text-gray-500 dark:text-gray-400 text-sm"
-          >
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
-              <span>No credit card needed</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
-              <span>Free forever, fr fr</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-500" />
-              <span>Setup in 2 mins</span>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Features Section - Gen-Z Style */}
-      <section className="py-24 bg-white dark:bg-zinc-900">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-20"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-50 mb-6">
-              Everything You Need to
-              <br />
-              <span className="text-gray-600 dark:text-gray-400">Slay Your Writing</span>
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Tools that actually make sense and don't overcomplicate things
-            </p>
-          </motion.div>
-
-          <div className="grid lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                className="group"
-              >
-                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-zinc-800/80 dark:to-zinc-900 p-10 rounded-3xl border border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
-                                     <div className="w-16 h-16 bg-gradient-to-br from-gray-700 to-black rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-300">
-                    <div className="text-white">
-                      {feature.icon}
-                    </div>
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-4">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-lg">
-                    {feature.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Vibes Grid */}
-      <section className="py-24 bg-gray-50 dark:bg-zinc-950">
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-50 mb-6">
-              Why WriteX is Actually Different
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              No corporate speak, just real talk
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {vibes.map((vibe, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="flex items-start gap-4 p-6 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-700 hover:shadow-lg transition-all duration-300"
-              >
-                                 <div className="w-6 h-6 bg-gradient-to-r from-gray-600 to-black rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                  <CheckCircle className="w-4 h-4 text-white" />
-                </div>
-                <span className="text-gray-700 dark:text-gray-300 font-medium">{vibe}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Choose Section */}
-      <section className="py-24 bg-white dark:bg-zinc-900">
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-20"
-          >
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-50 mb-6">
-              Built Different
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              We're not just another writing platform
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {whyChoose.map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                className="text-center group"
-              >
-                <div className="w-20 h-20 bg-gradient-to-br from-gray-800 to-black rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <div className="text-white">
-                    {item.icon}
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {item.description}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Early Adopters Section */}
-      <section className="py-24 bg-gray-50 dark:bg-zinc-950">
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-20"
-          >
-            <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-50 mb-6">
-              What Early Adopters Say
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Real feedback from people who've been here since day one
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {earlyAdopters.map((user, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                className="group"
-              >
-                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-zinc-800/80 dark:to-zinc-900 p-10 rounded-3xl border border-gray-200 dark:border-zinc-700 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center">
-                                             <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-black rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
-                        {user.avatar}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900 dark:text-gray-50 text-lg">{user.name}</div>
-                        <div className="text-gray-600 dark:text-gray-400">{user.role}</div>
-                      </div>
-                    </div>
-                    <div className="text-3xl">{user.vibe}</div>
-                  </div>
-                  
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg italic">
-                    "{user.content}"
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section - Gen-Z Style */}
-      <section className="py-24 bg-gradient-to-br from-gray-900 via-black to-gray-900 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,transparent_70%)]"></div>
-        <div className="relative z-10 max-w-5xl mx-auto text-center px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-5xl md:text-6xl font-bold text-white mb-8 leading-tight">
-              Ready to Start
-              <br />
-                             <span className="bg-gradient-to-r from-gray-300 via-gray-400 to-white bg-clip-text text-transparent">
-                 Your Journey?
-               </span>
-            </h2>
-            <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Join the early adopters and help shape the future of writing. 
-              No pressure, just vibes and creativity.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-8">
-              <Button 
-                onClick={handleGetStarted}
-                size="lg"
-                className="bg-white hover:bg-gray-100 dark:bg-zinc-100 dark:hover:bg-white text-gray-900 dark:text-gray-950 px-12 py-6 text-xl h-auto rounded-2xl shadow-2xl hover:shadow-white/20 transition-all duration-300 transform hover:-translate-y-2 group"
-              >
-                Let's Go! 🚀
-                <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={handleLearnMore}
-                size="lg"
-                className="border-2 border-gray-600 hover:border-gray-500 text-white px-12 py-6 text-xl h-auto rounded-2xl hover:bg-white/10 transition-all duration-300 group"
-              >
-                Tell Me More
-                <ArrowUpRight className="ml-3 w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
-              </Button>
-            </div>
-
-            <div className="text-gray-400 text-sm">
-              <p>✨ No credit card • 🚀 Setup in 2 mins • 💜 Free forever</p>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-    </>
+    </div>
   );
 };
 

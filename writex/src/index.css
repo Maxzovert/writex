@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Oxygen:wght@300;400;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @source "./node_modules/preline/dist/*.js";
@@ -35,6 +36,110 @@ html, body {
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
+}
+
+.wx-serif {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+}
+
+.wx-sans {
+  font-family: "Plus Jakarta Sans", "Oxygen", system-ui, sans-serif;
+}
+
+/* Landing + auth — light is crisp; dark stays cinematic */
+.wx-cool {
+  --wx-bg: #f8fafc;
+  --wx-elev: #ffffff;
+  --wx-line: #e2e8f0;
+  --wx-text: #0f172a;
+  --wx-mute: #64748b;
+  --wx-accent: #0f766e;
+  --wx-accent-fg: #ffffff;
+  --wx-glow: rgba(15, 118, 110, 0.12);
+  --wx-soft: #f1f5f9;
+  --wx-panel: #ffffff;
+  --wx-on-media: #f8fafc;
+  --wx-code-bg: #0f172a;
+  --wx-code-fg: #e2e8f0;
+  background: var(--wx-bg);
+  color: var(--wx-text);
+}
+
+.dark .wx-cool {
+  --wx-bg: #09090b;
+  --wx-elev: rgba(255, 255, 255, 0.06);
+  --wx-line: rgba(255, 255, 255, 0.12);
+  --wx-text: #fafafa;
+  --wx-mute: #a1a1aa;
+  --wx-accent: #f0c7a8;
+  --wx-accent-fg: #18181b;
+  --wx-glow: rgba(240, 199, 168, 0.18);
+  --wx-soft: rgba(255, 255, 255, 0.05);
+  --wx-panel: rgba(255, 255, 255, 0.04);
+  --wx-on-media: #fafafa;
+  --wx-code-bg: #000000;
+  --wx-code-fg: #d4d4d8;
+}
+
+/* Hero always keeps a dark media wash so white type stays readable */
+.wx-hero-shade {
+  background: linear-gradient(
+    to bottom,
+    rgba(2, 6, 23, 0.5) 0%,
+    rgba(2, 6, 23, 0.58) 45%,
+    var(--wx-bg) 100%
+  );
+}
+
+.dark .wx-hero-shade {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.65) 50%,
+    var(--wx-bg) 100%
+  );
+}
+
+.wx-glass {
+  background: var(--wx-elev);
+  border: 1px solid var(--wx-line);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 16px 40px rgba(15, 23, 42, 0.06);
+}
+
+.dark .wx-glass {
+  background: rgba(18, 18, 22, 0.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.wx-logo-media {
+  filter: brightness(0) invert(1);
+}
+
+.wx-cool .wx-logo-auth {
+  filter: none;
+}
+
+.dark .wx-cool .wx-logo-auth {
+  filter: brightness(0) invert(1);
+}
+
+/* Light auth atmosphere (no muddy photo wash) */
+.wx-auth-light-bg {
+  background:
+    radial-gradient(900px 500px at 0% 0%, rgba(15, 118, 110, 0.1), transparent 55%),
+    radial-gradient(700px 420px at 100% 100%, rgba(15, 23, 42, 0.05), transparent 50%),
+    var(--wx-bg);
+}
+
+.dark .wx-auth-light-bg {
+  background: transparent;
 }
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
