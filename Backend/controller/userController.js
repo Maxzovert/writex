@@ -5,6 +5,10 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { createNotification } from "../utils/createNotification.js";
 import { fetchLeanBlogList, parsePagination } from "../utils/blogList.js";
+import {
+    providersFromAuth0Sub,
+    verifyAuth0IdToken,
+} from "../utils/auth0.js";
 
 const formatPublicUser = (user) => ({
     _id: user._id,
@@ -36,7 +40,12 @@ const signup = async (req , res) => {
             return res.status(400).json({message:"User Already Exists"})
         }
 
-        const user = await User.create({ username, email, password});
+        const user = await User.create({
+            username,
+            email,
+            password,
+            authProviders: ["password"],
+        });
         const token = generateToken(user._id, Boolean(rememberMe))
 
         // res.cookie('token' ,token , {
@@ -66,7 +75,7 @@ const login = async (req , res) => {
     const {email , password, rememberMe} = req.body;
     try {
         const user = await User.findOne({email});
-        if(!user) {
+        if(!user || !user.password) {
             return res.status(400).json({message : "Invalid Credentials"})
         }
 
@@ -114,6 +123,224 @@ const  getCurrentUser = async (req , res) => {
     }
 }
 
+const buildUsernameBase = (email, name) => {
+    const fromName = (name || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "")
+        .slice(0, 20);
+    const fromEmail = (email || "")
+        .split("@")[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "")
+        .slice(0, 20);
+    let base = fromName || fromEmail || "writer";
+    if (base.length < 4) {
+        base = `${base}user`.slice(0, 4);
+    }
+    return base;
+};
+
+const escapeRegex = (value = "") =>
+    value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const usernameTaken = async (username) => {
+    if (!username) return true;
+    // Case-insensitive match so "WeMultify" and "wemultify" collide the same way
+    return Boolean(
+        await User.findOne({
+            username: new RegExp(`^${escapeRegex(username)}$`, "i"),
+        })
+    );
+};
+const allocateUniqueUsername = async (email, name) => {
+    const base = buildUsernameBase(email, name);
+    for (let i = 0; i < 25; i += 1) {
+        let candidate =
+            i === 0
+                ? base
+                : `${base}${i}${Math.floor(Math.random() * 900 + 100)}`;
+        candidate = candidate.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 30);
+        if (candidate.length < 4) {
+            candidate = `${candidate}user`.slice(0, 30);
+        }
+        if (!(await usernameTaken(candidate))) {
+            return candidate;
+        }
+    }
+    return `user${Date.now().toString(36)}`.slice(0, 30);
+};
+
+const mergeAuthProviders = (existing = [], incoming = []) => {
+    return [...new Set([...(existing || []), ...(incoming || [])])];
+};
+
+const linkAuth0ToUser = async (user, profile, incomingProviders) => {
+    user.auth0Sub = profile.sub;
+    user.authProviders = mergeAuthProviders(
+        user.authProviders,
+        incomingProviders
+    );
+    if (!user.profileImage && profile.picture) {
+        user.profileImage = profile.picture;
+    }
+    await user.save();
+    return user;
+};
+
+/**
+ * Exchange a verified Auth0 ID token for a Writex app JWT.
+ * Links by auth0Sub first, then by email, so existing password users keep the same Mongo _id.
+ */
+const syncAuth0 = async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const idToken =
+            authHeader && authHeader.startsWith("Bearer ")
+                ? authHeader.split(" ")[1]
+                : null;
+
+        if (!idToken) {
+            return res.status(401).json({ message: "Auth0 token required" });
+        }
+
+        const { rememberMe, username: requestedUsername } = req.body || {};
+        const profile = await verifyAuth0IdToken(idToken);
+
+        if (!profile.email) {
+            return res.status(400).json({
+                message: "Auth0 account must include an email address",
+            });
+        }
+
+        if (!profile.emailVerified) {
+            return res.status(403).json({
+                message: "Verify your email with Auth0 before continuing",
+            });
+        }
+
+        const email = profile.email.toLowerCase().trim();
+        const incomingProviders = providersFromAuth0Sub(profile.sub);
+
+        let user = await User.findOne({ auth0Sub: profile.sub });
+
+        if (!user) {
+            user = await User.findOne({ email });
+            if (user) {
+                // Same email as an existing Writex account → link, do not create a duplicate
+                user = await linkAuth0ToUser(user, profile, incomingProviders);
+            } else {
+                let username = requestedUsername?.trim()?.toLowerCase();
+                if (username) {
+                    if (username.length < 4) {
+                        return res.status(400).json({
+                            message: "Username must be at least 4 characters",
+                        });
+                    }
+                    if (await usernameTaken(username)) {
+                        return res.status(400).json({
+                            message: "Username already taken",
+                        });
+                    }
+                } else {
+                    username = await allocateUniqueUsername(email, profile.name);
+                }
+
+                // Retry create on duplicate-key races (double callback / StrictMode)
+                for (let attempt = 0; attempt < 5; attempt += 1) {
+                    try {
+                        user = await User.create({
+                            username,
+                            email,
+                            auth0Sub: profile.sub,
+                            authProviders: incomingProviders,
+                            profileImage: profile.picture || "",
+                        });
+                        break;
+                    } catch (createError) {
+                        if (createError?.code !== 11000) {
+                            throw createError;
+                        }
+
+                        // Another request already linked/created this Auth0 user or email
+                        const bySub = await User.findOne({
+                            auth0Sub: profile.sub,
+                        });
+                        if (bySub) {
+                            user = bySub;
+                            break;
+                        }
+                        const byEmail = await User.findOne({ email });
+                        if (byEmail) {
+                            user = await linkAuth0ToUser(
+                                byEmail,
+                                profile,
+                                incomingProviders
+                            );
+                            break;
+                        }
+
+                        // Username collision only — pick another and retry
+                        if (createError?.keyPattern?.username) {
+                            username = await allocateUniqueUsername(
+                                email,
+                                `${profile.name || "writer"}${attempt + 1}`
+                            );
+                            continue;
+                        }
+
+                        throw createError;
+                    }
+                }
+
+                if (!user) {
+                    return res.status(500).json({
+                        message: "Could not create account after Auth0 login",
+                    });
+                }
+            }
+        } else {
+            user.authProviders = mergeAuthProviders(
+                user.authProviders,
+                incomingProviders
+            );
+            if (!user.profileImage && profile.picture) {
+                user.profileImage = profile.picture;
+            }
+            if (user.email !== email) {
+                // Prefer verified Auth0 email if it changed and is free
+                const emailOwner = await User.findOne({ email });
+                if (!emailOwner || emailOwner._id.equals(user._id)) {
+                    user.email = email;
+                }
+            }
+            await user.save();
+        }
+
+        const token = generateToken(user._id, Boolean(rememberMe));
+
+        res.status(200).json({
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            authProviders: user.authProviders,
+            token,
+            message: "Auth0 sync successful",
+        });
+    } catch (error) {
+        console.error("Auth0 sync error:", error);
+        const isDup = error?.code === 11000;
+        const message =
+            error?.code === "ERR_JWT_CLAIM_VALIDATION_FAILED" ||
+            error?.code === "ERR_JWS_SIGNATURE_VERIFICATION_FAILED" ||
+            error?.name === "JWTExpired"
+                ? "Invalid or expired Auth0 token"
+                : isDup
+                  ? "Account already exists — try signing in again"
+                  : error.message || "Error syncing Auth0 user";
+        res.status(isDup ? 409 : 401).json({ message });
+    }
+};
+
 const logout = async (req,res) => {
     try {
         res.status(200).json({message : "Logout Successfully"})
@@ -124,10 +351,10 @@ const logout = async (req,res) => {
 
 const getUserProfileStats = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user.id || req.user._id;
         const authorOid = new mongoose.Types.ObjectId(userId);
 
-        const [statsAgg, user] = await Promise.all([
+        const [statsAgg, userAgg] = await Promise.all([
             Blog.aggregate([
                 { $match: { author: authorOid } },
                 {
@@ -139,16 +366,39 @@ const getUserProfileStats = async (req, res) => {
                             },
                         },
                         totalLikes: {
-                            $sum: { $size: { $ifNull: ["$likes", []] } },
+                            $sum: {
+                                $cond: [
+                                    { $isArray: "$likes" },
+                                    { $size: "$likes" },
+                                    0,
+                                ],
+                            },
                         },
                     },
                 },
             ]),
-            User.findById(userId).select(
-                "username email profileImage bio socialLinks createdAt followers following"
-            ),
+            User.aggregate([
+                { $match: { _id: authorOid } },
+                {
+                    $project: {
+                        username: 1,
+                        email: 1,
+                        profileImage: 1,
+                        bio: 1,
+                        socialLinks: 1,
+                        createdAt: 1,
+                        followerCount: {
+                            $size: { $ifNull: ["$followers", []] },
+                        },
+                        followingCount: {
+                            $size: { $ifNull: ["$following", []] },
+                        },
+                    },
+                },
+            ]),
         ]);
 
+        const user = userAgg[0];
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -164,8 +414,8 @@ const getUserProfileStats = async (req, res) => {
                 bio: user.bio,
                 socialLinks: user.socialLinks,
                 createdAt: user.createdAt,
-                followerCount: user.followers?.length || 0,
-                followingCount: user.following?.length || 0,
+                followerCount: user.followerCount || 0,
+                followingCount: user.followingCount || 0,
             },
             stats: {
                 publishedBlogs: stats.publishedBlogs,
@@ -476,6 +726,7 @@ const getFollowing = async (req, res) => {
 export default {
     signup,
     login,
+    syncAuth0,
     getCurrentUser,
     logout,
     getUserProfileStats,

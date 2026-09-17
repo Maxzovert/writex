@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.post('/signup', userController.signup);
 router.post('/login', userController.login);
+router.post('/auth0/sync', userController.syncAuth0);
 router.get('/current', protectRoute, userController.getCurrentUser);
 router.get('/profile-stats', protectRoute, userController.getUserProfileStats);
 router.put('/profile-image', protectRoute, userController.updateProfileImage);

@@ -25,6 +25,8 @@ This README explains the project in simple language, then goes deeper into the f
 13. [API overview](#api-overview)
 14. [Notes for contributors](#notes-for-contributors)
 
+**Auth0 portal setup (Google + email + forgot password):** see [docs/AUTH0_SETUP.md](docs/AUTH0_SETUP.md) for step-by-step dashboard instructions before wiring Auth0 into the app.
+
 ---
 
 ## What is Writex?

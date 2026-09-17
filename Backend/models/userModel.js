@@ -17,8 +17,18 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type:String,
-        required:true,
+        required:false,
         minlength:6,
+    },
+    auth0Sub: {
+        type: String,
+        unique: true,
+        sparse: true,
+        default: undefined,
+    },
+    authProviders: {
+        type: [String],
+        default: [],
     },
     profileImage: {
         type: String,
@@ -57,7 +67,7 @@ const userSchema = new mongoose.Schema({
 })
 
 userSchema.pre('save' , async function (next) {
-    if(!this.isModified('password')) return next();
+    if (!this.isModified('password') || !this.password) return next();
 
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password , salt);

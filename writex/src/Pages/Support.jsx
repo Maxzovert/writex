@@ -61,9 +61,9 @@ export default function Support() {
       <div className="relative overflow-hidden">
         <div className="wx-auth-light-bg absolute inset-0" />
         <div className="relative z-10">
-          <GuestNav />
+          <GuestNav tone="page" />
 
-          <main className="mx-auto max-w-3xl px-5 pb-20 pt-28 sm:px-8">
+          <main className="mx-auto max-w-3xl px-5 pb-20 pt-10 sm:px-8">
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
