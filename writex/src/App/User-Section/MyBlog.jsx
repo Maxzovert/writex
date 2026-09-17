@@ -1,21 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { motion } from "framer-motion"
 import { toast } from "react-toastify"
-import {
-  BarChart3,
-  Clock,
-  Eye,
-  FileText,
-  FolderOpen,
-  Plus,
-  Shield,
-  Sparkles,
-} from "lucide-react"
+import { FileText, FolderOpen, Plus, Sparkles } from "lucide-react"
 import { MyBlogsList } from "@/components/blogs/MyBlogsList"
-import Navbar from "../Components/Navbar"
 import { BlogLibraryExplorer } from "@/components/folders/BlogLibraryExplorer"
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,24 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import { fetchFolderTree, moveBlogToFolder } from "@/lib/folders-api"
 import axiosInstance from "../../lib/axiosConfig"
-
-function StatCard({ icon: Icon, label, value, accent }) {
-  return (
-    <Card className="border-border/70 shadow-sm">
-      <CardContent className="flex items-center gap-4 p-5">
-        <div
-          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${accent}`}
-        >
-          <Icon className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-2xl font-bold tracking-tight">{value}</p>
-          <p className="text-sm text-muted-foreground">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
+import { cn } from "@/lib/utils"
 
 const MyBlog = () => {
   const navigate = useNavigate()
@@ -104,10 +75,6 @@ const MyBlog = () => {
     }
   }
 
-  const publishedCount = data.filter((b) => b.status === "published").length
-  const draftCount = data.filter((b) => b.status === "draft").length
-  const personalCount = data.filter((b) => b.status === "personal").length
-  const totalViews = data.reduce((t, b) => t + (b.viewCount || 0), 0)
   const filteredBlogs = useMemo(() => {
     if (activeStatusFilter === "all") return data
     return data.filter((blog) => blog.status === activeStatusFilter)
@@ -124,43 +91,27 @@ const MyBlog = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <Navbar />
-
+    <div className="flex min-h-screen flex-col">
       <main className="flex-1">
-        <section
-          className={`relative overflow-hidden border-b border-border bg-gradient-to-br from-muted/40 via-background to-background px-4 sm:px-6 lg:px-8 ${
-            activeView === "folders" ? "py-6" : "py-10"
-          }`}
-        >
-          <div className="relative mx-auto max-w-7xl">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1 text-xs font-medium text-muted-foreground">
+        <section className="border-b border-border/70 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-card/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
                   <Sparkles className="h-3.5 w-3.5" />
-                  {activeView === "folders" ? "Folder library" : "File explorer"}
+                  Your library
                 </div>
-                <h1
-                  className={`font-bold tracking-tight ${
-                    activeView === "folders"
-                      ? "text-2xl sm:text-3xl"
-                      : "text-3xl sm:text-4xl"
-                  }`}
-                >
-                  {activeView === "folders" ? "Folders" : "My Blogs"}
+                <h1 className="wx-serif text-4xl tracking-tight text-foreground sm:text-5xl">
+                  My Blogs
                 </h1>
                 <p className="mt-2 max-w-xl text-muted-foreground">
-                  {activeView === "folders"
-                    ? "A full workspace for pinned folders, nested collections, and organized posts."
-                    : "Manage every post in one place, then organize selected posts in folders without losing the big picture."}
+                  Drafts, published work, and folders — one calm shelf for every
+                  page.
                 </p>
-              </motion.div>
+              </div>
               <Button
                 size="lg"
-                className="rounded-full px-6"
+                className="self-start rounded-full px-6"
                 onClick={() => navigate("/write")}
               >
                 <Plus className="h-4 w-4" />
@@ -168,119 +119,83 @@ const MyBlog = () => {
               </Button>
             </div>
 
-            {!loading && activeView === "allBlogs" && (
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+            <div
+              role="tablist"
+              aria-label="Library view"
+              className="mt-8 inline-flex w-full max-w-lg gap-1 rounded-2xl bg-muted p-1.5"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeView === "allBlogs"}
+                onClick={() => setActiveView("allBlogs")}
+                className={cn(
+                  "inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-base font-medium transition",
+                  activeView === "allBlogs"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+                )}
               >
-                <StatCard
-                  icon={FileText}
-                  label="Total posts"
-                  value={data.length}
-                  accent="bg-foreground text-background"
-                />
-                <StatCard
-                  icon={Eye}
-                  label="Published"
-                  value={publishedCount}
-                  accent="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                />
-                <StatCard
-                  icon={Clock}
-                  label="Drafts"
-                  value={draftCount}
-                  accent="bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                />
-                <StatCard
-                  icon={Shield}
-                  label="Personal"
-                  value={personalCount}
-                  accent="bg-violet-500/15 text-violet-600 dark:text-violet-400"
-                />
-                <StatCard
-                  icon={BarChart3}
-                  label="Total views"
-                  value={totalViews}
-                  accent="bg-blue-500/15 text-blue-600 dark:text-blue-400"
-                />
-              </motion.div>
-            )}
+                <FileText className="h-4 w-4" />
+                All Blogs
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeView === "folders"}
+                onClick={() => setActiveView("folders")}
+                className={cn(
+                  "inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-base font-medium transition",
+                  activeView === "folders"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+                )}
+              >
+                <FolderOpen className="h-4 w-4" />
+                Folders
+              </button>
+            </div>
           </div>
         </section>
 
         <section
-          className={`w-full ${
+          className={
             activeView === "folders"
-              ? "px-0 pb-0 pt-4 sm:pt-5"
-              : "px-3 py-8 sm:px-5 lg:px-8 xl:px-10 lg:py-10"
-          }`}
+              ? "w-full px-0 pb-0 pt-5"
+              : "w-full px-4 py-8 sm:px-6 lg:px-8"
+          }
         >
           {loading ? (
-            <div className="mx-3 flex min-h-[420px] items-center justify-center rounded-2xl border border-border bg-card/50 sm:mx-5 lg:mx-8 xl:mx-10">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-foreground" />
+            <div className="mx-auto flex min-h-[420px] max-w-6xl items-center justify-center rounded-3xl border border-border bg-card/50">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
+            </div>
+          ) : activeView === "allBlogs" ? (
+            <div className="mx-auto max-w-6xl">
+              <MyBlogsList
+                allBlogs={data}
+                blogs={filteredBlogs}
+                folderTree={folderTree}
+                activeFilter={activeStatusFilter}
+                onFilterChange={setActiveStatusFilter}
+                onEditBlog={(blog) =>
+                  navigate("/write", { state: { editBlog: blog } })
+                }
+                onReadBlog={(blogId) => navigate(`/blog/${blogId}`)}
+                onDeleteBlog={setDeleteTargetId}
+                onNewBlog={() => navigate("/write")}
+                onMoveBlog={handleMoveBlog}
+              />
             </div>
           ) : (
-            <div className={activeView === "folders" ? "space-y-4" : "space-y-5"}>
-              <div className={`flex justify-center ${activeView === "folders" ? "px-3" : ""}`}>
-                <div className="inline-flex rounded-full border border-border bg-card p-1 shadow-sm">
-                  <button
-                    type="button"
-                    onClick={() => setActiveView("allBlogs")}
-                    className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                      activeView === "allBlogs"
-                        ? "bg-foreground text-background"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <FileText className="h-4 w-4" />
-                    All Blogs
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveView("folders")}
-                    className={`flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                      activeView === "folders"
-                        ? "bg-foreground text-background"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <FolderOpen className="h-4 w-4" />
-                    Folders
-                  </button>
-                </div>
-              </div>
-
-              {activeView === "allBlogs" ? (
-                <div className="px-3 sm:px-5 lg:px-8 xl:px-10">
-                  <MyBlogsList
-                    allBlogs={data}
-                    blogs={filteredBlogs}
-                    folderTree={folderTree}
-                    activeFilter={activeStatusFilter}
-                    onFilterChange={setActiveStatusFilter}
-                    onEditBlog={(blog) =>
-                      navigate("/write", { state: { editBlog: blog } })
-                    }
-                    onReadBlog={(blogId) => navigate(`/blog/${blogId}`)}
-                    onDeleteBlog={setDeleteTargetId}
-                    onNewBlog={() => navigate("/write")}
-                    onMoveBlog={handleMoveBlog}
-                  />
-                </div>
-              ) : (
-                <BlogLibraryExplorer
-                  key={explorerKey}
-                  onEditBlog={(blog) =>
-                    navigate("/write", { state: { editBlog: blog } })
-                  }
-                  onReadBlog={(blogId) => navigate(`/blog/${blogId}`)}
-                  onDeleteBlog={setDeleteTargetId}
-                  onNewBlog={() => navigate("/write")}
-                />
-              )}
-            </div>
+            <BlogLibraryExplorer
+              key={explorerKey}
+              onEditBlog={(blog) =>
+                navigate("/write", { state: { editBlog: blog } })
+              }
+              onReadBlog={(blogId) => navigate(`/blog/${blogId}`)}
+              onDeleteBlog={setDeleteTargetId}
+              onNewBlog={() => navigate("/write")}
+            />
           )}
         </section>
       </main>

@@ -2,8 +2,6 @@ import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import {
   ChevronRight,
-  FileText,
-  FolderInput,
   FolderOpen,
   FolderPlus,
   Pencil,
@@ -18,6 +16,7 @@ import {
   formatFolderCount,
   FolderCountBadge,
 } from "@/components/folders/FolderCountBadge"
+import { LibraryBlogTile } from "@/components/blogs/LibraryBlogTile"
 import { Button } from "@/components/ui/button"
 import {
   createFolder,
@@ -62,7 +61,7 @@ function FolderCard({
       <button
         type="button"
         onClick={onOpen}
-        className="relative flex h-full min-h-[10.5rem] w-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card p-5 text-left transition-colors hover:border-border hover:bg-muted/25"
+        className="relative flex h-full min-h-[11rem] w-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md"
       >
         <span
           className="absolute inset-y-0 left-0 w-1.5"
@@ -77,7 +76,7 @@ function FolderCard({
           </span>
           <FolderCountBadge count={total} />
         </div>
-        <span className="mt-4 line-clamp-2 pl-1.5 text-base font-semibold leading-snug text-foreground">
+        <span className="wx-serif mt-4 line-clamp-2 pl-1.5 text-xl leading-snug text-foreground">
           {folder.name}
         </span>
         <span className="mt-1.5 flex items-center gap-1.5 pl-1.5 text-xs text-muted-foreground">
@@ -115,117 +114,6 @@ function FolderCard({
         >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
-      </div>
-    </div>
-  )
-}
-
-function BlogRow({
-  blog,
-  itemType,
-  onOpen,
-  onMove,
-  onEdit,
-  onDelete,
-  onRemove,
-}: {
-  blog: LibraryBlog
-  itemType?: "own" | "saved"
-  onOpen: () => void
-  onMove: () => void
-  onEdit?: () => void
-  onDelete?: () => void
-  onRemove?: () => void
-}) {
-  const isSaved = itemType === "saved"
-
-  return (
-    <div className="group overflow-hidden rounded-2xl border border-border/60 bg-card transition-colors hover:border-border hover:bg-muted/15">
-      <button
-        type="button"
-        onClick={onOpen}
-        className="flex min-w-0 w-full flex-col text-left"
-      >
-        <div className="relative overflow-hidden bg-muted/50">
-          {blog.mainImage ? (
-            <img
-              src={blog.mainImage}
-              alt={blog.title || "Blog cover"}
-              loading="lazy"
-              decoding="async"
-              className="h-44 w-full object-cover sm:h-48"
-            />
-          ) : (
-            <div className="flex h-44 w-full items-center justify-center sm:h-48">
-              <FileText className="h-9 w-9 text-muted-foreground/45" />
-            </div>
-          )}
-          {isSaved ? (
-            <span className="absolute right-3 top-3 rounded-md bg-sky-600/90 px-2.5 py-1 text-[11px] font-medium text-white">
-              Saved
-            </span>
-          ) : (
-            <span
-              className={cn(
-                "absolute right-3 top-3 rounded-md px-2.5 py-1 text-[11px] font-medium capitalize text-white",
-                blog.status === "published"
-                  ? "bg-emerald-600/90"
-                  : blog.status === "personal"
-                    ? "bg-violet-600/90"
-                    : "bg-amber-600/90"
-              )}
-            >
-              {blog.status}
-            </span>
-          )}
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col px-4 py-4">
-          <div className="min-w-0">
-            <h3 className="line-clamp-2 text-base font-semibold text-foreground">
-              {blog.title || "Untitled"}
-            </h3>
-            <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-              {blog.description || "No description yet."}
-            </p>
-          </div>
-          <p className="mt-3 truncate text-xs text-muted-foreground/80">
-            {blog.author?.username || "Unknown"}
-          </p>
-        </div>
-      </button>
-      <div className="flex flex-wrap gap-2 border-t border-border/50 px-4 py-3">
-        <Button variant="ghost" size="sm" className="h-9 px-3" onClick={onMove} title="Move">
-          <FolderInput className="h-4 w-4" />
-          Move
-        </Button>
-        {!isSaved && onEdit && (
-          <Button variant="ghost" size="sm" className="h-9 px-3" onClick={onEdit}>
-            <Pencil className="h-4 w-4" />
-            Edit
-          </Button>
-        )}
-        {!isSaved && onDelete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 px-3 text-destructive hover:text-destructive"
-            onClick={onDelete}
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete
-          </Button>
-        )}
-        {isSaved && onRemove && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 px-3 text-destructive hover:text-destructive"
-            onClick={onRemove}
-          >
-            <Trash2 className="h-4 w-4" />
-            Remove
-          </Button>
-        )}
       </div>
     </div>
   )
@@ -327,8 +215,8 @@ export function BlogLibraryExplorer({
 
   if (loading || !contents) {
     return (
-      <div className="flex h-[min(720px,calc(100vh-11rem))] min-h-[560px] items-center justify-center border-y border-border/70 bg-card">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-foreground" />
+      <div className="mx-3 flex h-[min(720px,calc(100vh-11rem))] min-h-[560px] items-center justify-center rounded-3xl border border-border/60 bg-card shadow-sm sm:mx-5 lg:mx-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
       </div>
     )
   }
@@ -363,10 +251,11 @@ export function BlogLibraryExplorer({
     blog: LibraryBlog,
     itemType: "own" | "saved" = "own"
   ) => (
-    <BlogRow
+    <LibraryBlogTile
       key={blog._id}
       blog={blog}
       itemType={itemType}
+      subtitle={blog.author?.username}
       onOpen={() => onReadBlog(blog._id)}
       onMove={() => setMoveDialog({ open: true, blogId: blog._id, itemType })}
       onEdit={itemType !== "saved" ? () => onEditBlog(blog) : undefined}
@@ -388,13 +277,13 @@ export function BlogLibraryExplorer({
   )
 
   return (
-    <div className="flex h-[min(820px,calc(100vh-11rem))] min-h-[640px] flex-col overflow-hidden border-y border-border/70 bg-card lg:h-[calc(100vh-11rem)]">
+    <div className="flex h-[min(820px,calc(100vh-11rem))] min-h-[640px] flex-col overflow-hidden border border-border/60 bg-card shadow-sm sm:mx-3 sm:rounded-3xl lg:mx-5 lg:h-[calc(100vh-11rem)] xl:mx-8">
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* Sidebar */}
-        <aside className="flex max-h-[40vh] flex-col border-b border-border/70 bg-muted/20 p-4 lg:max-h-none lg:w-80 lg:shrink-0 lg:border-b-0 lg:border-r xl:w-96">
+        <aside className="flex max-h-[40vh] flex-col border-b border-border/60 bg-muted/30 p-4 lg:max-h-none lg:w-80 lg:shrink-0 lg:border-b-0 lg:border-r xl:w-96">
           <div className="mb-3 flex items-center justify-between gap-2 px-1 pb-3">
             <div className="min-w-0">
-              <p className="text-base font-semibold text-foreground">Folders</p>
+              <p className="wx-serif text-xl text-foreground">Folders</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 Browse, pin, and organize your library
               </p>
@@ -531,7 +420,7 @@ export function BlogLibraryExplorer({
                         {rootUnfiledBlogs.length === 1 ? "" : "s"} at root
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                       {rootUnfiledBlogs.map((blog) => renderBlogRow(blog, "own"))}
                     </div>
                   </section>
@@ -547,7 +436,7 @@ export function BlogLibraryExplorer({
                         {folderCount} folder{folderCount === 1 ? "" : "s"}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {contents.subfolders.map((folder) => (
                         <FolderCard
                           key={folder._id}
@@ -573,7 +462,7 @@ export function BlogLibraryExplorer({
                         {folderBlogCount} in this folder
                       </span>
                     </div>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                       {folderBlogItems.map(({ blog, itemType }) =>
                         renderBlogRow(blog, itemType)
                       )}

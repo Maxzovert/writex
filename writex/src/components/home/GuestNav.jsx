@@ -6,6 +6,7 @@ import logo from "@/assets/logo.png";
 const links = [
   { to: "/blogs", label: "Read" },
   { to: "/about", label: "About" },
+  { to: "/support", label: "Support" },
   { to: "/community", label: "Community" },
 ];
 

@@ -15,7 +15,7 @@ export function AuthShell({
   const isSignup = mode === "signup";
 
   return (
-    <div className="wx-cool relative min-h-screen overflow-hidden wx-sans">
+    <div className="wx-cool relative min-h-screen overflow-x-hidden wx-sans">
       {/* Light: clean gradient. Dark: cinematic photo. */}
       <div className="wx-auth-light-bg absolute inset-0 dark:hidden" />
       <div className="absolute inset-0 hidden dark:block">
@@ -28,7 +28,7 @@ export function AuthShell({
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-6 sm:px-8 lg:flex-row lg:items-center lg:gap-16 lg:py-10">
-        <aside className="mb-8 flex-1 lg:mb-0">
+        <aside className="mb-6 flex-1 lg:mb-0">
           <Link to="/" className="inline-flex items-center gap-2.5">
             <img src={logo} alt="WriteX" className="wx-logo-auth h-8 w-auto" />
             <span className="wx-serif text-2xl text-[var(--wx-text)]">WriteX</span>
@@ -71,13 +71,21 @@ export function AuthShell({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="mx-auto w-full max-w-md"
+          className="mx-auto w-full max-w-md pb-8 lg:pb-0"
         >
-          <div className="wx-glass rounded-[1.75rem] p-7 sm:p-8">
+          <div className="wx-glass rounded-[1.75rem] p-6 sm:p-8">
             <h2 className="wx-serif text-3xl text-[var(--wx-text)]">{heading}</h2>
-            <p className="mt-2 text-sm text-[var(--wx-mute)]">{subheading}</p>
-            <div className="mt-7">{children}</div>
-            {footer ? <div className="mt-6">{footer}</div> : null}
+            {subheading ? (
+              <p className="mt-1.5 text-sm leading-relaxed text-[var(--wx-mute)]">
+                {subheading}
+              </p>
+            ) : null}
+            <div className="mt-5">{children}</div>
+            {footer ? (
+              <div className="mt-5 border-t border-[var(--wx-line)] pt-5">
+                {footer}
+              </div>
+            ) : null}
           </div>
         </motion.main>
       </div>
@@ -109,7 +117,7 @@ export function AuthField({
           placeholder={placeholder}
           autoComplete={autoComplete}
           required
-          className={`w-full rounded-xl border border-[var(--wx-line)] bg-[var(--wx-soft)] px-3.5 py-3 text-[15px] text-[var(--wx-text)] outline-none transition placeholder:text-[var(--wx-mute)] focus:border-[var(--wx-accent)] focus:bg-[var(--wx-elev)] focus:ring-4 focus:ring-[var(--wx-accent)]/15 ${
+          className={`w-full rounded-xl border border-[var(--wx-line)] bg-[var(--wx-soft)] px-3.5 py-2.5 text-[15px] text-[var(--wx-text)] outline-none transition placeholder:text-[var(--wx-mute)] focus:border-[var(--wx-accent)] focus:bg-[var(--wx-elev)] focus:ring-4 focus:ring-[var(--wx-accent)]/15 ${
             rightSlot ? "pr-11" : ""
           }`}
         />
@@ -124,7 +132,7 @@ export function AuthSubmit({ loading, children }) {
     <button
       type="submit"
       disabled={loading}
-      className="mt-1 inline-flex w-full items-center justify-center rounded-xl bg-[var(--wx-accent)] px-4 py-3 text-[15px] font-semibold text-[var(--wx-accent-fg)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+      className="mt-1 inline-flex w-full items-center justify-center rounded-xl bg-[var(--wx-accent)] px-4 py-2.5 text-[15px] font-semibold text-[var(--wx-accent-fg)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {loading ? "Please wait…" : children}
     </button>

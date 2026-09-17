@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { 
   Edit3, 
-  Instagram, 
   Linkedin, 
-  Twitter, 
   Heart, 
   FileText,
   X,
@@ -16,17 +13,39 @@ import {
 } from 'lucide-react';
 import { 
   FaInstagram, 
-  FaLinkedin, 
   FaTwitter 
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import Navbar from '../Components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { useAuth } from '../../context/authContext';
 import { uploadImageToCloudinary } from '../../lib/cloudinary-storage';
 import { getSafeImageUrl } from '../../lib/image-url';
+
+const SOCIAL_PLATFORMS = [
+  { name: 'instagram', icon: FaInstagram, label: 'Instagram' },
+  { name: 'linkedin', icon: Linkedin, label: 'LinkedIn' },
+  { name: 'twitter', icon: FaTwitter, label: 'Twitter' },
+];
+
+function buildProfileFromUser(authUser, stats = {}) {
+  return {
+    name: authUser?.username || "User",
+    bio: authUser?.bio || "Add Bio",
+    profileImage: authUser?.profileImage || "",
+    favoriteTopics: ["Technology", "Travel", "Food", "Lifestyle", "Business"],
+    totalLikes: stats.totalLikes ?? 0,
+    totalPublishedBlogs: stats.publishedBlogs ?? 0,
+    followerCount: authUser?.followerCount ?? 0,
+    followingCount: authUser?.followingCount ?? 0,
+    socialLinks: {
+      instagram: authUser?.socialLinks?.instagram || "",
+      linkedin: authUser?.socialLinks?.linkedin || "",
+      twitter: authUser?.socialLinks?.twitter || "",
+    },
+  };
+}
 
 const MyProfile = () => {
   const navigate = useNavigate();
@@ -35,130 +54,66 @@ const MyProfile = () => {
   const [showSocialModal, setShowSocialModal] = useState(false);
   const [selectedSocial, setSelectedSocial] = useState('');
   const [socialUrl, setSocialUrl] = useState('');
-  const [loading, setLoading] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef(null);
-  
-  // Profile state with real data
-  const [profile, setProfile] = useState({
-    name: "",
-    bio: "Add Bio",
-    profileImage: "",
+  const fetchedRef = useRef(false);
+
+  const [profile, setProfile] = useState(() => buildProfileFromUser(user));
+
+  const [editForm, setEditForm] = useState(() => ({
+    name: user?.username || "",
+    bio: user?.bio || "Add Bio",
     favoriteTopics: ["Technology", "Travel", "Food", "Lifestyle", "Business"],
-    totalLikes: 0,
-    totalPublishedBlogs: 0,
-    followerCount: 0,
-    followingCount: 0,
-    socialLinks: {
-      instagram: "",
-      linkedin: "",
-      twitter: ""
-    }
-  });
+  }));
 
-  const [editForm, setEditForm] = useState({
-    name: "",
-    bio: profile.bio,
-    favoriteTopics: [...profile.favoriteTopics]
-  });
+  const socialPlatforms = SOCIAL_PLATFORMS;
 
-  const socialPlatforms = [
-    { 
-      name: 'instagram', 
-      icon: FaInstagram, 
-      color: 'from-pink-500 to-purple-600',
-      label: 'Instagram'
-    },
-    { 
-      name: 'linkedin', 
-      icon: LinkedInIcon, 
-      color: 'from-blue-600 to-blue-700',
-      label: 'LinkedIn'
-    },
-    { 
-      name: 'twitter', 
-      icon: FaTwitter, 
-      color: 'from-blue-400 to-blue-500',
-      label: 'Twitter'
-    }
-  ];
-
-  // Custom LinkedIn icon component since it's not in react-icons
-  function LinkedInIcon({ className }) {
-  return (
-      <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.047-1.852-3.047-1.853 0-2.136 1.445-2.136 2.939v5.677H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-      </svg>
-    );
-  }
-
-  // Fetch user profile data
   const fetchUserProfile = async () => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        toast.error('Authentication required');
-        navigate('/login');
-        return;
+      const response = await axios.get("/users/profile-stats");
+      const { user: userData, stats } = response.data || {};
+
+      if (!userData) {
+        throw new Error("No profile data returned");
       }
 
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/users/profile-stats`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      const { user: userData, stats } = response.data;
-      
-      setProfile(prev => ({
-        ...prev,
-        name: userData.username || "User",
-        profileImage: userData.profileImage || "",
-        bio: userData.bio || "Add Bio",
-        socialLinks: userData.socialLinks || {
-          instagram: "",
-          linkedin: "",
-          twitter: ""
-        },
-        totalLikes: stats.totalLikes || 0,
-        totalPublishedBlogs: stats.publishedBlogs || 0,
-        followerCount: userData.followerCount || 0,
-        followingCount: userData.followingCount || 0,
+      const nextProfile = buildProfileFromUser(userData, stats);
+      setProfile((prev) => ({
+        ...nextProfile,
+        favoriteTopics: prev.favoriteTopics?.length
+          ? prev.favoriteTopics
+          : nextProfile.favoriteTopics,
       }));
-
-      setEditForm(prev => ({
+      setEditForm((prev) => ({
         ...prev,
-        name: userData.username || "User",
-        bio: userData.bio || "Add Bio"
+        name: nextProfile.name,
+        bio: nextProfile.bio,
       }));
-
-      if (setUser) {
-        setUser(userData);
-      }
-
+      setUser((prev) => ({
+        ...(prev || {}),
+        ...userData,
+      }));
     } catch (error) {
       console.error('Error fetching user profile:', error);
       toast.error(error.response?.data?.message || 'Failed to fetch profile data');
-      
-      // Fallback to user context data
       if (user?.username) {
-        setProfile(prev => ({
+        setProfile((prev) => ({
           ...prev,
-          name: user.username,
-          bio: user.bio || "Add Bio"
-        }));
-        setEditForm(prev => ({
-          ...prev,
-          name: user.username,
-          bio: user.bio || "Add Bio"
+          ...buildProfileFromUser(user),
+          favoriteTopics: prev.favoriteTopics,
         }));
       }
     } finally {
-      setLoading(false);
+      // no-op: page is never blocked on this fetch
     }
   };
+
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    fetchUserProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle profile image upload
   const handleImageUpload = async (event) => {
@@ -234,10 +189,6 @@ const MyProfile = () => {
   const triggerImageUpload = () => {
     fileInputRef.current?.click();
   };
-
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -406,28 +357,16 @@ const MyProfile = () => {
   const safeProfileImage = getSafeImageUrl(profile.profileImage);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <Navbar />
-
-      {loading ? (
-        <div className="flex flex-1 items-center justify-center">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-foreground" />
-        </div>
-      ) : (
-        <main className="flex-1">
-          <section className="border-b border-border bg-gradient-to-br from-muted/50 via-background to-background px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen flex-col pb-10 text-foreground">
+      <main className="flex-1">
+          <section className="border-b border-border bg-muted/30 px-4 py-12 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-5xl">
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="flex flex-col items-center text-center"
-              >
+              <div className="flex flex-col items-center text-center">
                 <div className="relative mb-6">
-                  <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-background shadow-lg ring-2 ring-border sm:h-32 sm:w-32">
+                  <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-card bg-card shadow-md ring-1 ring-border sm:h-32 sm:w-32">
                     {uploadingImage ? (
                       <div className="flex h-full w-full items-center justify-center bg-muted">
-                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-foreground" />
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-primary" />
                       </div>
                     ) : safeProfileImage ? (
                       <img
@@ -435,22 +374,28 @@ const MyProfile = () => {
                         alt={profile.name}
                         className="h-full w-full object-cover"
                         onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling;
+                          if (fallback) fallback.style.display = 'flex';
                         }}
                       />
                     ) : null}
-                    <div className={`flex h-full w-full items-center justify-center bg-muted ${safeProfileImage ? 'hidden' : ''}`}>
-                      <span className="text-3xl font-semibold text-muted-foreground">
+                    <div
+                      className={`flex h-full w-full items-center justify-center bg-primary/10 ${
+                        safeProfileImage ? 'hidden' : ''
+                      }`}
+                    >
+                      <span className="wx-serif text-4xl text-primary sm:text-5xl">
                         {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
                       </span>
                     </div>
                   </div>
                   {isEditing && (
                     <button
+                      type="button"
                       onClick={triggerImageUpload}
                       disabled={uploadingImage}
-                      className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-background shadow-md transition-opacity hover:opacity-90 disabled:opacity-50"
+                      className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition hover:brightness-110 disabled:opacity-50"
                     >
                       <Camera className="h-4 w-4" />
                     </button>
@@ -463,24 +408,24 @@ const MyProfile = () => {
                       type="text"
                       value={editForm.name}
                       onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full border-b border-border bg-transparent py-2 text-center text-3xl font-semibold text-foreground focus:border-foreground focus:outline-none"
+                      className="w-full border-b border-border bg-transparent py-2 text-center text-3xl font-semibold text-foreground focus:border-primary focus:outline-none"
                       placeholder="Enter your name"
                     />
                     <textarea
                       value={editForm.bio}
                       onChange={(e) => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
-                      className="w-full resize-none border-b border-border bg-transparent py-2 text-center text-muted-foreground focus:border-foreground focus:outline-none"
+                      className="w-full resize-none border-b border-border bg-transparent py-2 text-center text-muted-foreground focus:border-primary focus:outline-none"
                       placeholder="Tell us about yourself"
                       rows={3}
                     />
                   </div>
                 ) : (
                   <>
-                    <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                    <h1 className="wx-serif text-4xl tracking-tight text-foreground sm:text-5xl">
                       {profile.name || 'User'}
                     </h1>
                     <p className="mt-3 max-w-xl text-base leading-relaxed text-muted-foreground">
-                      {profile.bio}
+                      {profile.bio === 'Add Bio' ? 'No bio yet — click Edit profile to add one.' : profile.bio}
                     </p>
                   </>
                 )}
@@ -493,16 +438,21 @@ const MyProfile = () => {
                     </>
                   ) : (
                     <>
-                      <Button onClick={handleEdit} variant="outline">
+                      <Button onClick={handleEdit} variant="outline" className="border-border text-foreground">
                         <Edit3 className="h-4 w-4" />
                         Edit profile
                       </Button>
-                      <Button variant="secondary" onClick={() => navigate('/myblogs')}>
+                      <Button
+                        variant="outline"
+                        className="border-border text-foreground"
+                        onClick={() => navigate('/myblogs')}
+                      >
                         <FileText className="h-4 w-4" />
                         My blogs
                       </Button>
                       <Button
                         variant="outline"
+                        className="border-border text-foreground"
                         onClick={() => navigate(`/author/${profile.name}`)}
                       >
                         <ExternalLink className="h-4 w-4" />
@@ -515,7 +465,7 @@ const MyProfile = () => {
                     </>
                   )}
                 </div>
-              </motion.div>
+              </div>
             </div>
           </section>
 
@@ -651,7 +601,6 @@ const MyProfile = () => {
             </div>
           </section>
         </main>
-      )}
 
       {/* Social Media Modal */}
       {showSocialModal && (

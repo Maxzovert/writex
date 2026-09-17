@@ -61,7 +61,7 @@ function TreeNode({
         className={cn(
           "group relative flex min-h-10 items-center gap-0.5 rounded-lg text-sm transition-colors",
           isActive
-            ? "bg-muted/80 text-foreground"
+            ? "bg-primary/10 text-foreground"
             : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
         )}
         style={{ marginLeft: `${indent}px` }}
@@ -166,7 +166,7 @@ export function FolderTreeSidebar({
                   className={cn(
                     "relative flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors",
                     isActive
-                      ? "bg-muted/80 text-foreground"
+                      ? "bg-primary/10 text-foreground"
                       : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
@@ -217,7 +217,7 @@ export function FolderTreeSidebar({
         className={cn(
           "relative flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors",
           isLibraryActive
-            ? "bg-muted/80 text-foreground"
+            ? "bg-primary/10 text-foreground"
             : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
         )}
       >

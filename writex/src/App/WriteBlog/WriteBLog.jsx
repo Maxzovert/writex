@@ -1,9 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import Navbar from "../Components/Navbar";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { Button } from "../../components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import axiosInstance from "../../lib/axiosConfig";
@@ -11,9 +8,6 @@ import { toast } from "react-toastify";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  Sparkles,
-  PanelLeftOpen,
-  PanelLeftClose,
   Loader2,
   CheckCircle2,
   AlertCircle,
@@ -168,8 +162,6 @@ const WriteBlog = () => {
   const [editorInitialContent, setEditorInitialContent] = useState(EMPTY_EDITOR_CONTENT);
   const [editorSessionKey, setEditorSessionKey] = useState("new");
   const [publishStatus, setPublishStatus] = useState("published");
-  const [aiPanelOpen, setAiPanelOpen] = useState(true);
-  const [aiMessage, setAiMessage] = useState("");
   const [draftBookmarkDocumentId] = useState(() => createDraftBookmarkDocumentId());
   const [bookmarkDocumentId, setBookmarkDocumentId] = useState(() =>
     location.state?.editBlog?._id
@@ -229,27 +221,7 @@ const WriteBlog = () => {
     }
   }, [])
 
-  useEffect(() => {
-    if (window.innerWidth < 1024) {
-      setAiPanelOpen(false);
-    }
-  }, []);
-
   const { isFocusMode, toggleFocusMode } = useFocusMode();
-
-  const handleToggleFocusMode = () => {
-    if (!isFocusMode) {
-      setAiPanelOpen(false);
-    }
-    toggleFocusMode();
-  };
-  const [aiSuggestions, setAiSuggestions] = useState([
-    "Improve your blog title to be more engaging",
-    "Add more descriptive content to your introduction",
-    "Consider adding relevant images to support your points",
-    "Break down complex ideas into smaller paragraphs",
-    "End with a strong conclusion that summarizes your main points"
-  ]);
   
   const lastSavedSnapshotRef = useRef(null);
   const autoSaveReadyRef = useRef(false);
@@ -362,7 +334,6 @@ const WriteBlog = () => {
     editBlogIdRef.current = null;
     setOriginalStatus("draft");
     setPublishStatus("published");
-    setAiMessage("");
     setEditorInitialContent(EMPTY_EDITOR_CONTENT);
     setEditorSessionKey("new");
     setSaveStatus("idle");
@@ -878,22 +849,9 @@ const WriteBlog = () => {
     }
   };
 
-  const handleAiSuggestion = (suggestion) => {
-    setAiMessage(suggestion);
-  };
-
-  const handleAiMessageSend = () => {
-    if (aiMessage.trim()) {
-      // Here you would typically send the message to an AI service
-      // For now, we'll just show a toast
-      toast.info("AI Assistant: " + aiMessage);
-      setAiMessage("");
-    }
-  };
-
   const renderCategorySelect = () => (
     <Select value={category} onValueChange={(value) => setCategory(value)}>
-      <SelectTrigger className="w-full bg-gray-50 border-gray-300">
+      <SelectTrigger className="w-full bg-muted border-input">
         <SelectValue placeholder="Select category" />
       </SelectTrigger>
       <SelectContent>
@@ -934,12 +892,10 @@ const WriteBlog = () => {
     <div
       className={
         isFocusMode
-          ? "fixed inset-0 z-[60] flex flex-col overflow-hidden bg-white"
-          : "flex h-screen flex-col overflow-hidden bg-gray-50"
+          ? "fixed inset-0 z-[60] flex flex-col overflow-hidden bg-card"
+          : "flex min-h-0 flex-1 flex-col overflow-hidden bg-muted"
       }
     >
-      {!isFocusMode && <Navbar />}
-
       <div
         className={
           isFocusMode
@@ -954,154 +910,24 @@ const WriteBlog = () => {
               : "flex min-h-0 flex-1 gap-4 overflow-hidden lg:gap-5"
           }
         >
-          {/* Mobile AI overlay */}
-          {!isFocusMode && aiPanelOpen && (
-            <button
-              type="button"
-              aria-label="Close AI panel"
-              className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px] lg:hidden"
-              onClick={() => setAiPanelOpen(false)}
-            />
-          )}
-
-          {/* AI Assistant Sidebar */}
-          {!isFocusMode && (
-          <aside
-            className={`
-              fixed inset-y-0 left-0 z-50 flex w-[min(100vw-2rem,20rem)] flex-col overflow-hidden
-              border border-gray-200 bg-white shadow-xl transition-transform duration-300
-              lg:relative lg:z-0 lg:w-72 lg:shrink-0 lg:rounded-2xl lg:shadow-sm
-              ${aiPanelOpen ? "translate-x-4" : "-translate-x-[110%] lg:translate-x-0"}
-              ${!aiPanelOpen ? "lg:hidden" : ""}
-              top-[5.5rem] bottom-4 rounded-2xl lg:top-auto lg:bottom-auto lg:h-auto
-            `}
-          >
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-900 shadow-sm">
-                  <Sparkles className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-base font-semibold text-gray-900">AI Assistant</h2>
-                  <p className="text-xs text-gray-500">Writing companion</p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden"
-                onClick={() => setAiPanelOpen(false)}
-                aria-label="Close panel"
-              >
-                <PanelLeftClose className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="flex-1 space-y-6 overflow-y-auto p-5">
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-gray-900">Writing tips</h3>
-                <div className="space-y-2">
-                  {aiSuggestions.slice(0, 3).map((suggestion, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      className="w-full rounded-lg border border-gray-200 bg-gray-50 p-3 text-left text-sm text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-100"
-                      onClick={() => handleAiSuggestion(suggestion)}
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <Separator className="bg-gray-200" />
-
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-gray-900">Ask AI</h3>
-                <div className="space-y-2">
-                  <Textarea
-                    placeholder="Ask about your blog..."
-                    value={aiMessage}
-                    onChange={(e) => setAiMessage(e.target.value)}
-                    className="min-h-[88px] resize-none border-gray-200 bg-white text-sm"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleAiMessageSend();
-                      }
-                    }}
-                  />
-                  <Button
-                    onClick={handleAiMessageSend}
-                    disabled={!aiMessage.trim()}
-                    className="w-full bg-gray-900 text-white hover:bg-gray-800"
-                    size="sm"
-                  >
-                    Send
-                  </Button>
-                </div>
-              </div>
-
-              <Separator className="bg-gray-200" />
-
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-gray-900">Quick actions</h3>
-                <div className="space-y-2">
-                  {[
-                    ["Generate Title", "Generate a compelling title for my blog"],
-                    ["Improve Intro", "Help me improve my blog's introduction"],
-                    ["Suggest Tags", "Suggest relevant tags for my blog"],
-                  ].map(([label, prompt]) => (
-                    <Button
-                      key={label}
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start border-gray-200 text-gray-700"
-                      onClick={() => handleAiSuggestion(prompt)}
-                    >
-                      {label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </aside>
-          )}
-
           {/* Editor Section */}
           <main
-            className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white ${
+            className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-card ${
               isFocusMode
                 ? "rounded-none border-0 shadow-none"
-                : "rounded-2xl border border-gray-200 shadow-sm"
+                : "rounded-2xl border border-border shadow-sm"
             }`}
           >
             {/* Fixed header — writing area below scrolls independently */}
-            <header className="z-20 shrink-0 border-b border-gray-100 bg-white px-3 py-2 sm:px-4 sm:py-3">
+            <header className="z-20 shrink-0 border-b border-border bg-card/95 px-3 py-2 backdrop-blur-sm sm:px-4 sm:py-3">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-3">
                 <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                  {!isFocusMode && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0 text-gray-600 hover:bg-gray-100"
-                      onClick={() => setAiPanelOpen((open) => !open)}
-                      aria-label={aiPanelOpen ? "Hide AI panel" : "Show AI panel"}
-                    >
-                      {aiPanelOpen ? (
-                        <PanelLeftClose className="h-4 w-4" />
-                      ) : (
-                        <PanelLeftOpen className="h-4 w-4" />
-                      )}
-                    </Button>
-                  )}
-
                   {!isFocusMode && (isEditMode || hasMeaningfulContent()) && (
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={isEditMode ? handleNavigateAway : () => navigate("/myblogs")}
-                      className="h-8 w-8 shrink-0 text-gray-600 hover:bg-gray-100"
+                      className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted"
                       aria-label="Back"
                       title="Back"
                     >
@@ -1110,10 +936,10 @@ const WriteBlog = () => {
                   )}
 
                   <div className="min-w-0 flex-1 md:flex-none">
-                    <h1 className="truncate text-base font-semibold text-gray-900 sm:text-lg">
+                    <h1 className="wx-serif truncate text-lg text-foreground sm:text-xl">
                       {isEditMode ? "Edit Blog" : "Write New Blog"}
                     </h1>
-                    <p className="hidden text-xs text-gray-500 lg:block">
+                    <p className="hidden text-xs text-muted-foreground lg:block">
                       {isFocusMode
                         ? "Fullscreen writing · Press Esc to exit"
                         : isEditMode
@@ -1139,7 +965,7 @@ const WriteBlog = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 shrink-0 border-gray-200"
+                    className="h-8 w-8 shrink-0 border-border"
                     onClick={handleNewBlog}
                     title="New blog"
                     aria-label="New blog"
@@ -1150,8 +976,8 @@ const WriteBlog = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 shrink-0 border-gray-200"
-                    onClick={handleToggleFocusMode}
+                    className="h-8 w-8 shrink-0 border-border"
+                    onClick={toggleFocusMode}
                     title={isFocusMode ? "Exit fullscreen (Esc)" : "Enter fullscreen writing mode"}
                     aria-label={isFocusMode ? "Exit focus mode" : "Focus mode"}
                   >
@@ -1167,7 +993,7 @@ const WriteBlog = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 shrink-0 border-gray-200 px-2.5 text-xs sm:px-3 sm:text-sm"
+                        className="h-8 shrink-0 border-border px-2.5 text-xs sm:px-3 sm:text-sm"
                       >
                         <span className="sm:hidden">Draft</span>
                         <span className="hidden sm:inline">Save Draft</span>
@@ -1214,7 +1040,7 @@ const WriteBlog = () => {
                         <DialogClose asChild>
                           <Button variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button onClick={handleSaveDraft} className="bg-gray-900 text-white hover:bg-gray-800">
+                        <Button onClick={handleSaveDraft} className="bg-primary text-primary-foreground hover:brightness-110">
                           {isEditMode ? "Update Draft" : "Save Draft"}
                         </Button>
                       </DialogFooter>
@@ -1226,7 +1052,7 @@ const WriteBlog = () => {
                       <Button
                         disabled={isPublishing}
                         size="sm"
-                        className="h-8 shrink-0 bg-gray-900 px-3 text-xs text-white hover:bg-gray-800 sm:text-sm"
+                        className="h-8 shrink-0 bg-primary px-3 text-xs text-primary-foreground hover:brightness-110 sm:text-sm"
                       >
                         {isPublishing
                           ? isEditMode
@@ -1278,7 +1104,7 @@ const WriteBlog = () => {
                         <div className="grid gap-2">
                           <Label htmlFor="visibility">Visibility</Label>
                           <Select value={publishStatus} onValueChange={setPublishStatus}>
-                            <SelectTrigger className="w-full bg-gray-50 border-gray-300">
+                            <SelectTrigger className="w-full bg-muted border-input">
                               <SelectValue placeholder="Select visibility" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1295,7 +1121,7 @@ const WriteBlog = () => {
                         <Button
                           onClick={handlePublish}
                           disabled={isPublishing || !title.trim() || !description.trim()}
-                          className="bg-gray-900 text-white hover:bg-gray-800"
+                          className="bg-primary text-primary-foreground hover:brightness-110"
                         >
                           {isPublishing
                             ? isEditMode
@@ -1317,7 +1143,7 @@ const WriteBlog = () => {
             </header>
 
             {/* Editor */}
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
               <SimpleEditor
                 key={editorSessionKey}
                 className="min-h-0 flex-1"

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
-import { ArrowRight, Eye, Tag } from "lucide-react"
+import { ArrowRight, Eye } from "lucide-react"
 import { getSafeImageUrl } from "@/lib/image-url"
 import {
   getCategoryFeedUrl,
@@ -96,18 +96,13 @@ export function RelatedBlogsSection({
   return (
     <section
       className={cn(
-        "not-prose overflow-hidden rounded-xl border border-border bg-card shadow-sm",
+        "not-prose overflow-hidden rounded-2xl border border-[var(--wx-line)] bg-[var(--wx-elev)]",
         className
       )}
     >
-      <div className="border-b border-border/60 px-4 py-3">
-        <h2 className="text-sm font-semibold text-foreground">
-          Read more related blogs
-        </h2>
-        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-          <Tag className="h-3 w-3 shrink-0" />
-          {normalizedCategory}
-        </p>
+      <div className="border-b border-[var(--wx-line)] px-4 py-3.5">
+        <h2 className="wx-serif text-lg text-[var(--wx-text)]">Related notes</h2>
+        <p className="mt-0.5 text-xs text-[var(--wx-mute)]">{normalizedCategory}</p>
       </div>
 
       <div className="p-2">
@@ -116,13 +111,13 @@ export function RelatedBlogsSection({
             {Array.from({ length: 3 }).map((_, index) => (
               <div
                 key={index}
-                className="h-16 animate-pulse rounded-lg bg-muted/60"
+                className="h-14 animate-pulse rounded-lg bg-[var(--wx-soft)]"
               />
             ))}
           </div>
         ) : relatedBlogs.length === 0 ? (
-          <p className="px-2 py-3 text-sm leading-relaxed text-muted-foreground">
-            No other blogs in {normalizedCategory} yet.
+          <p className="px-2 py-3 text-sm leading-relaxed text-[var(--wx-mute)]">
+            No other notes in {normalizedCategory} yet.
           </p>
         ) : (
           <div className="space-y-0.5">
@@ -134,9 +129,9 @@ export function RelatedBlogsSection({
                   key={item._id}
                   type="button"
                   onClick={() => navigate(`/blog/${item._id}`)}
-                  className="group flex w-full items-start gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-muted/50"
+                  className="group flex w-full items-start gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-[var(--wx-soft)]"
                 >
-                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted">
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[var(--wx-soft)]">
                     {safeImage ? (
                       <img
                         src={safeImage}
@@ -146,23 +141,23 @@ export function RelatedBlogsSection({
                         className="h-full w-full object-cover transition-transform group-hover:scale-105"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
-                        No image
+                      <div className="flex h-full w-full items-center justify-center text-[10px] text-[var(--wx-mute)]">
+                        —
                       </div>
                     )}
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground group-hover:text-foreground/80">
-                      {item.title || "Untitled blog"}
+                    <p className="line-clamp-2 text-sm font-medium leading-snug text-[var(--wx-text)]">
+                      {item.title || "Untitled note"}
                     </p>
-                    <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-                      {item.author?.username || "Unknown author"}
+                    <p className="mt-1 line-clamp-1 text-xs text-[var(--wx-mute)]">
+                      {item.author?.username || "Unknown"}
                       {item.createdAt ? ` · ${formatDate(item.createdAt)}` : ""}
                     </p>
-                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                    <p className="mt-1 flex items-center gap-1 text-xs text-[var(--wx-mute)]">
                       <Eye className="h-3 w-3" />
-                      {item.viewCount ?? 0} views
+                      {item.viewCount ?? 0}
                     </p>
                   </div>
                 </button>
@@ -173,13 +168,13 @@ export function RelatedBlogsSection({
       </div>
 
       {!loading && relatedBlogs.length > 0 && (
-        <div className="border-t border-border/60 px-4 py-2.5">
+        <div className="border-t border-[var(--wx-line)] px-4 py-2.5">
           <button
             type="button"
             onClick={() => navigate(getCategoryFeedUrl(normalizedCategory))}
-            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="inline-flex items-center gap-1 text-xs font-medium text-[var(--wx-accent)] transition-opacity hover:opacity-80"
           >
-            Browse all blogs
+            Browse all
             <ArrowRight className="h-3 w-3" />
           </button>
         </div>

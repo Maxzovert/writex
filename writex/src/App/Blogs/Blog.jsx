@@ -1,537 +1,327 @@
-import React, { useEffect, useRef, useState } from "react";
-import Navbar from "../Components/Navbar";
-import axios from "axios";
-import { toast } from "react-toastify";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { getSafeImageUrl } from "../../lib/image-url";
-import { useAuth } from "../../context/authContext";
-import { fetchFollowingFeed } from "../../lib/follow-api";
+import React, { useEffect, useMemo, useRef, useState } from "react"
+import Navbar from "../Components/Navbar"
+import axios from "axios"
+import { toast } from "react-toastify"
+import { useNavigate, useSearchParams } from "react-router-dom"
+import { useAuth } from "../../context/authContext"
+import { fetchFollowingFeed } from "../../lib/follow-api"
 import {
   blogMatchesCategory,
   filterBlogsByCategory,
   resolveCategoryFilter,
-} from "../../lib/blog-categories";
-import {
-  Eye,
-  Heart,
-  ArrowRight,
-  Calendar,
-  Tag,
-  Filter,
-  Sparkles,
-  BookHeart,
-  Handshake,
-  CircuitBoard,
-  HeartPulse,
-  BookA,
-  Tv,
-  Medal,
-  ArrowBigUp,
-  MessageCircle,
-  Users,
-} from 'lucide-react';
+} from "../../lib/blog-categories"
+import { TopicFilterRail } from "@/components/blog/TopicFilterRail"
+import { PublicBlogTile } from "@/components/blogs/PublicBlogTile"
+import { ArrowRight, Users } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const Blog = () => {
-  const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [showFilters, setShowFilters] = useState(true);
-  const [feedMode, setFeedMode] = useState("all");
-  const [feedLoading, setFeedLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const hasFatched = useRef(false);
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const [data, setData] = useState([])
+  const [filteredData, setFilteredData] = useState([])
+  const [activeCategory, setActiveCategory] = useState("All")
+  const [feedMode, setFeedMode] = useState("all")
+  const [feedLoading, setFeedLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const hasFatched = useRef(false)
+  const navigate = useNavigate()
+  const { user } = useAuth()
 
-  const PAGE_LIMIT = 20;
+  const PAGE_LIMIT = 20
 
   const applyCategoryFilter = (category, sourceData = data) => {
-    setActiveCategory(category);
-    setFilteredData(filterBlogsByCategory(sourceData, category));
-  };
+    setActiveCategory(category)
+    setFilteredData(filterBlogsByCategory(sourceData, category))
+  }
 
   const fetchAllBlogsPage = async (pageNum = 1) => {
     const fetchData = await axios.get(
       `${import.meta.env.VITE_API_BASE_URL}/public/posts/blogs/`,
       { params: { page: pageNum, limit: PAGE_LIMIT } }
-    );
-    const allBlogs = fetchData.data.allBlogs ?? [];
-    setData(allBlogs);
-    setPage(fetchData.data.page ?? pageNum);
-    setHasMore(Boolean(fetchData.data.hasMore));
-    return allBlogs;
-  };
+    )
+    const allBlogs = fetchData.data.allBlogs ?? []
+    setData(allBlogs)
+    setPage(fetchData.data.page ?? pageNum)
+    setHasMore(Boolean(fetchData.data.hasMore))
+    return allBlogs
+  }
 
   const handleFetchAllBlogs = async () => {
-    if (hasFatched.current) return;
-    hasFatched.current = true;
+    if (hasFatched.current) return
+    hasFatched.current = true
 
     try {
-      const allBlogs = await fetchAllBlogsPage(1);
-      const category = resolveCategoryFilter(searchParams.get("category"));
-      applyCategoryFilter(category, allBlogs);
-    } catch (error) {
-      toast.error("Error loading blogs");
+      const allBlogs = await fetchAllBlogsPage(1)
+      const category = resolveCategoryFilter(searchParams.get("category"))
+      applyCategoryFilter(category, allBlogs)
+    } catch {
+      toast.error("Error loading blogs")
     }
-  };
+  }
 
   const handleLoadMore = async () => {
-    if (!hasMore || loadingMore || feedMode !== "all") return;
+    if (!hasMore || loadingMore || feedMode !== "all") return
     try {
-      setLoadingMore(true);
-      const nextPage = page + 1;
+      setLoadingMore(true)
+      const nextPage = page + 1
       const fetchData = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/public/posts/blogs/`,
         { params: { page: nextPage, limit: PAGE_LIMIT } }
-      );
-      const allBlogs = fetchData.data.allBlogs ?? [];
+      )
+      const allBlogs = fetchData.data.allBlogs ?? []
       setData((prev) => {
-        const seen = new Set(prev.map((b) => b._id));
-        return [...prev, ...allBlogs.filter((b) => b._id && !seen.has(b._id))];
-      });
-      setPage(fetchData.data.page ?? nextPage);
-      setHasMore(Boolean(fetchData.data.hasMore));
+        const seen = new Set(prev.map((b) => b._id))
+        return [...prev, ...allBlogs.filter((b) => b._id && !seen.has(b._id))]
+      })
+      setPage(fetchData.data.page ?? nextPage)
+      setHasMore(Boolean(fetchData.data.hasMore))
     } catch {
-      toast.error("Error loading more blogs");
+      toast.error("Error loading more blogs")
     } finally {
-      setLoadingMore(false);
+      setLoadingMore(false)
     }
-  };
+  }
 
   const handleFetchFollowingFeed = async () => {
     if (!user) {
-      toast.info("Log in to see blogs from people you follow");
-      navigate("/login");
-      return;
+      toast.info("Log in to see blogs from people you follow")
+      navigate("/login")
+      return
     }
 
     try {
-      setFeedLoading(true);
-      const { allBlogs, sharedBlogs } = await fetchFollowingFeed({ page: 1, limit: PAGE_LIMIT });
-      const seen = new Set();
-      const merged = [];
+      setFeedLoading(true)
+      const { allBlogs, sharedBlogs } = await fetchFollowingFeed({
+        page: 1,
+        limit: PAGE_LIMIT,
+      })
+      const seen = new Set()
+      const merged = []
 
-      [...sharedBlogs, ...allBlogs].forEach((blog) => {
-        if (!blog?._id || seen.has(blog._id)) return;
-        seen.add(blog._id);
-        merged.push(blog);
-      });
+      ;[...sharedBlogs, ...allBlogs].forEach((blog) => {
+        if (!blog?._id || seen.has(blog._id)) return
+        seen.add(blog._id)
+        merged.push(blog)
+      })
 
-      setData(merged);
-      setHasMore(false);
-      setPage(1);
-      const category = resolveCategoryFilter(searchParams.get("category"));
-      applyCategoryFilter(category, merged);
+      setData(merged)
+      setHasMore(false)
+      setPage(1)
+      const category = resolveCategoryFilter(searchParams.get("category"))
+      applyCategoryFilter(category, merged)
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to load following feed");
+      toast.error(
+        error.response?.data?.message || "Failed to load following feed"
+      )
     } finally {
-      setFeedLoading(false);
+      setFeedLoading(false)
     }
-  };
-
-  const handleFeedModeChange = async (mode) => {
-    setFeedMode(mode);
-    if (mode === "all") {
-      try {
-        setFeedLoading(true);
-        const allBlogs = await fetchAllBlogsPage(1);
-        const category = resolveCategoryFilter(searchParams.get("category"));
-        applyCategoryFilter(category, allBlogs);
-      } catch {
-        toast.error("Error loading blogs");
-      } finally {
-        setFeedLoading(false);
-      }
-    } else {
-      await handleFetchFollowingFeed();
-    }
-  };
-
-  useEffect(() => {
-    handleFetchAllBlogs();
-  }, []);
-
-  useEffect(() => {
-    if (data.length === 0) return;
-    const category = resolveCategoryFilter(searchParams.get("category"));
-    applyCategoryFilter(category);
-  }, [searchParams, data]);
-
-  const CATAGORY = [
-    {
-      type: "All",
-      icon: <Sparkles className="w-4 h-4" />,
-      count: data.length
-    },
-    {
-      type: "General",
-      icon: <Tag className="w-4 h-4" />,
-      count: data.filter(blog => blogMatchesCategory(blog, "General")).length
-    },
-    {
-      type: "Personal",
-      icon: <BookHeart className="w-4 h-4" />,
-      count: data.filter(blog => blogMatchesCategory(blog, "Personal")).length
-    },
-    {
-      type: "Business",
-      icon: <Handshake className="w-4 h-4" />,
-      count: data.filter(blog => blogMatchesCategory(blog, "Business")).length
-    },
-    {
-      type: "Tech",
-      icon: <CircuitBoard className="w-4 h-4" />,
-      count: data.filter(blog => blogMatchesCategory(blog, "Tech")).length
-    },
-    {
-      type: "Health",
-      icon: <HeartPulse className="w-4 h-4" />,
-      count: data.filter(blog => blogMatchesCategory(blog, "Health")).length
-    },
-    {
-      type: "Education",
-      icon: <BookA className="w-4 h-4" />,
-      count: data.filter(blog => blogMatchesCategory(blog, "Education")).length
-    },
-    {
-      type: "Entertainment",
-      icon: <Tv className="w-4 h-4" />,
-      count: data.filter(blog => blogMatchesCategory(blog, "Entertainment")).length
-    },
-    {
-      type: "Sports",
-      icon: <Medal className="w-4 h-4" />,
-      count: data.filter(blog => blogMatchesCategory(blog, "Sports")).length
-    },
-    {
-      type: "Other",
-      icon: <ArrowBigUp className="w-4 h-4" />,
-      count: data.filter(blog => blogMatchesCategory(blog, "Other")).length
-    },
-  ];
-
-  const firstUpperCase = (str) => {
-    if (!str) return "Unknown";
-    const capName = str.charAt(0).toUpperCase() + str.slice(1);
-    return capName;
   }
 
-  // Format date function
-  const formatDate = (dateString) => {
-    if (!dateString) return "Unknown";
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  const handleFeedModeChange = async (mode) => {
+    setFeedMode(mode)
+    if (mode === "all") {
+      try {
+        setFeedLoading(true)
+        const allBlogs = await fetchAllBlogsPage(1)
+        const category = resolveCategoryFilter(searchParams.get("category"))
+        applyCategoryFilter(category, allBlogs)
+      } catch {
+        toast.error("Error loading blogs")
+      } finally {
+        setFeedLoading(false)
+      }
+    } else {
+      await handleFetchFollowingFeed()
+    }
+  }
+
+  useEffect(() => {
+    handleFetchAllBlogs()
+  }, [])
+
+  useEffect(() => {
+    if (data.length === 0) return
+    const category = resolveCategoryFilter(searchParams.get("category"))
+    applyCategoryFilter(category)
+  }, [searchParams, data])
+
+  const topicCounts = useMemo(() => {
+    const counts = {}
+    ;[
+      "General",
+      "Personal",
+      "Business",
+      "Tech",
+      "Health",
+      "Education",
+      "Entertainment",
+      "Sports",
+      "Other",
+    ].forEach((type) => {
+      counts[type] = data.filter((blog) =>
+        blogMatchesCategory(blog, type)
+      ).length
+    })
+    return counts
+  }, [data])
 
   const handleCategoryFilter = (category) => {
     if (category === "All") {
-      setSearchParams({});
-      return;
+      setSearchParams({})
+      return
     }
-    setSearchParams({ category });
-  };
+    setSearchParams({ category })
+  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="wx-desk-bg wx-sans min-h-screen text-foreground">
       <Navbar />
 
-      {/* Enhanced Category Navigation */}
-      <section className="py-16 px-4 lg:px-8 bg-gradient-to-br from-gray-50 to-white dark:from-zinc-900 dark:to-zinc-950">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8 flex justify-center">
-            <div className="inline-flex rounded-full border border-gray-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900">
-              <button
-                type="button"
-                onClick={() => handleFeedModeChange("all")}
-                className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${
-                  feedMode === "all"
-                    ? "bg-gray-900 text-white dark:bg-blue-600"
-                    : "text-gray-600 hover:text-gray-900 dark:text-gray-300"
-                }`}
-              >
-                All blogs
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFeedModeChange("following")}
-                className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
-                  feedMode === "following"
-                    ? "bg-gray-900 text-white dark:bg-blue-600"
-                    : "text-gray-600 hover:text-gray-900 dark:text-gray-300"
-                }`}
-              >
-                <Users className="h-4 w-4" />
-                Following
-              </button>
-            </div>
+      <section className="border-b border-border/70 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-primary">
+            Read
+          </p>
+          <h1 className="wx-serif mt-2 text-4xl text-foreground sm:text-5xl">
+            Discover notes
+          </h1>
+          <p className="mt-2 max-w-xl text-muted-foreground">
+            A calm shelf of published writing — browse topics or follow people
+            you care about.
+          </p>
+
+          <div
+            role="tablist"
+            aria-label="Feed mode"
+            className="mt-8 inline-flex w-full max-w-md gap-1 rounded-2xl bg-muted p-1.5"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={feedMode === "all"}
+              onClick={() => handleFeedModeChange("all")}
+              className={cn(
+                "inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-base font-medium transition",
+                feedMode === "all"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+              )}
+            >
+              All blogs
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={feedMode === "following"}
+              onClick={() => handleFeedModeChange("following")}
+              className={cn(
+                "inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-base font-medium transition",
+                feedMode === "following"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+              )}
+            >
+              <Users className="h-4 w-4" />
+              Following
+            </button>
           </div>
 
-          {feedLoading && (
-            <div className="mb-6 text-center text-sm text-gray-500 dark:text-gray-400">
-              Loading following feed...
-            </div>
-          )}
+          <div className="mt-5">
+            <TopicFilterRail
+              activeCategory={activeCategory}
+              onSelect={(category) =>
+                handleCategoryFilter(category)
+              }
+              counts={topicCounts}
+              allCount={data.length}
+              includeAll
+            />
+          </div>
 
-          {/* Category Filter Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="flex items-center justify-center gap-3 mb-8"
-          >
-            <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <span className="text-gray-600 dark:text-gray-400 font-medium cursor-pointer" onClick={() => setShowFilters(!showFilters)}>Filter by Category</span>
-          </motion.div>
+          {feedLoading ? (
+            <p className="mt-3 text-sm text-muted-foreground">Loading feed…</p>
+          ) : null}
 
-          {/* Enhanced Category Grid */}
-          {showFilters && <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl mx-auto"
-          >
-            {CATAGORY.map((category, index) => (
-              <motion.button
-                key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-                onClick={() => handleCategoryFilter(category.type)}
-                className={`group relative p-4 rounded-2xl border-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${activeCategory === category.type
-                    ? 'border-gray-900 bg-gray-900 text-white shadow-xl dark:border-blue-600 dark:bg-blue-600 dark:text-white'
-                    : 'border-gray-200 dark:border-zinc-600 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-zinc-500 hover:bg-white dark:hover:bg-zinc-800'
-                  }`}
-              >
-                {activeCategory === category.type && (
-                  <motion.div
-                    layoutId="activeCategory"
-                    className="absolute inset-0 bg-gray-900 dark:bg-blue-600 rounded-2xl -z-10"
-                    initial={false}
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-
-                <div className="text-center">
-                  <div className={`flex items-center justify-center mb-2 ${activeCategory === category.type ? 'text-white' : 'text-gray-600 dark:text-gray-400'
-                    }`}>
-                    {category.icon}
-                  </div>
-                  <div className={`font-semibold text-sm mb-1 ${activeCategory === category.type ? 'text-white' : 'text-gray-900 dark:text-gray-50'
-                    }`}>
-                    {category.type}
-                  </div>
-                  <div className={`text-xs ${activeCategory === category.type ? 'text-gray-300 dark:text-blue-100' : 'text-gray-500 dark:text-gray-400'
-                    }`}>
-                    {category.count} blogs
-                  </div>
-                </div>
-
-                <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br from-gray-100/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${activeCategory === category.type ? 'hidden' : ''
-                  }`} />
-              </motion.button>
-            ))}
-          </motion.div>}
-
-          {activeCategory !== "All" && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-center mt-6"
-            >
-              <span className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium">
-                <Tag className="w-4 h-4" />
-                Showing {filteredData.length} blogs in {activeCategory}
-                <button
-                  onClick={() => handleCategoryFilter("All")}
-                  className="ml-2 hover:bg-white/20 rounded-full p-1 transition-colors"
-                >
-                  ×
-                </button>
+          {activeCategory !== "All" ? (
+            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <span>
+                {filteredData.length} in {activeCategory}
               </span>
-            </motion.div>
-          )}
+              <button
+                type="button"
+                onClick={() => handleCategoryFilter("All")}
+                className="font-medium text-primary hover:underline"
+              >
+                Clear
+              </button>
+            </div>
+          ) : null}
         </div>
       </section>
 
-      {/* Blogs Grid */}
-      <section className="py-16 px-4 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      <section className="px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <div className="mx-auto max-w-6xl">
           {filteredData.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center py-20"
-            >
-              <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">📝</div>
-              <div className="text-gray-500 dark:text-gray-400 text-xl mb-2">
-                {activeCategory === "All" ? "No blogs found yet." : `No blogs found in ${activeCategory}.`}
-              </div>
-              <div className="text-gray-400 dark:text-gray-500 text-sm">
-                Be the first to write something amazing!
-              </div>
-            </motion.div>
+            <div className="rounded-3xl border border-border/70 bg-card px-6 py-24 text-center shadow-sm">
+              <p className="wx-serif text-3xl text-foreground">Nothing here yet</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {activeCategory === "All"
+                  ? "Be the first to publish something worth reading."
+                  : `No notes in ${activeCategory} right now.`}
+              </p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-              {filteredData.map((blog, index) => {
-                const safeMainImage = getSafeImageUrl(blog.mainImage);
-                const safeAuthorImage = getSafeImageUrl(blog.author?.profileImage);
-                return (
-                <motion.div
-                  key={blog._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: Math.min(index, 8) * 0.05 }}
-                  className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-3xl border border-gray-200 dark:border-zinc-700 overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group"
-                >
-                  {/* Image */}
-                  <div className="relative h-48 overflow-hidden">
-                    {safeMainImage ? (
-                      <img
-                        src={safeMainImage}
-                        alt={blog.title || "Blog Image"}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-700 flex items-center justify-center">
-                        <span className="text-gray-400 dark:text-gray-500 text-lg">No Image</span>
-                      </div>
-                    )}
-                    <div className="absolute top-3 left-3">
-                      <span className="inline-flex items-center gap-1 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full text-sm font-medium">
-                        <Tag className="w-3 h-3" />
-                        {blog.category || "General"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-6">
-                    {/* Author Info */}
-                    <div className="flex items-center gap-3 mb-4">
-                      {safeAuthorImage ? (
-                        <Link to={blog.author?.username ? `/author/${blog.author.username}` : "#"}>
-                          <img
-                            src={safeAuthorImage}
-                            alt={blog.author?.username || "Author"}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-600 shadow-sm"
-                          />
-                        </Link>
-                      ) : (
-                        <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                          {firstUpperCase(blog.author?.username || "A").charAt(0)}
-                        </div>
-                      )}
-                      <div>
-                        <Link
-                          to={blog.author?.username ? `/author/${blog.author.username}` : "#"}
-                          className="font-semibold text-gray-900 dark:text-gray-50 text-sm hover:underline"
-                        >
-                          {firstUpperCase(blog.author?.username) || "Unknown"}
-                        </Link>
-                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                          <Calendar className="w-3 h-3" />
-                          {formatDate(blog.createdAt)}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-50 mb-3 line-clamp-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
-                      {blog.title || "Untitled Blog"}
-                    </h3>
-                    {blog.sharedBy && (
-                      <p className="mb-2 text-xs text-blue-600 dark:text-blue-400">
-                        Shared by {firstUpperCase(blog.sharedBy.username)}
-                      </p>
-                    )}
-
-                    {/* Excerpt */}
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4">
-                      {blog.description || "No description"}
-                    </p>
-
-                    {/* Stats & Read More */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                        <div className="flex items-center gap-1">
-                          <Eye className="w-3 h-3" />
-                          {blog.viewCount || "0"}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Heart className="w-3 h-3" />
-                          {blog.likeCount ?? blog.likes?.length ?? 0}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MessageCircle className="w-3 h-3" />
-                          {blog.commentCount ?? blog.comments?.length ?? 0}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => navigate(`/blog/${blog._id}`)}
-                        className="flex items-center gap-1 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium text-sm transition-colors group-hover:gap-2"
-                      >
-                        Read More
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              )})}
+            <div className="overflow-hidden rounded-3xl border border-border/70 bg-card p-5 shadow-sm sm:p-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {filteredData.map((blog) => (
+                  <PublicBlogTile
+                    key={blog._id}
+                    blog={blog}
+                    onOpen={() => navigate(`/blog/${blog._id}`)}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
-          {feedMode === "all" && hasMore && (
+          {feedMode === "all" && hasMore ? (
             <div className="mt-10 flex justify-center">
               <button
                 type="button"
                 onClick={handleLoadMore}
                 disabled={loadingMore}
-                className="inline-flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-60 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-50"
               >
-                {loadingMore ? "Loading..." : "Load more blogs"}
+                {loadingMore ? "Loading…" : "Load more"}
               </button>
             </div>
-          )}
+          ) : null}
         </div>
       </section>
 
-      {/* Bottom CTA */}
-      {filteredData.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mt-16 mb-20 px-4 lg:px-8"
-        >
-          <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-gray-50 mb-4">
-            Found something interesting? Share your own story!
-          </h3>
+      {filteredData.length > 0 ? (
+        <div className="border-t border-border/70 px-4 py-14 text-center sm:px-6">
+          <p className="wx-serif text-2xl text-foreground sm:text-3xl">
+            Found something interesting?
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Share your own note with the feed.
+          </p>
           <button
+            type="button"
             onClick={() => navigate("/write")}
-            className="inline-flex items-center gap-2 bg-gray-900 dark:bg-primary text-white dark:text-primary-foreground px-6 py-3 rounded-full font-medium hover:bg-gray-800 dark:hover:bg-primary/90 transition-colors"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
           >
-            Start Writing Now
-            <ArrowRight className="w-4 h-4" />
+            Start writing
+            <ArrowRight className="h-4 w-4" />
           </button>
-        </motion.div>
-      )}
+        </div>
+      ) : null}
     </div>
-  );
-};
+  )
+}
 
-export default Blog;
+export default Blog

@@ -51,6 +51,11 @@ export function SiteFooter() {
                 </Link>
               </li>
               <li>
+                <Link to="/support" className="transition-colors hover:text-foreground">
+                  Support
+                </Link>
+              </li>
+              <li>
                 <Link to="/profile" className="transition-colors hover:text-foreground">
                   Profile
                 </Link>

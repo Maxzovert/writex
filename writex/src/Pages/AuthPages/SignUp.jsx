@@ -5,6 +5,8 @@ import { toast } from "react-toastify";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useAuth } from "@/context/authContext";
 import { AuthField, AuthShell, AuthSubmit } from "@/components/auth/AuthShell";
+import { Auth0SocialActions } from "@/components/auth/Auth0SocialActions";
+import { isAuth0Configured } from "@/lib/auth0-config";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -87,7 +89,7 @@ const SignUp = () => {
         </p>
       }
     >
-      <form onSubmit={handleSignUp} className="space-y-4">
+      <form onSubmit={handleSignUp} className="space-y-3.5">
         <AuthField
           id="name"
           label="Username"
@@ -105,52 +107,55 @@ const SignUp = () => {
           placeholder="you@email.com"
           autoComplete="email"
         />
-        <AuthField
-          id="password"
-          label="Password"
-          type={showPassword ? "text" : "password"}
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="At least 6 characters"
-          autoComplete="new-password"
-          rightSlot={
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--wx-mute)] hover:text-[var(--wx-text)]"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? (
-                <FaEyeSlash className="h-4 w-4" />
-              ) : (
-                <FaEye className="h-4 w-4" />
-              )}
-            </button>
-          }
-        />
-        <AuthField
-          id="confirmPassword"
-          label="Confirm password"
-          type={showConfirm ? "text" : "password"}
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          placeholder="Repeat password"
-          autoComplete="new-password"
-          rightSlot={
-            <button
-              type="button"
-              onClick={() => setShowConfirm((v) => !v)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--wx-mute)] hover:text-[var(--wx-text)]"
-              aria-label={showConfirm ? "Hide password" : "Show password"}
-            >
-              {showConfirm ? (
-                <FaEyeSlash className="h-4 w-4" />
-              ) : (
-                <FaEye className="h-4 w-4" />
-              )}
-            </button>
-          }
-        />
+        <div className="grid gap-3.5 sm:grid-cols-2">
+          <AuthField
+            id="password"
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="At least 6 characters"
+            autoComplete="new-password"
+            rightSlot={
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--wx-mute)] hover:text-[var(--wx-text)]"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <FaEyeSlash className="h-4 w-4" />
+                ) : (
+                  <FaEye className="h-4 w-4" />
+                )}
+              </button>
+            }
+          />
+          <AuthField
+            id="confirmPassword"
+            label="Confirm"
+            type={showConfirm ? "text" : "password"}
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            placeholder="Repeat"
+            autoComplete="new-password"
+            rightSlot={
+              <button
+                type="button"
+                onClick={() => setShowConfirm((v) => !v)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--wx-mute)] hover:text-[var(--wx-text)]"
+                aria-label={showConfirm ? "Hide password" : "Show password"}
+              >
+                {showConfirm ? (
+                  <FaEyeSlash className="h-4 w-4" />
+                ) : (
+                  <FaEye className="h-4 w-4" />
+                )}
+              </button>
+            }
+          />
+        </div>
+
         <label className="inline-flex items-center gap-2 text-sm text-[var(--wx-mute)]">
           <input
             type="checkbox"
@@ -161,8 +166,15 @@ const SignUp = () => {
           />
           Keep me signed in
         </label>
+
         <AuthSubmit loading={loading}>Start writing</AuthSubmit>
       </form>
+
+      {isAuth0Configured() ? (
+        <div className="mt-5">
+          <Auth0SocialActions mode="signup" />
+        </div>
+      ) : null}
     </AuthShell>
   );
 };

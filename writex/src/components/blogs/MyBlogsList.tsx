@@ -1,10 +1,16 @@
-import { Clock, Eye, FileText, FolderInput, PenLine, Trash2 } from "lucide-react"
+import {
+  Clock,
+  Eye,
+  FileText,
+  PenLine,
+  Shield,
+} from "lucide-react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { LibraryBlogTile } from "@/components/blogs/LibraryBlogTile"
 import type { BlogFolderNode, LibraryBlog } from "@/lib/folders-api"
 import { cn } from "@/lib/utils"
 import { MoveToFolderDialog } from "@/components/folders/MoveToFolderDialog"
-import { useState } from "react"
 
 type BlogFilter = "all" | "draft" | "personal" | "published"
 
@@ -21,23 +27,16 @@ interface MyBlogsListProps {
   onMoveBlog: (blogId: string, folderId: string | null) => Promise<void>
 }
 
-const FILTERS: Array<{ key: BlogFilter; label: string }> = [
-  { key: "all", label: "All" },
-  { key: "draft", label: "Drafts" },
-  { key: "personal", label: "Personal" },
-  { key: "published", label: "Published" },
+const FILTERS: Array<{
+  key: BlogFilter
+  label: string
+  icon: typeof FileText
+}> = [
+  { key: "all", label: "All", icon: FileText },
+  { key: "published", label: "Published", icon: Eye },
+  { key: "draft", label: "Drafts", icon: Clock },
+  { key: "personal", label: "Personal", icon: Shield },
 ]
-
-function formatDate(value?: string) {
-  if (!value) return "Recently updated"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "Recently updated"
-  return new Intl.DateTimeFormat("en", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(date)
-}
 
 export function MyBlogsList({
   allBlogs,
@@ -51,10 +50,14 @@ export function MyBlogsList({
   folderTree,
   onMoveBlog,
 }: MyBlogsListProps) {
-  const [moveDialog, setMoveDialog] = useState<{ open: boolean; blogId: string | null }>({
+  const [moveDialog, setMoveDialog] = useState<{
+    open: boolean
+    blogId: string | null
+  }>({
     open: false,
     blogId: null,
   })
+
   const sortedBlogs = [...blogs].sort((left, right) => {
     const leftTime = left.updatedAt ? new Date(left.updatedAt).getTime() : 0
     const rightTime = right.updatedAt ? new Date(right.updatedAt).getTime() : 0
@@ -62,54 +65,64 @@ export function MyBlogsList({
   })
 
   return (
-    <Card className="border-border/70 shadow-sm">
-      <CardContent className="p-0">
-        <div className="flex flex-col gap-4 border-b border-border px-4 py-4 sm:px-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+    <div className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm">
+      <div className="border-b border-border px-5 py-5 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-xl font-semibold tracking-tight text-foreground">
-                All Blogs
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary">
+                Browse
+              </p>
+              <h2 className="wx-serif mt-1 text-3xl text-foreground sm:text-4xl">
+                All blogs
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                See every draft and published post in one place, then organize them
-                with folders only when you need to.
+              <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
+                Filter by status, open a page, or file it into a folder.
               </p>
             </div>
-            {onNewBlog && (
-              <Button className="rounded-full self-start" onClick={onNewBlog}>
+            {onNewBlog ? (
+              <Button className="self-start rounded-full px-5" onClick={onNewBlog}>
                 <PenLine className="h-4 w-4" />
                 New blog
               </Button>
-            )}
+            ) : null}
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div
+            role="tablist"
+            aria-label="Filter blogs by status"
+            className="flex w-full flex-wrap gap-1 rounded-2xl bg-muted p-1.5 sm:flex-nowrap"
+          >
             {FILTERS.map((filter) => {
               const isActive = activeFilter === filter.key
               const count =
                 filter.key === "all"
                   ? allBlogs.length
                   : allBlogs.filter((blog) => blog.status === filter.key).length
+              const Icon = filter.icon
 
               return (
                 <button
                   key={filter.key}
                   type="button"
+                  role="tab"
+                  aria-selected={isActive}
                   onClick={() => onFilterChange(filter.key)}
                   className={cn(
-                    "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors",
+                    "inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition sm:px-4 sm:text-base",
                     isActive
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-background/80 hover:text-foreground"
                   )}
                 >
+                  <Icon className="h-4 w-4 shrink-0 opacity-80" />
                   <span>{filter.label}</span>
                   <span
                     className={cn(
-                      "rounded-full px-1.5 py-0.5 text-xs",
+                      "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums sm:text-sm",
                       isActive
-                        ? "bg-background/15 text-background"
-                        : "bg-muted text-foreground/70"
+                        ? "bg-primary-foreground/20 text-primary-foreground"
+                        : "bg-background text-muted-foreground"
                     )}
                   >
                     {count}
@@ -119,108 +132,40 @@ export function MyBlogsList({
             })}
           </div>
         </div>
+      </div>
 
-        {sortedBlogs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <FileText className="mb-3 h-10 w-10 text-muted-foreground/50" />
-            <p className="font-medium text-foreground">No blogs in this view</p>
-            <p className="mt-1 max-w-md text-sm text-muted-foreground">
-              Switch filters or start writing a new post to fill up this section.
-            </p>
+      {sortedBlogs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <FileText className="h-7 w-7" />
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3 2xl:grid-cols-4">
-            {sortedBlogs.map((blog) => (
-              <Card
-                key={blog._id}
-                className="border-border/70 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <CardContent className="flex h-full flex-col p-4">
-                  <button
-                    type="button"
-                    onClick={() => onReadBlog(blog._id)}
-                    className="flex min-w-0 flex-1 flex-col text-left"
-                  >
-                    <div className="relative overflow-hidden rounded-xl bg-muted">
-                      {blog.mainImage ? (
-                        <img
-                          src={blog.mainImage}
-                          alt={blog.title || "Blog cover"}
-                          loading="lazy"
-                          decoding="async"
-                          className="h-44 w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-44 w-full items-center justify-center">
-                          <FileText className="h-8 w-8 text-muted-foreground/60" />
-                        </div>
-                      )}
-                      <span
-                        className={cn(
-                          "absolute right-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-medium capitalize backdrop-blur",
-                          blog.status === "published"
-                            ? "bg-emerald-500/90 text-white"
-                            : blog.status === "personal"
-                              ? "bg-violet-500/90 text-white"
-                              : "bg-amber-500/90 text-white"
-                        )}
-                      >
-                        {blog.status || "draft"}
-                      </span>
-                    </div>
-
-                    <div className="mt-4 min-w-0">
-                      <h3 className="line-clamp-2 text-base font-semibold text-foreground">
-                        {blog.title || "Untitled"}
-                      </h3>
-                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
-                        {blog.description || "No description yet."}
-                      </p>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        {formatDate(blog.updatedAt || blog.createdAt)}
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Eye className="h-3.5 w-3.5" />
-                        {blog.viewCount || 0} views
-                      </span>
-                      {blog.category && <span>{blog.category}</span>}
-                    </div>
-                  </button>
-
-                  <div className="mt-4 flex flex-wrap gap-2 border-t border-border/60 pt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setMoveDialog({ open: true, blogId: blog._id })}
-                    >
-                      <FolderInput className="h-4 w-4" />
-                      Move
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => onEditBlog(blog)}>
-                      Edit
-                    </Button>
-                    {onDeleteBlog && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => onDeleteBlog(blog._id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </CardContent>
+          <p className="wx-serif text-2xl text-foreground">No blogs in this view</p>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            Switch filters or start a new post to fill this shelf.
+          </p>
+          {onNewBlog ? (
+            <Button className="mt-6 rounded-full" onClick={onNewBlog}>
+              <PenLine className="h-4 w-4" />
+              Start writing
+            </Button>
+          ) : null}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-3">
+          {sortedBlogs.map((blog) => (
+            <LibraryBlogTile
+              key={blog._id}
+              blog={blog}
+              onOpen={() => onReadBlog(blog._id)}
+              onMove={() => setMoveDialog({ open: true, blogId: blog._id })}
+              onEdit={() => onEditBlog(blog)}
+              onDelete={
+                onDeleteBlog ? () => onDeleteBlog(blog._id) : undefined
+              }
+            />
+          ))}
+        </div>
+      )}
 
       <MoveToFolderDialog
         open={moveDialog.open}
@@ -232,6 +177,6 @@ export function MyBlogsList({
           await onMoveBlog(moveDialog.blogId, targetFolderId)
         }}
       />
-    </Card>
+    </div>
   )
 }

@@ -5,6 +5,11 @@ import axios from "axios";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useAuth } from "@/context/authContext";
 import { AuthField, AuthShell, AuthSubmit } from "@/components/auth/AuthShell";
+import {
+  Auth0SocialActions,
+  sendAuth0PasswordReset,
+} from "@/components/auth/Auth0SocialActions";
+import { isAuth0Configured } from "@/lib/auth0-config";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,6 +21,7 @@ const Login = () => {
   });
   const [isVisible, setIsVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const handleChange = (e) => {
     const { id, value, type, checked } = e.target;
@@ -53,6 +59,18 @@ const Login = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    try {
+      setResetting(true);
+      const ok = await sendAuth0PasswordReset(formData.email);
+      if (ok) toast.success("Check your email for a password reset link");
+    } catch (error) {
+      toast.error(error.message || "Could not send reset email");
+    } finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <AuthShell
       mode="login"
@@ -70,7 +88,7 @@ const Login = () => {
         </p>
       }
     >
-      <form onSubmit={handleLogin} className="space-y-4">
+      <form onSubmit={handleLogin} className="space-y-3.5">
         <AuthField
           id="email"
           label="Email"
@@ -103,18 +121,38 @@ const Login = () => {
             </button>
           }
         />
-        <label className="inline-flex items-center gap-2 text-sm text-[var(--wx-mute)]">
-          <input
-            type="checkbox"
-            id="rememberMe"
-            checked={formData.rememberMe}
-            onChange={handleChange}
-            className="h-4 w-4 rounded border-[var(--wx-line)] bg-transparent"
-          />
-          Remember me
-        </label>
+
+        <div className="flex items-center justify-between gap-3">
+          <label className="inline-flex items-center gap-2 text-sm text-[var(--wx-mute)]">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={formData.rememberMe}
+              onChange={handleChange}
+              className="h-4 w-4 rounded border-[var(--wx-line)] bg-transparent"
+            />
+            Remember me
+          </label>
+          {isAuth0Configured() ? (
+            <button
+              type="button"
+              disabled={resetting}
+              onClick={handleForgotPassword}
+              className="text-sm font-medium text-[var(--wx-accent)] hover:underline disabled:opacity-60"
+            >
+              {resetting ? "Sending…" : "Forgot password?"}
+            </button>
+          ) : null}
+        </div>
+
         <AuthSubmit loading={loading}>Log in</AuthSubmit>
       </form>
+
+      {isAuth0Configured() ? (
+        <div className="mt-5">
+          <Auth0SocialActions mode="login" />
+        </div>
+      ) : null}
     </AuthShell>
   );
 };

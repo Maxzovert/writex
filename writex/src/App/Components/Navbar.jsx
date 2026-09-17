@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import {
   Popover,
@@ -14,8 +14,17 @@ import { FaUser, FaSignOutAlt } from "react-icons/fa";
 import { TbArticleFilled } from "react-icons/tb";
 import { HiMenu, HiX } from "react-icons/hi";
 import { NotificationPanel } from "../../components/notifications/NotificationPanel";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { cn } from "@/lib/utils";
+import { isAuth0Configured, AUTH0_LOGOUT_FLAG, AUTH0_RETURN_TO_KEY } from "@/lib/auth0-config";
 
-const ProfileAvatar = ({ user, className = "h-10 w-10 lg:h-12 lg:w-12" }) => {
+function displayName(user) {
+  const name = user?.username?.trim();
+  if (!name) return "Writer";
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+const ProfileAvatar = ({ user, className = "h-9 w-9", loading = false }) => {
   const [imageError, setImageError] = useState(false);
   const imageUrl = getSafeImageUrl(user?.profileImage);
 
@@ -23,234 +32,288 @@ const ProfileAvatar = ({ user, className = "h-10 w-10 lg:h-12 lg:w-12" }) => {
     setImageError(false);
   }, [imageUrl]);
 
+  if (loading && !user) {
+    return (
+      <div
+        className={cn(
+          className,
+          "animate-pulse rounded-full bg-muted ring-1 ring-border"
+        )}
+        aria-hidden
+      />
+    );
+  }
+
   return (
     <div
-      className={`${className} rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-600 dark:to-zinc-700 flex items-center justify-center text-foreground font-semibold shadow-sm`}
+      className={cn(
+        className,
+        "flex items-center justify-center overflow-hidden rounded-full bg-muted text-sm font-semibold text-foreground ring-1 ring-border"
+      )}
     >
       {imageUrl && !imageError ? (
         <img
           src={imageUrl}
-          alt={user?.username || "User"}
+          alt={displayName(user)}
           className="h-full w-full object-cover"
           onError={() => setImageError(true)}
         />
       ) : (
-        <span>{user?.username?.[0]?.toUpperCase() || "U"}</span>
+        <span>{displayName(user).charAt(0)}</span>
       )}
     </div>
   );
 };
 
-
 const Navbar = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useAuth();
+  const location = useLocation();
+  const { user, clearLocalSession, loading: authLoading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+  const [profileOpen, setProfileOpen] = useState(false);
+
   const NAVITEMS = [
-    {
-      title: "Home",
-      path: "/dashboard",
-    },
-    {
-      title: "Blogs",
-      path: "/blogs",
-    },
-    {
-      title: "Write",
-      path: "/write",
-    },
-    {
-      title: "Community",
-      path: "/community",
-    },
+    { title: "Desk", path: "/dashboard" },
+    { title: "Read", path: "/blogs" },
+    { title: "Library", path: "/myblogs" },
+    { title: "Community", path: "/community" },
   ];
-  
+
   const USERITEMS = [
-    {
-      title: "Profile",
-      path: "/profile",
-      logo: <FaUser />
-    },
-    {
-      title: "My Blogs",
-      path: "/myblogs",
-      logo: <TbArticleFilled />
-    }
+    { title: "Profile", path: "/profile", logo: <FaUser className="h-3.5 w-3.5" /> },
+    { title: "My Blogs", path: "/myblogs", logo: <TbArticleFilled className="h-3.5 w-3.5" /> },
   ];
-  
+
   const handleLogout = async () => {
+    setProfileOpen(false);
+    setIsMobileMenuOpen(false);
+
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/logout`);
-      setUser(null);
-      localStorage.removeItem('token');
-      toast.success("Logout Successfully");
-      navigate("/");
-      setIsMobileMenuOpen(false);
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/logout`);
     } catch (error) {
       console.error("Logout error:", error);
-      toast.error(error.response?.data?.message || "Logout Failed");
     }
+
+    // Prevent Auth0SessionBridge from immediately syncing you back in
+    sessionStorage.setItem(AUTH0_LOGOUT_FLAG, "1");
+    sessionStorage.removeItem(AUTH0_RETURN_TO_KEY);
+    clearLocalSession();
+    toast.success("Logout Successfully");
+
+    if (isAuth0Configured()) {
+      const domain = import.meta.env.VITE_AUTH0_DOMAIN;
+      const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
+      const returnTo = encodeURIComponent(`${window.location.origin}/`);
+      window.location.assign(
+        `https://${domain}/v2/logout?client_id=${clientId}&returnTo=${returnTo}`
+      );
+      return;
+    }
+
+    navigate("/");
   };
-  
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-  
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-  
+
+  const isActive = (path) =>
+    location.pathname === path ||
+    (path !== "/dashboard" && location.pathname.startsWith(path));
+
+  const closeProfile = () => setProfileOpen(false);
+
   return (
-    <div className="flex items-center justify-center mt-8 px-4">
-      <div className="h-20 w-full max-w-7xl bg-card/90 backdrop-blur-md border border-border rounded-2xl shadow-lg relative z-40 text-card-foreground">
-        <div className="flex flex-row items-center px-4 sm:px-6 h-full">
-          {/* Logo */}
-          <div className="flex items-center">
-            <img
-              src={logo}
-              alt="Writex Logo"
-              className="h-10 w-auto sm:h-12 hover:opacity-80 transition-opacity"
-            />
-          </div>
+    <header className="sticky top-0 z-40 px-4 pt-4 sm:px-6">
+      <div className="relative z-40 mx-auto flex h-14 max-w-6xl items-center gap-3 rounded-2xl border border-border/80 bg-card/90 px-3 shadow-sm backdrop-blur-md sm:h-16 sm:px-5">
+        <Link to="/dashboard" className="inline-flex shrink-0 items-center gap-2.5">
+          <img
+            src={logo}
+            alt="WriteX"
+            className="h-8 w-auto dark:brightness-0 dark:invert"
+          />
+          <span className="wx-serif hidden text-xl tracking-tight text-foreground sm:inline">
+            WriteX
+          </span>
+        </Link>
 
-          {/* Desktop Navigation - Centered */}
-          <div className="hidden md:flex flex-1 justify-center">
-            <ul className="flex flex-row items-center gap-4 lg:gap-6">
-              {NAVITEMS.map((item, index) => (
-                <li key={index}>
-                  <Link
-                    to={item.path}
-                    className="relative px-3 lg:px-4 py-2 text-muted-foreground font-medium hover:text-foreground transition-colors duration-200
-                               after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-foreground 
-                               after:transition-all after:duration-300 hover:after:w-full"
-                  >
-                    {item.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Desktop Right Section */}
-          <div className="hidden md:flex items-center gap-3 lg:gap-4">
-            {user && <NotificationPanel />}
-            <Popover>
-              <PopoverTrigger>
-                <div className="hover:shadow-md transition-shadow cursor-pointer">
-                  <ProfileAvatar user={user} />
-                </div>
-              </PopoverTrigger>
-              <PopoverContent>
-                <div>
-                  <div className="flex flex-row">
-                    <ProfileAvatar user={user} className="h-12 w-12" />
-                    <h2 className="font-semibold text-muted-foreground mt-2 ml-4 text-2xl">
-                      {user?.username?.[0]?.toUpperCase() + user?.username.slice(1)}
-                    </h2>
-                  </div>
-                  <div className="flex flex-col mt-4 text-muted-foreground">
-                    {USERITEMS.map((item) => (
-                      <Link to={item.path} key={item.title} className="flex flex-row hover:bg-accent p-2 hover:rounded-md">
-                        <div className="mt-1">{item.logo}</div>
-                        <h1 className="ml-2">{item.title}</h1>
-                      </Link>
-                    ))}
-                    <button
-                      onClick={handleLogout}
-                      className="flex flex-row hover:bg-accent p-2 hover:rounded-md w-full text-left"
-                    >
-                      <div className="mt-1"><FaSignOutAlt /></div>
-                      <span className="ml-2">Logout</span>
-                    </button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              onClick={toggleMobileMenu}
-              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Toggle mobile menu"
-            >
-              {isMobileMenuOpen ? (
-                <HiX className="h-6 w-6" />
-              ) : (
-                <HiMenu className="h-6 w-6" />
+        <nav className="hidden flex-1 items-center justify-center gap-1 md:flex">
+          {NAVITEMS.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "rounded-full px-3.5 py-2 text-sm font-medium transition",
+                isActive(item.path)
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
-            </button>
-          </div>
-        </div>
+            >
+              {item.title}
+            </Link>
+          ))}
+        </nav>
 
-        {/* Mobile Navigation Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-card shadow-xl rounded-b-2xl absolute top-full left-0 right-0 z-50 text-card-foreground">
-            <div className="px-4 py-4 space-y-4">
-              {/* Mobile Navigation Items */}
-              <ul className="space-y-3">
-                {NAVITEMS.map((item, index) => (
-                  <li key={index}>
+        <div className="ml-auto hidden items-center gap-2 md:flex">
+          <Link
+            to="/write"
+            className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
+          >
+            Write
+          </Link>
+          <ThemeToggle className="h-9 w-9 shadow-none" />
+          {user ? <NotificationPanel /> : null}
+
+          {authLoading && !user ? (
+            <ProfileAvatar user={null} loading />
+          ) : user ? (
+            <Popover open={profileOpen} onOpenChange={setProfileOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Open profile menu"
+                  className="rounded-full outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  <ProfileAvatar user={user} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                sideOffset={10}
+                className="z-[200] w-64 overflow-hidden rounded-2xl border-border/80 bg-card p-0 shadow-lg"
+              >
+                <div className="border-b border-border bg-muted/40 px-4 py-3.5">
+                  <div className="flex items-center gap-3">
+                    <ProfileAvatar user={user} className="h-11 w-11" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {displayName(user)}
+                      </p>
+                      {user.email ? (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {user.email}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+                <div className="p-1.5">
+                  {USERITEMS.map((item) => (
                     <Link
                       to={item.path}
-                      onClick={closeMobileMenu}
-                      className="block px-4 py-3 text-muted-foreground font-medium hover:text-foreground hover:bg-accent rounded-lg transition-colors duration-200"
+                      key={item.title}
+                      onClick={closeProfile}
+                      className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-foreground transition hover:bg-muted"
                     >
-                      {item.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-
-              {/* Mobile User Section */}
-              <div className="pt-4 border-t border-border">
-                <div className="flex items-center gap-3 mb-4">
-                  <ProfileAvatar user={user} className="h-10 w-10" />
-                  <div>
-                    <h2 className="font-semibold text-foreground text-lg">
-                      {user?.username?.[0]?.toUpperCase() + user?.username.slice(1)}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">Welcome back!</p>
-                  </div>
-                </div>
-
-                {/* Mobile User Menu Items */}
-                <div className="space-y-2 mb-4">
-                  {USERITEMS.map((item) => (
-                    <Link 
-                      to={item.path} 
-                      key={item.title} 
-                      onClick={closeMobileMenu}
-                      className="flex items-center px-4 py-3 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
-                    >
-                      <div className="text-muted-foreground">{item.logo}</div>
-                      <span className="ml-3 font-medium">{item.title}</span>
+                      <span className="text-muted-foreground">{item.logo}</span>
+                      <span>{item.title}</span>
                     </Link>
                   ))}
                   <button
+                    type="button"
                     onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-3 text-muted-foreground hover:bg-accent rounded-lg transition-colors"
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-destructive transition hover:bg-destructive/10"
                   >
-                    <FaSignOutAlt className="text-muted-foreground" />
-                    <span className="ml-3 font-medium">Logout</span>
+                    <FaSignOutAlt className="h-3.5 w-3.5" />
+                    <span>Logout</span>
                   </button>
                 </div>
+              </PopoverContent>
+            </Popover>
+          ) : null}
+        </div>
 
-                {/* Mobile Controls */}
-                {user && (
-                  <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
-                    <span className="text-sm font-medium text-foreground">Notifications</span>
-                    <NotificationPanel />
-                  </div>
+        <div className="ml-auto flex items-center gap-2 md:hidden">
+          <ThemeToggle className="h-9 w-9 shadow-none" />
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen((v) => !v)}
+            className="rounded-full border border-border p-2 text-muted-foreground"
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? (
+              <HiX className="h-5 w-5" />
+            ) : (
+              <HiMenu className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {isMobileMenuOpen ? (
+        <div className="relative z-50 mx-auto mt-2 max-w-6xl rounded-2xl border border-border bg-card p-4 shadow-lg md:hidden">
+          <div className="space-y-1">
+            {NAVITEMS.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={cn(
+                  "block rounded-xl px-3 py-3 text-sm font-medium",
+                  isActive(item.path)
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted"
                 )}
+              >
+                {item.title}
+              </Link>
+            ))}
+            <Link
+              to="/write"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="mt-2 block rounded-full bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-foreground"
+            >
+              Write
+            </Link>
+          </div>
+          {user ? (
+            <div className="mt-4 border-t border-border pt-4">
+              <div className="mb-3 flex items-center gap-3">
+                <ProfileAvatar user={user} className="h-10 w-10" />
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-foreground">
+                    {displayName(user)}
+                  </p>
+                  {user.email ? (
+                    <p className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Welcome back</p>
+                  )}
+                </div>
+              </div>
+              {USERITEMS.map((item) => (
+                <Link
+                  key={item.title}
+                  to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-muted-foreground hover:bg-muted"
+                >
+                  {item.logo}
+                  {item.title}
+                </Link>
+              ))}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-destructive hover:bg-destructive/10"
+              >
+                <FaSignOutAlt />
+                Logout
+              </button>
+              <div className="mt-2 flex items-center justify-between rounded-xl border border-border px-3 py-3">
+                <span className="text-sm font-medium">Notifications</span>
+                <NotificationPanel />
               </div>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
+          ) : authLoading ? (
+            <div className="mt-4 border-t border-border pt-4">
+              <div className="flex items-center gap-3">
+                <ProfileAvatar user={null} loading className="h-10 w-10" />
+                <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </header>
   );
 };
 
