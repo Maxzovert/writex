@@ -2,6 +2,7 @@ import Blog from "../models/postModel.js";
 import User from "../models/userModel.js";
 import BlogShare from "../models/blogShareModel.js";
 import { createNotification, createNotificationsForUsers } from "../utils/createNotification.js";
+import { notDeletedFilter } from "../utils/trash.js";
 
 const addComment = async (req, res) => {
     try {
@@ -13,7 +14,7 @@ const addComment = async (req, res) => {
             return res.status(400).json({ message: "Comment content is required" });
         }
 
-        const blog = await Blog.findById(blogId).select("author comments");
+        const blog = await Blog.findOne({ _id: blogId, ...notDeletedFilter }).select("author comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -66,7 +67,7 @@ const addReply = async (req, res) => {
             return res.status(400).json({ message: "Reply content is required" });
         }
 
-        const blog = await Blog.findById(blogId).select("comments");
+        const blog = await Blog.findOne({ _id: blogId, ...notDeletedFilter }).select("comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -107,7 +108,7 @@ const toggleLike = async (req, res) => {
         const { blogId } = req.params;
         const userId = req.user.id;
 
-        const blog = await Blog.findById(blogId).select("author likes");
+        const blog = await Blog.findOne({ _id: blogId, ...notDeletedFilter }).select("author likes");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -116,14 +117,12 @@ const toggleLike = async (req, res) => {
 
         let updated;
         if (isLiked) {
-            updated = await Blog.findByIdAndUpdate(
-                blogId,
+            updated = await Blog.findOneAndUpdate({ _id: blogId, ...notDeletedFilter },
                 { $pull: { likes: userId } },
                 { new: true }
             ).select("likes");
         } else {
-            updated = await Blog.findByIdAndUpdate(
-                blogId,
+            updated = await Blog.findOneAndUpdate({ _id: blogId, ...notDeletedFilter },
                 { $addToSet: { likes: userId } },
                 { new: true }
             ).select("likes");
@@ -154,7 +153,7 @@ const toggleCommentLike = async (req, res) => {
         const { blogId, commentId } = req.params;
         const userId = req.user.id;
 
-        const blog = await Blog.findById(blogId).select("comments");
+        const blog = await Blog.findOne({ _id: blogId, ...notDeletedFilter }).select("comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -190,7 +189,7 @@ const toggleReplyLike = async (req, res) => {
         const { blogId, commentId, replyId } = req.params;
         const userId = req.user.id;
 
-        const blog = await Blog.findById(blogId).select("comments");
+        const blog = await Blog.findOne({ _id: blogId, ...notDeletedFilter }).select("comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -231,8 +230,7 @@ const trackView = async (req, res) => {
         const { blogId } = req.params;
         const userId = req.user?.id;
 
-        const blog = await Blog.findByIdAndUpdate(
-            blogId,
+        const blog = await Blog.findOneAndUpdate({ _id: blogId, ...notDeletedFilter },
             { $inc: { viewCount: 1 } },
             { new: true }
         ).select("viewCount");
@@ -243,8 +241,7 @@ const trackView = async (req, res) => {
 
         let uniqueViewCount;
         if (userId) {
-            const uniqueResult = await Blog.findOneAndUpdate(
-                { _id: blogId, "uniqueViews.user": { $ne: userId } },
+            const uniqueResult = await Blog.findOneAndUpdate({ _id: blogId, ...notDeletedFilter,  "uniqueViews.user": { $ne: userId } },
                 {
                     $push: {
                         uniqueViews: { user: userId, viewedAt: new Date() },
@@ -256,7 +253,7 @@ const trackView = async (req, res) => {
             if (uniqueResult) {
                 uniqueViewCount = uniqueResult.uniqueViews.length;
             } else {
-                const existing = await Blog.findById(blogId)
+                const existing = await Blog.findOne({ _id: blogId, ...notDeletedFilter })
                     .select("uniqueViews")
                     .lean();
                 uniqueViewCount = existing?.uniqueViews?.length || 0;
@@ -279,7 +276,7 @@ const getBlogWithInteractions = async (req, res) => {
         const { blogId } = req.params;
         const userId = req.user?.id;
 
-        const blog = await Blog.findById(blogId)
+        const blog = await Blog.findOne({ _id: blogId, ...notDeletedFilter })
             .select("-uniqueViews")
             .populate("author", "username profileImage")
             .populate("comments.user", "username profileImage")
@@ -347,7 +344,7 @@ const deleteComment = async (req, res) => {
         const { blogId, commentId } = req.params;
         const userId = req.user.id;
 
-        const blog = await Blog.findById(blogId).select("author comments");
+        const blog = await Blog.findOne({ _id: blogId, ...notDeletedFilter }).select("author comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -381,7 +378,7 @@ const deleteReply = async (req, res) => {
         const { blogId, commentId, replyId } = req.params;
         const userId = req.user.id;
 
-        const blog = await Blog.findById(blogId).select("author comments");
+        const blog = await Blog.findOne({ _id: blogId, ...notDeletedFilter }).select("author comments");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }
@@ -420,7 +417,7 @@ const shareBlog = async (req, res) => {
         const { blogId } = req.params;
         const userId = req.user._id;
 
-        const blog = await Blog.findById(blogId).select("status title author");
+        const blog = await Blog.findOne({ _id: blogId, ...notDeletedFilter }).select("status title author");
         if (!blog) {
             return res.status(404).json({ message: "Blog not found" });
         }

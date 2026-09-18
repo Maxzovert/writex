@@ -128,16 +128,24 @@ const blogSchema = new mongoose.Schema({
     },
     publishedAt: {
         type: Date
-    }
+    },
+    /** Set when moved to recycle bin; null means active. Auto-purged after 60 days. */
+    deletedAt: {
+        type: Date,
+        default: null,
+        index: true,
+    },
 }, {
     timestamps: true // This will automatically handle createdAt and updatedAt
 })
 
 // Index for better query performance
 blogSchema.index({ author: 1, status: 1 });
+blogSchema.index({ author: 1, deletedAt: 1 });
 blogSchema.index({ createdAt: -1 });
 blogSchema.index({ status: 1, publishedAt: -1 });
 blogSchema.index({ status: 1, author: 1, publishedAt: -1 });
+blogSchema.index({ deletedAt: 1 });
 
 const Blog = mongoose.model("Blog", blogSchema );
 export default Blog;

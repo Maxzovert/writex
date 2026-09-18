@@ -11,6 +11,11 @@ postRouter.get("/edit/:id", protectRoute, postController.getBlogForEdit);
 postRouter.put("/updateblog/:id" , protectRoute , postController.updateBlog);
 postRouter.delete("/deleteblog/:id" , protectRoute , postController.deleteBlog);
 
+postRouter.get("/trash", protectRoute, postController.getTrash);
+postRouter.post("/trash/:id/restore", protectRoute, postController.restoreBlog);
+postRouter.delete("/trash/:id", protectRoute, postController.permanentDeleteBlog);
+postRouter.delete("/trash", protectRoute, postController.emptyTrash);
+
 postRouter.get("/folders/tree", protectRoute, folderController.getFolderTree);
 postRouter.get("/library", protectRoute, folderController.getLibraryContents);
 postRouter.post("/folders", protectRoute, folderController.createFolder);

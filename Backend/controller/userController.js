@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { createNotification } from "../utils/createNotification.js";
 import { fetchLeanBlogList, parsePagination } from "../utils/blogList.js";
+import { notDeletedFilter } from "../utils/trash.js";
 import {
     providersFromAuth0Sub,
     verifyAuth0IdToken,
@@ -356,7 +357,7 @@ const getUserProfileStats = async (req, res) => {
 
         const [statsAgg, userAgg] = await Promise.all([
             Blog.aggregate([
-                { $match: { author: authorOid } },
+                { $match: { author: authorOid, deletedAt: null } },
                 {
                     $group: {
                         _id: null,
@@ -517,7 +518,8 @@ const getPublicProfile = async (req, res) => {
 
         const publishedBlogsCount = await Blog.countDocuments({
             author: user._id,
-            status: "published"
+            status: "published",
+            ...notDeletedFilter,
         });
 
         const viewerId = req.user?._id?.toString();
@@ -560,7 +562,7 @@ const getPublicUserBlogs = async (req, res) => {
 
         const { total, blogs, hasMore } = await fetchLeanBlogList({
             Blog,
-            filter: { author: user._id, status: "published" },
+            filter: { author: user._id, status: "published", ...notDeletedFilter },
             skip,
             limit,
             sort: { publishedAt: -1, createdAt: -1 },

@@ -8,6 +8,7 @@ import {
   shapeListBlog,
   BLOG_LIST_SELECT,
 } from "../utils/blogList.js";
+import { notDeletedFilter } from "../utils/trash.js";
 
 const getAllBlogs = async (req, res) => {
   try {
@@ -15,7 +16,7 @@ const getAllBlogs = async (req, res) => {
 
     const { total, blogs, hasMore } = await fetchLeanBlogList({
       Blog,
-      filter: { status: "published" },
+      filter: { status: "published", ...notDeletedFilter },
       skip,
       limit,
       sort: { publishedAt: -1, createdAt: -1 },
@@ -43,7 +44,7 @@ const getRelatedBlogs = async (req, res) => {
     const { category, exclude } = req.query;
     const limit = Math.min(12, Math.max(1, parseInt(req.query.limit, 10) || 5));
 
-    const filter = { status: "published" };
+    const filter = { status: "published", ...notDeletedFilter };
     if (category && category !== "All") {
       const escaped = String(category).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       filter.category = new RegExp(`^${escaped}$`, "i");
@@ -76,7 +77,7 @@ const getRelatedBlogs = async (req, res) => {
 const getBlogById = async (req, res) => {
   try {
     const { id } = req.params;
-    const blog = await Blog.findById(id).populate(
+    const blog = await Blog.findOne({ _id: id, ...notDeletedFilter }).populate(
       "author",
       "username profileImage"
     );
@@ -101,7 +102,7 @@ const getBlogBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
 
-    const blog = await Blog.findOne({ slug }).populate(
+    const blog = await Blog.findOne({ slug, ...notDeletedFilter }).populate(
       "author",
       "username profileImage"
     );
@@ -144,6 +145,7 @@ const getFollowingFeed = async (req, res) => {
     const filter = {
       author: { $in: followingIds },
       status: "published",
+      ...notDeletedFilter,
     };
 
     const [{ total, blogs, hasMore }, shares] = await Promise.all([
@@ -158,7 +160,7 @@ const getFollowingFeed = async (req, res) => {
         .select("user blog createdAt")
         .populate({
           path: "blog",
-          match: { status: "published" },
+          match: { status: "published", ...notDeletedFilter },
           select: BLOG_LIST_SELECT,
           populate: { path: "author", select: "username profileImage" },
         })

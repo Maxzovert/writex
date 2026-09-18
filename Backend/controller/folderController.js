@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Blog from "../models/postModel.js";
 import BlogFolder from "../models/blogFolderModel.js";
 import FolderItem from "../models/folderItemModel.js";
+import { notDeletedFilter } from "../utils/trash.js";
 
 const isValidObjectId = (id) => id && /^[0-9a-fA-F]{24}$/.test(id);
 
@@ -131,6 +132,7 @@ const getFolderTree = async (req, res) => {
       author: userId,
       _id: { $nin: filedBlogIds },
       status: { $in: ["draft", "personal", "published"] },
+      ...notDeletedFilter,
     });
 
     res.status(200).json({
@@ -208,6 +210,7 @@ const getLibraryContents = async (req, res) => {
             .populate({
               path: "blog",
               select: LIBRARY_BLOG_SELECT,
+              match: notDeletedFilter,
               populate: { path: "author", select: "username profileImage" },
             })
             .lean()
@@ -217,6 +220,7 @@ const getLibraryContents = async (req, res) => {
             author: userId,
             _id: { $nin: filedBlogIds },
             status: { $in: ["draft", "personal", "published"] },
+            ...notDeletedFilter,
           })
             .select(LIBRARY_BLOG_SELECT)
             .populate("author", "username profileImage")
@@ -225,10 +229,12 @@ const getLibraryContents = async (req, res) => {
         : Promise.resolve([]),
     ]);
 
-    const shapedItems = folderItems.map((item) => ({
-      ...item,
-      blog: shapeLibraryBlog(item.blog),
-    }));
+    const shapedItems = folderItems
+      .filter((item) => item.blog)
+      .map((item) => ({
+        ...item,
+        blog: shapeLibraryBlog(item.blog),
+      }));
 
     const shapedUnfiled = unfiledBlogs.map(shapeLibraryBlog);
 
@@ -383,7 +389,10 @@ const addItemToFolder = async (req, res) => {
       return res.status(404).json({ message: "Folder not found" });
     }
 
-    const blog = await Blog.findById(blogId).populate("author", "username profileImage");
+    const blog = await Blog.findOne({
+      _id: blogId,
+      ...notDeletedFilter,
+    }).populate("author", "username profileImage");
     if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
     }
@@ -429,7 +438,7 @@ const moveItem = async (req, res) => {
       return res.status(400).json({ message: "Invalid target folder ID" });
     }
 
-    const blog = await Blog.findById(blogId);
+    const blog = await Blog.findOne({ _id: blogId, ...notDeletedFilter });
     if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
     }

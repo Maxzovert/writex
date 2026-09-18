@@ -8,6 +8,7 @@ import postRouter from "./routes/PostUserRoute.js";
 import publicRouter from "./routes/PostPublicRoute.js";
 import interactionRouter from "./routes/interactionRoute.js";
 import notificationRouter from "./routes/notificationRoute.js";
+import { purgeExpiredTrash } from "./utils/trash.js";
 
 dotenv.config();
 const app = express();
@@ -54,6 +55,21 @@ const PORT = process.env.PORT || 5000;
 
 const start = async () => {
   await connetDB();
+
+  // Purge recycle-bin items older than 60 days on boot and daily
+  const runTrashPurge = async () => {
+    try {
+      const { purged } = await purgeExpiredTrash();
+      if (purged > 0) {
+        console.log(`Recycle bin: permanently removed ${purged} expired blog(s)`);
+      }
+    } catch (err) {
+      console.error("Recycle bin purge failed:", err);
+    }
+  };
+  await runTrashPurge();
+  setInterval(runTrashPurge, 24 * 60 * 60 * 1000);
+
   app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
   });
