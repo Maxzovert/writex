@@ -10,7 +10,7 @@ export function SiteFooter() {
           <div>
             <div className="mb-4 flex items-center gap-3">
               <img src={logo} alt="Writex" className="h-9 w-auto" />
-              <span className="text-xl font-semibold text-foreground">Writex</span>
+              <span className="wx-script text-2xl text-foreground">WriteX</span>
             </div>
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
               A calm space to write, publish, and share your stories with readers who care.

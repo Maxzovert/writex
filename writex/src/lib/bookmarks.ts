@@ -394,7 +394,14 @@ export function findPosFromBlockOffset(
     }
   })
 
-  return targetPos ?? start
+  // Exact start of block
+  if (charOffset <= 0) return start
+  // Clamp to end of plain text in the block (do not fall back to start — that
+  // created zero/inverted ranges and floating bookmark underlines after paste).
+  if (targetPos === null) {
+    return walked > 0 ? end : null
+  }
+  return targetPos
 }
 
 export function getAnchorFromEditor(editor: {

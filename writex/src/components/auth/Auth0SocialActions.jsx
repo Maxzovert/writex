@@ -43,7 +43,7 @@ function Auth0SocialActionsInner({ mode }) {
           <div className="w-full border-t border-[var(--wx-line)]" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="rounded-sm bg-white px-3 text-[var(--wx-mute)] dark:bg-[#18181c]">
+          <span className="rounded-sm bg-[var(--wx-elev)] px-3 text-[var(--wx-mute)]">
             or continue with
           </span>
         </div>

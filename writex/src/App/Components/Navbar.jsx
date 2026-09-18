@@ -10,8 +10,7 @@ import { useAuth } from "../../context/authContext";
 import { getSafeImageUrl } from "../../lib/image-url";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { FaUser, FaSignOutAlt } from "react-icons/fa";
-import { TbArticleFilled } from "react-icons/tb";
+import { FaUser, FaSignOutAlt, FaTrashAlt, FaCog } from "react-icons/fa";
 import { HiMenu, HiX } from "react-icons/hi";
 import { NotificationPanel } from "../../components/notifications/NotificationPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -81,7 +80,12 @@ const Navbar = () => {
 
   const USERITEMS = [
     { title: "Profile", path: "/profile", logo: <FaUser className="h-3.5 w-3.5" /> },
-    { title: "My Blogs", path: "/myblogs", logo: <TbArticleFilled className="h-3.5 w-3.5" /> },
+    { title: "Settings", path: "/settings", logo: <FaCog className="h-3.5 w-3.5" /> },
+    {
+      title: "Recycle Bin",
+      path: "/myblogs?view=trash",
+      logo: <FaTrashAlt className="h-3.5 w-3.5" />,
+    },
   ];
 
   const handleLogout = async () => {
@@ -128,7 +132,7 @@ const Navbar = () => {
             alt="WriteX"
             className="h-8 w-auto dark:brightness-0 dark:invert"
           />
-          <span className="wx-serif hidden text-xl tracking-tight text-foreground sm:inline">
+          <span className="wx-script hidden text-2xl tracking-tight text-foreground sm:inline">
             WriteX
           </span>
         </Link>

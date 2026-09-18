@@ -31,7 +31,7 @@ export function AuthShell({
         <aside className="mb-6 flex-1 lg:mb-0">
           <Link to="/" className="inline-flex items-center gap-2.5">
             <img src={logo} alt="WriteX" className="wx-logo-auth h-8 w-auto" />
-            <span className="wx-serif text-2xl text-[var(--wx-text)]">WriteX</span>
+            <span className="wx-script text-3xl text-[var(--wx-text)]">WriteX</span>
           </Link>
 
           <motion.div

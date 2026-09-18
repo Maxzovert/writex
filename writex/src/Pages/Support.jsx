@@ -53,7 +53,7 @@ const FAQS = [
   },
 ];
 
-const SUPPORT_EMAIL = "support@writex.app";
+const SUPPORT_EMAIL = "hello@veriencestudio.com";
 
 export default function Support() {
   return (
@@ -131,7 +131,7 @@ export default function Support() {
                 to do. We usually reply within 1–2 business days.
               </p>
               <a
-                href={`mailto:${SUPPORT_EMAIL}?subject=WriteX%20support`}
+                href={`mailto:${SUPPORT_EMAIL}?subject=hello%20veriencestudio.com`}
                 className="mt-5 inline-flex rounded-full bg-[var(--wx-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--wx-accent-fg)] transition hover:brightness-110"
               >
                 Email {SUPPORT_EMAIL}

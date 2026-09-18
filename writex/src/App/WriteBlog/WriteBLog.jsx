@@ -892,8 +892,8 @@ const WriteBlog = () => {
     <div
       className={
         isFocusMode
-          ? "fixed inset-0 z-[60] flex flex-col overflow-hidden bg-card"
-          : "flex min-h-0 flex-1 flex-col overflow-hidden bg-muted"
+          ? "fixed inset-0 z-[60] flex h-svh max-h-svh flex-col overflow-hidden overscroll-none bg-card"
+          : "relative flex h-full min-h-0 max-h-full flex-1 flex-col overflow-hidden overscroll-none bg-muted"
       }
     >
       <div
@@ -1146,7 +1146,7 @@ const WriteBlog = () => {
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
               <SimpleEditor
                 key={editorSessionKey}
-                className="min-h-0 flex-1"
+                className="min-h-0 h-full flex-1"
                 wide={isFocusMode}
                 getEditorInstance={(editor) => (editorRef.current = editor)}
                 onMainImageChange={handleMainImageChange}

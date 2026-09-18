@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "react-toastify"
 import { FileText, FolderOpen, Plus, Sparkles } from "lucide-react"
 import { MyBlogsList } from "@/components/blogs/MyBlogsList"
+import { RecycleBinList } from "@/components/blogs/RecycleBinList"
 import { BlogLibraryExplorer } from "@/components/folders/BlogLibraryExplorer"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,17 +18,38 @@ import { fetchFolderTree, moveBlogToFolder } from "@/lib/folders-api"
 import axiosInstance from "../../lib/axiosConfig"
 import { cn } from "@/lib/utils"
 
+const VALID_VIEWS = new Set(["allBlogs", "folders", "trash"])
+
 const MyBlog = () => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const viewFromUrl = searchParams.get("view")
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleteTargetId, setDeleteTargetId] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const hasFetched = useRef(false)
   const [explorerKey, setExplorerKey] = useState(0)
-  const [activeView, setActiveView] = useState("allBlogs")
+  const [trashKey, setTrashKey] = useState(0)
+  const [activeView, setActiveView] = useState(() =>
+    VALID_VIEWS.has(viewFromUrl) ? viewFromUrl : "allBlogs"
+  )
   const [activeStatusFilter, setActiveStatusFilter] = useState("all")
   const [folderTree, setFolderTree] = useState([])
+
+  useEffect(() => {
+    const next = VALID_VIEWS.has(viewFromUrl) ? viewFromUrl : "allBlogs"
+    setActiveView(next)
+  }, [viewFromUrl])
+
+  const selectView = (viewId) => {
+    setActiveView(viewId)
+    if (viewId === "allBlogs") {
+      setSearchParams({}, { replace: true })
+    } else {
+      setSearchParams({ view: viewId }, { replace: true })
+    }
+  }
 
   const fetchBlogs = async () => {
     try {
@@ -58,6 +80,7 @@ const MyBlog = () => {
       .then((res) => setFolderTree(res.tree))
       .catch(() => toast.error("Failed to load folders"))
     setExplorerKey((k) => k + 1)
+    setTrashKey((k) => k + 1)
   }
 
   const handleDeleteBlog = async () => {
@@ -65,7 +88,7 @@ const MyBlog = () => {
     setDeleting(true)
     try {
       await axiosInstance.delete(`/blog/deleteblog/${deleteTargetId}`)
-      toast.success("Blog deleted")
+      toast.success("Moved to recycle bin")
       setDeleteTargetId(null)
       refreshAll()
     } catch {
@@ -90,8 +113,13 @@ const MyBlog = () => {
     }
   }
 
+  const tabs = [
+    { id: "allBlogs", label: "All Blogs", icon: FileText },
+    { id: "folders", label: "Folders", icon: FolderOpen },
+  ]
+
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       <main className="flex-1">
         <section className="border-b border-border/70 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
           <div className="mx-auto max-w-6xl">
@@ -105,8 +133,7 @@ const MyBlog = () => {
                   My Blogs
                 </h1>
                 <p className="mt-2 max-w-xl text-muted-foreground">
-                  Drafts, published work, and folders — one calm shelf for every
-                  page.
+                  Drafts, published work, and folders in one place.
                 </p>
               </div>
               <Button
@@ -119,42 +146,47 @@ const MyBlog = () => {
               </Button>
             </div>
 
-            <div
-              role="tablist"
-              aria-label="Library view"
-              className="mt-8 inline-flex w-full max-w-lg gap-1 rounded-2xl bg-muted p-1.5"
-            >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeView === "allBlogs"}
-                onClick={() => setActiveView("allBlogs")}
-                className={cn(
-                  "inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-base font-medium transition",
-                  activeView === "allBlogs"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
-                )}
+            {activeView !== "trash" ? (
+              <div
+                role="tablist"
+                aria-label="Library view"
+                className="mt-8 inline-flex w-full max-w-md gap-1 rounded-2xl bg-muted p-1.5"
               >
-                <FileText className="h-4 w-4" />
-                All Blogs
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeView === "folders"}
-                onClick={() => setActiveView("folders")}
-                className={cn(
-                  "inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-base font-medium transition",
-                  activeView === "folders"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
-                )}
-              >
-                <FolderOpen className="h-4 w-4" />
-                Folders
-              </button>
-            </div>
+                {tabs.map((tab) => {
+                  const Icon = tab.icon
+                  const selected = activeView === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      onClick={() => selectView(tab.id)}
+                      className={cn(
+                        "inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl px-3 text-sm font-medium transition sm:px-5 sm:text-base",
+                        selected
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="hidden sm:inline">{tab.label}</span>
+                      <span className="sm:hidden">
+                        {tab.id === "allBlogs" ? "All" : "Folders"}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="mt-8">
+                <h2 className="wx-serif text-2xl text-foreground">Recycle Bin</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Items are kept for 60 days. Restore or delete permanently
+                  below.
+                </p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -165,7 +197,12 @@ const MyBlog = () => {
               : "w-full px-4 py-8 sm:px-6 lg:px-8"
           }
         >
-          {loading ? (
+          {activeView === "trash" ? (
+            <RecycleBinList
+              refreshKey={trashKey}
+              onRestored={refreshAll}
+            />
+          ) : loading ? (
             <div className="mx-auto flex min-h-[420px] max-w-6xl items-center justify-center rounded-3xl border border-border bg-card/50">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
             </div>
@@ -206,9 +243,10 @@ const MyBlog = () => {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete this blog?</DialogTitle>
+            <DialogTitle>Move to recycle bin?</DialogTitle>
             <DialogDescription>
-              This permanently removes the post. It cannot be undone.
+              The post will be kept for 60 days. You can restore it or delete
+              it permanently anytime from Recycle Bin.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -224,7 +262,7 @@ const MyBlog = () => {
               onClick={handleDeleteBlog}
               disabled={deleting}
             >
-              {deleting ? "Deleting..." : "Delete"}
+              {deleting ? "Moving..." : "Move to bin"}
             </Button>
           </DialogFooter>
         </DialogContent>

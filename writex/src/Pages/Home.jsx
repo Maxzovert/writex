@@ -84,7 +84,7 @@ const Home = () => {
             transition={{ duration: 0.7 }}
             className="max-w-3xl"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#5eead4] dark:text-[var(--wx-accent)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/70">
               Write · organize · share
             </p>
             <h1 className="wx-serif mt-5 text-[clamp(3.2rem,10vw,6rem)] text-white">
@@ -115,7 +115,7 @@ const Home = () => {
               {["Auto-save drafts", "Folders for own & saved", "Free forever"].map(
                 (t) => (
                   <span key={t} className="inline-flex items-center gap-1.5">
-                    <CheckCircle className="h-3.5 w-3.5 text-[#5eead4] dark:text-[var(--wx-accent)]" />
+                    <CheckCircle className="h-3.5 w-3.5 text-white" />
                     {t}
                   </span>
                 )

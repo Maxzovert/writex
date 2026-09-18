@@ -19,7 +19,11 @@ export interface CursorVisibilityOptions {
   /**
    * Reference to the element to track for cursor visibility
    */
-  elementRef?: React.RefObject<HTMLElement> | null
+  elementRef?: React.RefObject<HTMLElement | null> | null
+  /**
+   * Optional scroll container (defaults to elementRef, then window)
+   */
+  getScrollElement?: () => HTMLElement | null
 }
 
 /**
@@ -41,6 +45,7 @@ export function useCursorVisibility({
   editor,
   overlayHeight = 0,
   elementRef = null,
+  getScrollElement,
 }: CursorVisibilityOptions) {
   const { height: windowHeight } = useWindowSize()
   const [rect, setRect] = React.useState<RectState>({
@@ -87,7 +92,11 @@ export function useCursorVisibility({
       const cursorCoords = view.coordsAtPos(from)
       if (!cursorCoords) return
 
-      const scrollContainer = elementRef?.current
+      const scrollContainer =
+        getScrollElement?.() ||
+        elementRef?.current ||
+        null
+
       if (scrollContainer) {
         const containerRect = scrollContainer.getBoundingClientRect()
         const padding = 24
@@ -125,7 +134,7 @@ export function useCursorVisibility({
       editor?.off("selectionUpdate", ensureCursorVisibility)
       editor?.off("update", ensureCursorVisibility)
     }
-  }, [editor, elementRef, overlayHeight, windowHeight, rect.height])
+  }, [editor, elementRef, getScrollElement, overlayHeight, windowHeight, rect.height])
 
   return rect
 }

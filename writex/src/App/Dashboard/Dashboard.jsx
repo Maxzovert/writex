@@ -43,7 +43,7 @@ const Dashboard = () => {
     : "Writer";
 
   return (
-    <div className="pb-16">
+    <div className="min-h-0 flex-1 overflow-y-auto pb-16">
       <section className="px-4 pb-10 pt-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <motion.div
@@ -150,7 +150,7 @@ const Dashboard = () => {
           />
           <div className="absolute inset-0 bg-slate-950/55 dark:bg-black/65" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            <p className="mb-3 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#5eead4] dark:text-primary">
+            <p className="mb-3 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/70 dark:text-primary">
               <Sparkles className="h-3.5 w-3.5" />
               Ready when you are
             </p>

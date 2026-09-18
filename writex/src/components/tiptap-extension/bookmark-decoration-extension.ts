@@ -37,6 +37,12 @@ export const BookmarkDecorations = Extension.create<BookmarkDecorationsOptions>(
               const range = resolveBookmarkToRange(state.doc, bookmark)
               if (!range) continue
 
+              const selected = state.doc
+                .textBetween(range.from, range.to, " ")
+                .replace(/\s+/g, " ")
+                .trim()
+              if (!selected) continue
+
               const colorStyle = BOOKMARK_COLOR_STYLES[bookmark.color]
 
               decorations.push(

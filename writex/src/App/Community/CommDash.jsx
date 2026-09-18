@@ -4,7 +4,7 @@ import { Users, MessageCircle, Trophy, Calendar } from 'lucide-react'
 
 const CommDash = () => {
   return (
-    <div className="flex min-h-[70vh] w-full items-center justify-center px-4 py-16 text-foreground">
+    <div className="flex min-h-0 w-full flex-1 items-center justify-center overflow-y-auto px-4 py-16 text-foreground">
       <div className="mx-auto max-w-4xl text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}

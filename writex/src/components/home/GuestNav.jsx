@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { HiMenu, HiX } from "react-icons/hi";
 import logo from "@/assets/logo.png";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -34,7 +35,7 @@ export function GuestNav({ tone = "media" }) {
           />
           <span
             className={cn(
-              "wx-serif text-2xl tracking-tight",
+              "wx-script text-3xl tracking-tight",
               onMedia ? "text-white" : "text-[var(--wx-text)]"
             )}
           >
@@ -74,21 +75,25 @@ export function GuestNav({ tone = "media" }) {
           >
             Start writing
           </Link>
+          <ThemeToggle className="ml-1 h-9 w-9 shadow-none" />
         </nav>
 
-        <button
-          type="button"
-          className={cn(
-            "inline-flex rounded-full p-2 md:hidden",
-            onMedia
-              ? "border border-white/25 bg-white/10 text-white"
-              : "border border-[var(--wx-line)] bg-[var(--wx-soft)] text-[var(--wx-text)]"
-          )}
-          aria-label={open ? "Close menu" : "Open menu"}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? <HiX className="h-5 w-5" /> : <HiMenu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle className="h-9 w-9 shadow-none" />
+          <button
+            type="button"
+            className={cn(
+              "inline-flex rounded-full p-2",
+              onMedia
+                ? "border border-white/25 bg-white/10 text-white"
+                : "border border-[var(--wx-line)] bg-[var(--wx-soft)] text-[var(--wx-text)]"
+            )}
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <HiX className="h-5 w-5" /> : <HiMenu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {open ? (

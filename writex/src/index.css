@@ -1,6 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Oxygen:wght@300;400;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Allura&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @source "./node_modules/preline/dist/*.js";
@@ -13,83 +11,85 @@ html, body {
   overflow-y: auto;
 }
 
-.oxygen-light {
-  font-family: "Oxygen", sans-serif;
-  font-weight: 300;
-  font-style: normal;
-}
-
-.oxygen-regular {
-  font-family: "Oxygen", sans-serif;
-  font-weight: 400;
-  font-style: normal;
-}
-
+/* Legacy class names → new stack (About page etc.) */
+.oxygen-light,
+.oxygen-regular,
 .oxygen-bold {
-  font-family: "Oxygen", sans-serif;
-  font-weight: 700;
-  font-style: normal;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
 }
+
+.oxygen-light { font-weight: 400; }
+.oxygen-regular { font-weight: 400; }
+.oxygen-bold { font-weight: 700; }
 
 .lexend-txt {
-  font-family: "Lexend", sans-serif;
+  font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
   font-optical-sizing: auto;
-  font-weight: 400;
+  font-weight: 600;
   font-style: normal;
 }
 
 .wx-serif {
-  font-family: "Instrument Serif", Georgia, serif;
-  font-weight: 400;
-  letter-spacing: -0.025em;
-  line-height: 1.02;
+  font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .wx-sans {
-  font-family: "Plus Jakarta Sans", "Oxygen", system-ui, sans-serif;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
 }
 
-/* Landing + auth — light is crisp; dark stays cinematic */
+/* Script for brand / special flourishes */
+.wx-script {
+  font-family: "Allura", cursive;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+
+/* Landing + auth — Black & White */
 .wx-cool {
-  --wx-bg: #f8fafc;
+  --wx-bg: #fafafa;
   --wx-elev: #ffffff;
-  --wx-line: #e2e8f0;
-  --wx-text: #0f172a;
-  --wx-mute: #64748b;
-  --wx-accent: #0f766e;
+  --wx-line: #e5e5e5;
+  --wx-text: #0a0a0a;
+  --wx-mute: #737373;
+  --wx-accent: #0a0a0a;
   --wx-accent-fg: #ffffff;
-  --wx-glow: rgba(15, 118, 110, 0.12);
-  --wx-soft: #f1f5f9;
+  --wx-glow: rgba(0, 0, 0, 0.06);
+  --wx-soft: #f5f5f5;
   --wx-panel: #ffffff;
-  --wx-on-media: #f8fafc;
-  --wx-code-bg: #0f172a;
-  --wx-code-fg: #e2e8f0;
+  --wx-on-media: #fafafa;
+  --wx-code-bg: #0a0a0a;
+  --wx-code-fg: #f5f5f5;
   background: var(--wx-bg);
   color: var(--wx-text);
 }
 
 .dark .wx-cool {
-  --wx-bg: #09090b;
-  --wx-elev: rgba(255, 255, 255, 0.06);
-  --wx-line: rgba(255, 255, 255, 0.12);
+  --wx-bg: #0a0a0a;
+  --wx-elev: #141414;
+  --wx-line: #262626;
   --wx-text: #fafafa;
-  --wx-mute: #a1a1aa;
-  --wx-accent: #f0c7a8;
-  --wx-accent-fg: #18181b;
-  --wx-glow: rgba(240, 199, 168, 0.18);
-  --wx-soft: rgba(255, 255, 255, 0.05);
-  --wx-panel: rgba(255, 255, 255, 0.04);
+  --wx-mute: #a3a3a3;
+  --wx-accent: #fafafa;
+  --wx-accent-fg: #0a0a0a;
+  --wx-glow: rgba(255, 255, 255, 0.08);
+  --wx-soft: #171717;
+  --wx-panel: #141414;
   --wx-on-media: #fafafa;
   --wx-code-bg: #000000;
-  --wx-code-fg: #d4d4d8;
+  --wx-code-fg: #e5e5e5;
 }
 
 /* Hero always keeps a dark media wash so white type stays readable */
 .wx-hero-shade {
   background: linear-gradient(
     to bottom,
-    rgba(2, 6, 23, 0.5) 0%,
-    rgba(2, 6, 23, 0.58) 45%,
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(0, 0, 0, 0.58) 45%,
     var(--wx-bg) 100%
   );
 }
@@ -107,12 +107,12 @@ html, body {
   background: var(--wx-elev);
   border: 1px solid var(--wx-line);
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 16px 40px rgba(15, 23, 42, 0.06);
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 16px 40px rgba(0, 0, 0, 0.06);
 }
 
 .dark .wx-glass {
-  background: rgba(24, 24, 28, 0.92);
+  background: rgba(20, 20, 20, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
@@ -130,11 +130,11 @@ html, body {
   filter: brightness(0) invert(1);
 }
 
-/* Light auth atmosphere (no muddy photo wash) */
+/* Light auth atmosphere */
 .wx-auth-light-bg {
   background:
-    radial-gradient(900px 500px at 0% 0%, rgba(15, 118, 110, 0.1), transparent 55%),
-    radial-gradient(700px 420px at 100% 100%, rgba(15, 23, 42, 0.05), transparent 50%),
+    radial-gradient(900px 500px at 0% 0%, rgba(0, 0, 0, 0.04), transparent 55%),
+    radial-gradient(700px 420px at 100% 100%, rgba(0, 0, 0, 0.03), transparent 50%),
     var(--wx-bg);
 }
 
@@ -146,6 +146,8 @@ html, body {
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -197,89 +199,91 @@ html, body {
     }
   }}
 
-/* App tokens aligned with wx-cool writing desk */
+/* App tokens — Black & White */
 :root {
   --radius: 0.75rem;
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #fafafa;
+  --foreground: #0a0a0a;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #0a0a0a;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #0f766e;
+  --popover-foreground: #0a0a0a;
+  --primary: #0a0a0a;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #ecfdf5;
-  --accent-foreground: #0f766e;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #f0f0f0;
+  --accent-foreground: #0a0a0a;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #0f766e;
-  --chart-1: #0f766e;
-  --chart-2: #14b8a6;
-  --chart-3: #0f172a;
-  --chart-4: #f0c7a8;
-  --chart-5: #64748b;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #0a0a0a;
+  --chart-1: #0a0a0a;
+  --chart-2: #525252;
+  --chart-3: #a3a3a3;
+  --chart-4: #d4d4d4;
+  --chart-5: #737373;
   --sidebar: #ffffff;
-  --sidebar-foreground: #0f172a;
-  --sidebar-primary: #0f766e;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #0a0a0a;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f1f5f9;
-  --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #0f766e;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #0a0a0a;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #0a0a0a;
 }
 
 .dark {
-  --background: #09090b;
+  --background: #0a0a0a;
   --foreground: #fafafa;
-  --card: #121216;
+  --card: #141414;
   --card-foreground: #fafafa;
-  --popover: #121216;
+  --popover: #141414;
   --popover-foreground: #fafafa;
-  --primary: #f0c7a8;
-  --primary-foreground: #18181b;
-  --secondary: #18181b;
+  --primary: #fafafa;
+  --primary-foreground: #0a0a0a;
+  --secondary: #171717;
   --secondary-foreground: #fafafa;
-  --muted: #18181b;
-  --muted-foreground: #a1a1aa;
-  --accent: rgba(240, 199, 168, 0.12);
-  --accent-foreground: #f0c7a8;
+  --muted: #171717;
+  --muted-foreground: #a3a3a3;
+  --accent: rgba(255, 255, 255, 0.08);
+  --accent-foreground: #fafafa;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(255, 255, 255, 0.12);
-  --input: rgba(255, 255, 255, 0.15);
-  --ring: #f0c7a8;
-  --chart-1: #f0c7a8;
-  --chart-2: #14b8a6;
-  --chart-3: #fafafa;
-  --chart-4: #a1a1aa;
-  --chart-5: #71717a;
-  --sidebar: #121216;
+  --border: #262626;
+  --input: #262626;
+  --ring: #fafafa;
+  --chart-1: #fafafa;
+  --chart-2: #a3a3a3;
+  --chart-3: #737373;
+  --chart-4: #525252;
+  --chart-5: #d4d4d4;
+  --sidebar: #141414;
   --sidebar-foreground: #fafafa;
-  --sidebar-primary: #f0c7a8;
-  --sidebar-primary-foreground: #18181b;
-  --sidebar-accent: #18181b;
+  --sidebar-primary: #fafafa;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #171717;
   --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: rgba(255, 255, 255, 0.12);
-  --sidebar-ring: #f0c7a8;
+  --sidebar-border: #262626;
+  --sidebar-ring: #fafafa;
 }
 
-/* Soft desk atmosphere for authenticated shell */
+/* Soft desk atmosphere for authenticated shell — stays put while pages/canvas scroll */
 .wx-desk-bg {
   background:
-    radial-gradient(900px 480px at 0% 0%, rgba(15, 118, 110, 0.08), transparent 55%),
-    radial-gradient(700px 400px at 100% 0%, rgba(15, 23, 42, 0.04), transparent 50%),
+    radial-gradient(900px 480px at 0% 0%, rgba(0, 0, 0, 0.03), transparent 55%),
+    radial-gradient(700px 400px at 100% 0%, rgba(0, 0, 0, 0.02), transparent 50%),
     var(--background);
+  background-attachment: fixed;
 }
 
 .dark .wx-desk-bg {
   background:
-    radial-gradient(900px 480px at 0% 0%, rgba(240, 199, 168, 0.08), transparent 55%),
-    radial-gradient(700px 400px at 100% 0%, rgba(255, 255, 255, 0.03), transparent 50%),
+    radial-gradient(900px 480px at 0% 0%, rgba(255, 255, 255, 0.04), transparent 55%),
+    radial-gradient(700px 400px at 100% 0%, rgba(255, 255, 255, 0.02), transparent 50%),
     var(--background);
+  background-attachment: fixed;
 }
 
 @layer base {
@@ -288,6 +292,7 @@ html, body {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
   }
 }
 

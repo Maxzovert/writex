@@ -357,7 +357,7 @@ const MyProfile = () => {
   const safeProfileImage = getSafeImageUrl(profile.profileImage);
 
   return (
-    <div className="flex min-h-screen flex-col pb-10 text-foreground">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-10 text-foreground">
       <main className="flex-1">
           <section className="border-b border-border bg-muted/30 px-4 py-12 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-5xl">

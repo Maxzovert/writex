@@ -19,3 +19,12 @@
   border-radius: 0.15rem;
   padding: 0.05rem 0;
 }
+
+/* Avoid orphan underline scraps on empty / break-only ranges after paste */
+.ProseMirror .writex-bookmark-highlight:empty,
+.ProseMirror .writex-bookmark-highlight:has(> .ProseMirror-trailingBreak:only-child) {
+  background: transparent !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  padding: 0;
+}

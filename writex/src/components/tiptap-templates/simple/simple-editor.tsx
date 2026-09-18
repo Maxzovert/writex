@@ -88,6 +88,7 @@ import "@/components/bookmarks/bookmarks.scss"
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/new-tiptap-utils"
+import { transformPastedHtml, transformPastedText } from "@/lib/paste-cleanup"
 import { cn } from "@/lib/tiptap-utils"
 
 // --- Styles ---
@@ -237,7 +238,10 @@ export function SimpleEditor({
         autocorrect: "off",
         autocapitalize: "off",
         "aria-label": "Main content area, start typing to enter text.",
+        class: "wx-editor-canvas",
       },
+      transformPastedHTML: transformPastedHtml,
+      transformPastedText,
     },
     extensions: [
       StarterKit.configure({
